@@ -1,0 +1,6 @@
+# This repository begins with the current attached flashcard app only.
+# Legacy HTML variants, raw vocabulary extracts, and local build helpers remain
+# available in the working directory but are intentionally outside this history.
+*
+!.gitignore
+!ims-flashcards-enriched-tts.html
