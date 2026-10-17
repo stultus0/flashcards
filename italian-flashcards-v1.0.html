@@ -230,6 +230,8 @@
       <div class="tag" id="backTag">English</div>
       <div class="back-word" id="backWord">bathroom</div>
       <div class="back-extra" id="backExtra"></div>
+      <button class="speak-btn" id="speakBtnBack" type="button" style="display:none">🔊 Pronunciation</button>
+      <div class="pron-status" id="pronStatusBack" style="position:static;margin-top:6px"></div>
     </div>
   </div>
 </div>
@@ -1950,19 +1952,30 @@ function stopPron() {
 
 function updateSpeakButton(italian) {
   currentItalian = italian;
-  const btn = $("speakBtn");
+  const btnF = $("speakBtn");
+  const btnB = $("speakBtnBack");
   if (!italian) {
-    btn.style.display = "none";
+    btnF.style.display = "none";
+    btnB.style.display = "none";
     $("pronStatus").textContent = "";
+    $("pronStatusBack").textContent = "";
     stopPron();
     return;
   }
-  btn.style.display = "";
+  // Show the button on whichever face holds the Italian word.
+  const frontIsIt = dir === "it-en";
+  if (frontIsIt) {
+    btnF.style.display = "";
+    btnB.style.display = "none";
+  } else {
+    btnF.style.display = "none";
+    btnB.style.display = "";
+  }
   stopPron();
 }
 
 async function playPron(token, word, t0, viaFallback) {
-  const status = $("pronStatus");
+  const status = (dir === "it-en") ? $("pronStatus") : $("pronStatusBack");
   // Fast path: pre-rendered MP3 hosted with this page (same origin, no CORS).
   if (!viaFallback) {
     const local = localAudioPath(word);
@@ -2025,6 +2038,13 @@ $("speakBtn").addEventListener("click", (e) => {
   playPron(token, currentItalian, performance.now(), false);
 });
 
+$("speakBtnBack").addEventListener("click", (e) => {
+  e.stopPropagation(); // don't unflip the card
+  if (!currentItalian) return;
+  const token = ++pronToken;
+  playPron(token, currentItalian, performance.now(), false);
+});
+
 function render() {
   const total = cardsForSet(currentSet()).length;
   const shown = queue.length;
@@ -2039,7 +2059,8 @@ function render() {
   $("frontWord").textContent = front;
   $("backWord").textContent = back;
   $("pronStatus").textContent = "";
-  updateSpeakButton(frontIsIt ? c.it : null);
+  $("pronStatusBack").textContent = "";
+  updateSpeakButton(c.it);
   
   // Build tag: type + irregular marker
   let tagText = c.type;
