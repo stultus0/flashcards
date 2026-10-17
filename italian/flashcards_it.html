@@ -1776,7 +1776,7 @@ const CARDS = [
 /* ============================================================
    SPACED REPETITION (simple SM-2-ish)
    ============================================================ */
-const STORE_KEY = "imsFlashcards_all_v2";
+const STORE_KEY = "imsFlashcards_all_v3"; // v3: direction-aware card IDs (it-en / en-it)
 let state = loadState();
 
 function loadState() {
@@ -1832,14 +1832,14 @@ function shuffle(cards) {
 function buildDeck(setFilter) {
   const now = Date.now();
   const due = cardsForSet(setFilter).filter(c => {
-    const p = state.progress[cardId(c)];
+    const p = state.progress[cardId(c, dir)];
     return !p || p.due <= now;
   });
   return shuffle(due);
 }
-function cardId(c) { return c.it.replace(/\W+/g, "_"); }
+function cardId(c, d) { return (d || "it-en") + ":" + c.it.replace(/\W+/g, "_"); }
 function getDue(c) {
-  const p = state.progress[cardId(c)];
+  const p = state.progress[cardId(c, dir)];
   return p ? p.due : 0;
 }
 
@@ -2095,7 +2095,7 @@ function flip() {
   $("card").classList.toggle("flipped", flipped);
   setCardFace(flipped);
   if (flipped) {
-    markSeen(cardId(queue[idx]));
+    markSeen(cardId(queue[idx], dir));
     saveState();
     updateStats();
   }
@@ -2105,9 +2105,10 @@ function flip() {
 function advance(g) {
   if (!flipped) return;
   const c = queue[idx];
-  grade(cardId(c), g);
+  const id = cardId(c, dir);
+  grade(id, g);
   if (g === "again" || g === "hard") {
-    sessionMistakes.push(cardId(c));
+    sessionMistakes.push(id);
   }
   idx++;
   flipped = false;
@@ -2120,9 +2121,15 @@ function advance(g) {
 function updateStats() {
   const total = CARDS.length;
   const now = Date.now();
-  const learned = Object.values(state.progress).filter(p => p.reps >= 2 && p.interval >= 60).length;
+  // Learned: both directions of a word have reps >= 2 and interval >= 60 min.
+  const learnedWords = new Set();
+  for (const [id, p] of Object.entries(state.progress)) {
+    if (p.reps >= 2 && p.interval >= 60) learnedWords.add(id.split(":").pop());
+  }
+  const learned = [...learnedWords].filter(w =>
+    state.progress["it-en:" + w] && state.progress["en-it:" + w]).length;
   const dueNow = cardsForSet(currentSet()).filter(c => {
-    const p = state.progress[cardId(c)];
+    const p = state.progress[cardId(c, dir)];
     return !p || p.due <= now;
   }).length;
   const seen = Object.keys(state.seen).length;
@@ -2178,7 +2185,7 @@ document.querySelectorAll(".grade").forEach(btn => {
 $("setSelect").addEventListener("change", startDeck);
 $("onlyChapter").addEventListener("change", startDeck);
 $("includeIntro").addEventListener("change", startDeck);
-$("dirSelect").addEventListener("change", e => { dir = e.target.value; render(); });
+$("dirSelect").addEventListener("change", e => { dir = e.target.value; startDeck(); });
 $("resetBtn").addEventListener("click", () => {
   if (confirm("Reset all flashcard progress? This clears your spaced-repetition schedule.")) {
     state = { progress: {}, seen: {} };
@@ -2193,7 +2200,7 @@ function startMistakes() {
   $("deck").style.display = "";
   $("grades").style.display = "";
   const pool = new Set(sessionMistakes);
-  const cards = CARDS.filter(c => pool.has(cardId(c)));
+  const cards = CARDS.filter(c => pool.has(cardId(c, dir)));
   queue = shuffle(cards);
   sessionMistakes = [];
   idx = 0;
