@@ -6,9 +6,13 @@
 !ims-flashcards-enriched-tts.html
 !ims-flashcards-enriched-tts-ch11-pilot.html
 !italian-flashcards-v1.0.html
+!index.html
 !ims-ch13-20-enrichment.json
 !ims-ch21-28-enrichment.json
 !ims-ch29-34-enrichment.json
 !ims-ch35-40-enrichment.json
 !test_ch11_pilot.py
 !test_all_chapters_enriched.py
+!manifest.json
+!audio/
+!audio/**

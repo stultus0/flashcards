@@ -1875,20 +1875,36 @@ let dir = "it-en";
 function currentSet() { return $("setSelect").value; }
 
 /* ============================================================
-   Pronunciation — streamed live from Google Translate TTS (option 4)
-   Nothing is downloaded or stored: the browser streams the MP3
-   directly via an <audio> element. If the browser's media loader
-   rejects the source, falls back to a one-off download through a
-   CORS proxy and plays it from memory (still nothing persisted).
+   Pronunciation — pre-rendered MP3s hosted alongside this page
+   (audio/<slug>.mp3, listed in manifest.json). Plays from the
+   same origin: no CORS, no proxy, near-instant after first load.
+   Falls back to live Google Translate TTS (direct stream, then
+   CORS proxy) only for words missing a local file.
    ============================================================ */
 let pronAudio = null;
 let pronToken = 0;
 let currentItalian = null;
+let audioManifest = null; // word -> "audio/xxx.mp3"
 
 function ttsUrl(text, bust) {
   let u = "https://translate.google.com/translate_tts?ie=UTF-8&client=tw-ob&q=" + encodeURIComponent(text) + "&tl=it&tt=en";
   if (bust) u += "&_cb=" + bust;
   return u;
+}
+
+async function loadManifest() {
+  try {
+    const res = await fetch("manifest.json", {cache: "no-store"});
+    if (res.ok) audioManifest = await res.json();
+  } catch (e) { /* offline or missing — streaming fallback covers it */ }
+}
+
+function localAudioPath(word) {
+  if (!audioManifest || !word) return null;
+  const key = Object.keys(audioManifest).find(k => k.toLowerCase() === word.toLowerCase());
+  if (!key) return null;
+  let p = audioManifest[key];
+  return p.startsWith("audio/") ? p : "audio/" + p;
 }
 
 function fetchWithTimeout(url, ms) {
@@ -1947,6 +1963,26 @@ function updateSpeakButton(italian) {
 
 async function playPron(token, word, t0, viaFallback) {
   const status = $("pronStatus");
+  // Fast path: pre-rendered MP3 hosted with this page (same origin, no CORS).
+  if (!viaFallback) {
+    const local = localAudioPath(word);
+    if (local) {
+      const a = document.createElement("audio");
+      pronAudio = a;
+      a.src = local;
+      status.textContent = "Playing…";
+      a.onended = () => { if (token === pronToken) { status.textContent = ""; pronAudio = null; } };
+      a.onerror = async () => {
+        if (token !== pronToken || !a.error) return;
+        // Local file missing/corrupt — fall back to live TTS.
+        await playPron(token, word, t0, true);
+      };
+      try { await a.play(); } catch(e) {
+        if (token === pronToken) status.textContent = "Click 🔊 again to start playback.";
+      }
+      return;
+    }
+  }
   if (viaFallback) {
     status.textContent = "Streaming blocked — downloading… (≤15s)";
     try {
@@ -2129,6 +2165,7 @@ document.addEventListener("keydown", e => {
 });
 
 /* init */
+loadManifest(); // pre-rendered pronunciation files (same-origin, fast)
 startDeck();
 updateStats();
 </script>
