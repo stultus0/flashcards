@@ -28,7 +28,8 @@ def extract_words():
     m = re.search(r"const CARDS = \[(.*?)\n\];", html, re.S)
     if not m:
         raise SystemExit("CARDS array not found in HTML")
-    frs = re.findall(r'fr:"((?:[^"\\]|\\.)*)"', m.group(1))
+    # Match both key styles: unquoted JS-object (fr:"...") and quoted JSON ("fr":"...").
+    frs = re.findall(r'["\']?fr["\']?\s*:\s*"((?:[^"\\]|\\.)*)"', m.group(1))
     return sorted(set(w.strip() for w in frs if w.strip()))
 
 
