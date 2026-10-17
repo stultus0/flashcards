@@ -247,6 +247,7 @@
   <h2>Complimenti! 🎉</h2>
   <p id="doneText"></p>
   <button class="btn" id="restartBtn">Study again</button>
+  <button class="btn" id="mistakesBtn" style="display:none;margin-top:8px">🔁 Replay my mistakes</button>
 </div>
 
 <div class="stats">
@@ -1873,6 +1874,7 @@ let queue = [];
 let idx = 0;
 let flipped = false;
 let dir = "it-en";
+let sessionMistakes = []; // card IDs graded Again/Hard in this session
 
 function currentSet() { return $("setSelect").value; }
 
@@ -2104,6 +2106,9 @@ function advance(g) {
   if (!flipped) return;
   const c = queue[idx];
   grade(cardId(c), g);
+  if (g === "again" || g === "hard") {
+    sessionMistakes.push(cardId(c));
+  }
   idx++;
   flipped = false;
   $("card").classList.remove("flipped");
@@ -2131,10 +2136,19 @@ function showDone() {
   $("grades").style.display = "none";
   $("done").style.display = "block";
   const total = cardsForSet(currentSet()).length;
-  $("doneText").innerHTML =
-    `You reviewed all <b>${queue.length}</b> due card${queue.length !== 1 ? "s" : ""}.<br>` +
-    `The rest of the set will come back later via spaced repetition.<br>` +
-    `<span style="font-size:.85em;color:var(--muted)">Tip: press "Study again" to re-drill the same batch immediately.</span>`;
+  const uniqMistakes = [...new Set(sessionMistakes)];
+  if (uniqMistakes.length) {
+    $("mistakesBtn").style.display = "";
+    $("doneText").innerHTML =
+      `You reviewed all <b>${queue.length}</b> due card${queue.length !== 1 ? "s" : ""}.<br>` +
+      `<b>${uniqMistakes.length}</b> card${uniqMistakes.length !== 1 ? "s were" : " was"} marked Again/Hard this session.<br>` +
+      `<span style="font-size:.85em;color:var(--muted)">Press "Replay my mistakes" to re-drill just those now, or "Study again" for everything due.</span>`;
+  } else {
+    $("mistakesBtn").style.display = "none";
+    $("doneText").innerHTML =
+      `You reviewed all <b>${queue.length}</b> due card${queue.length !== 1 ? "s" : ""} — no mistakes! 🎉<br>` +
+      `The rest of the set will come back later via spaced repetition.`;
+  }
   updateStats();
 }
 
@@ -2142,6 +2156,7 @@ function startDeck() {
   $("done").style.display = "none";
   $("deck").style.display = "";
   $("grades").style.display = "";
+  sessionMistakes = [];
   queue = buildDeck(currentSet());
   idx = 0;
   flipped = false;
@@ -2172,6 +2187,26 @@ $("resetBtn").addEventListener("click", () => {
   }
 });
 $("restartBtn").addEventListener("click", startDeck);
+
+function startMistakes() {
+  $("done").style.display = "none";
+  $("deck").style.display = "";
+  $("grades").style.display = "";
+  const pool = new Set(sessionMistakes);
+  const cards = CARDS.filter(c => pool.has(cardId(c)));
+  queue = shuffle(cards);
+  sessionMistakes = [];
+  idx = 0;
+  flipped = false;
+  $("card").classList.remove("flipped");
+  setCardFace(false);
+  if (!queue.length) {
+    showDone();
+  } else {
+    render();
+  }
+}
+$("mistakesBtn").addEventListener("click", startMistakes);
 
 /* keyboard shortcuts */
 document.addEventListener("keydown", e => {
