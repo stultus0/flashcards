@@ -1,0 +1,1291 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>French Flashcards</title>
+<style>
+  :root {
+    --bg: #f4f1ea;
+    --card-bg: #ffffff;
+    --ink: #2b2620;
+    --muted: #7a7168;
+    --accent: #b3502e;
+    --accent-soft: #e9d9cf;
+    --good: #3e7c4f;
+    --warn: #b07d2a;
+    --bad: #a33b2e;
+    --radius: 14px;
+    --shadow: 0 6px 24px rgba(43,38,32,.12);
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: Georgia, 'Times New Roman', serif;
+    background: var(--bg);
+    color: var(--ink);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 24px 16px 48px;
+  }
+  header { text-align: center; margin-bottom: 18px; max-width: 640px; }
+  h1 { font-size: 1.5rem; letter-spacing: .02em; }
+  .subtitle { color: var(--muted); font-size: .9rem; margin-top: 4px; font-style: italic; }
+
+  .controls {
+    display: flex; gap: 10px; flex-wrap: wrap; justify-content: center;
+    margin-bottom: 14px; width: 100%; max-width: 520px;
+  }
+  .control-label { display: flex; flex-direction: column; gap: 4px; color: var(--muted); font-size: .78rem; text-align: left; }
+  .checkbox-label { display: flex; align-items: center; gap: 7px; min-height: 44px; align-self: end; padding: 0 5px; color: var(--ink); font-size: .9rem; cursor: pointer; user-select: none; }
+  .checkbox-label input { width: 19px; height: 19px; accent-color: var(--accent); }
+  select, button.btn {
+    font-family: inherit; font-size: 1rem;
+    min-height: 44px; padding: 9px 12px; border-radius: 8px;
+    border: 1px solid #d8cfc2; background: var(--card-bg); color: var(--ink);
+    cursor: pointer;
+  }
+  button.btn { align-self: end; }
+  button.btn:hover { border-color: var(--accent); color: var(--accent); }
+
+  .progress-wrap { width: 100%; max-width: 520px; margin-bottom: 14px; }
+  .progress-label { display: flex; justify-content: space-between; font-size: .8rem; color: var(--muted); margin-bottom: 4px; }
+  .progress-bar { height: 8px; background: var(--accent-soft); border-radius: 99px; overflow: hidden; }
+  .progress-fill { height: 100%; background: var(--accent); width: 0%; transition: width .3s ease; }
+
+  .deck { width: 100%; max-width: 520px; }
+  .card {
+    position: relative; width: 100%; min-height: 300px;
+    cursor: pointer; touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .face {
+    position: absolute; inset: 0;
+    background: var(--card-bg); border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    padding: 32px 28px; text-align: center;
+    transition: opacity .25s ease;
+  }
+  .face.front { z-index: 2; }
+  .face.back { z-index: 1; opacity: 0; pointer-events: none; }
+  .card.flipped .face.front { opacity: 0; pointer-events: none; }
+  .card.flipped .face.back { opacity: 1; pointer-events: auto; }
+  .tag {
+    font-size: .68rem; letter-spacing: .12em; text-transform: uppercase;
+    color: var(--accent); background: var(--accent-soft);
+    padding: 3px 10px; border-radius: 99px; margin-bottom: 18px;
+  }
+  .front-word { font-size: 2.2rem; line-height: 1.25; }
+  .front-gender { font-size: 1rem; color: var(--muted); margin-top: 6px; }
+  .hint { position: absolute; bottom: 14px; left: 0; right: 0; font-size: .75rem; color: var(--muted); font-style: italic; }
+  .speak-btn {
+    border: 1px solid #d8cfc2; background: var(--card-bg); color: var(--ink);
+    border-radius: 99px; padding: 7px 14px; margin-top: 14px;
+    font-family: inherit; font-size: .9rem; cursor: pointer; min-height: 38px;
+  }
+  .speak-btn:hover { border-color: var(--accent); color: var(--accent); }
+  .pron-status { position: absolute; bottom: 36px; left: 0; right: 0; font-size: .72rem; color: var(--muted); font-style: italic; text-align: center; min-height: 1em; }
+  .back-word { font-size: 1.9rem; line-height: 1.25; }
+  .back-example { font-size: 1rem; color: var(--accent, #4a7c6f); margin-top: 10px; line-height: 1.5; font-style: italic; border-left: 3px solid var(--accent, #4a7c6f); padding-left: 10px; }
+  .back-extra { font-size: 1.05rem; color: var(--muted); margin-top: 10px; line-height: 1.5; }
+
+  .grades { display: flex; gap: 10px; margin-top: 18px; width: 100%; max-width: 520px; }
+  .grade {
+    flex: 1; padding: 12px 6px; border-radius: 10px; border: none;
+    font-family: inherit; font-size: .95rem; font-weight: bold; cursor: pointer;
+    color: #fff; transition: transform .1s, filter .1s;
+  }
+  .grade:hover { filter: brightness(1.08); transform: translateY(-1px); }
+  .grade.again { background: var(--bad); }
+  .grade.hard   { background: var(--warn); }
+  .grade.good   { background: var(--good); }
+  .grade.easy   { background: #4a6fa5; }
+  .grades.hidden { visibility: hidden; }
+
+  .stats { margin-top: 22px; display: flex; gap: 18px; flex-wrap: wrap; justify-content: center; font-size: .85rem; color: var(--muted); }
+  .stats b { color: var(--ink); }
+  .save-note { margin-top: 9px; max-width: 520px; color: var(--muted); text-align: center; font-size: .76rem; }
+
+  .done {
+    display: none; width: 100%; max-width: 520px;
+    background: var(--card-bg); border-radius: var(--radius); box-shadow: var(--shadow);
+    padding: 40px 30px; text-align: center;
+  }
+  .done h2 { color: var(--accent); margin-bottom: 10px; }
+  .done p { color: var(--muted); margin-bottom: 20px; line-height: 1.6; }
+
+  .check-row { display: flex; flex-wrap: wrap; gap: 9px 16px; align-items: center; justify-content: center; }
+  @media (max-width: 600px) {
+    body { padding: max(16px, env(safe-area-inset-top)) 14px calc(28px + env(safe-area-inset-bottom)); }
+    header { margin-bottom: 14px; }
+    h1 { font-size: 1.28rem; }
+    .subtitle { font-size: .82rem; }
+    .controls { display: grid; grid-template-columns: 1fr 1fr; gap: 9px; }
+    .check-row { display: flex; flex-wrap: wrap; gap: 9px; grid-column: 1 / -1; }
+    .control-label { min-width: 0; }
+    .control-label select { width: 100%; min-width: 0; }
+    .controls .btn { grid-column: 1 / -1; width: 100%; }
+    .card { min-height: 285px; }
+    .face { padding: 26px 20px; }
+    .front-word { font-size: 1.72rem; }
+    .back-word { font-size: 1.48rem; }
+    .back-example { font-size: .95rem; }
+    .back-extra { font-size: .98rem; }
+    .grades { gap: 7px; margin-top: 14px; }
+    .grade { min-height: 48px; padding: 10px 3px; font-size: .9rem; }
+    .stats { gap: 10px; font-size: .78rem; }
+  }
+  @media (max-width: 360px) {
+    .controls { grid-template-columns: 1fr; }
+    .front-word { font-size: 1.5rem; }
+    .grade { font-size: .8rem; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>🇫🇷 French Flashcards</h1>
+  <div class="subtitle">Vocabulary from <i>Invitation au Français</i> (Holt McDougal)</div>
+</header>
+
+<div class="controls" aria-label="Study settings">
+  <label class="control-label" for="setSelect">Study through
+    <select id="setSelect">
+      <option value="through1">Lesson 1 — Bonjour! (salutations)</option>
+      <option value="through2">Lesson 2 — Famille et copains</option>
+      <option value="through3">Lesson 3 — Nationalités & âge</option>
+      <option value="through4">Lesson 4 — Bon appétit! (nourriture)</option>
+      <option value="through5">Lesson 5 — De jour en jour (boissons, argent)</option>
+      <option value="through6">Lesson 6 — Une invitation (heure, jours, date)</option>
+      <option value="through7">Lesson 7 — Mes activités quotidiennes</option>
+      <option value="through8">Lesson 8 — Qu'est-ce qu'on fait? (loisirs, sports)</option>
+      <option value="through9">Lesson 9 — Les personnes et les objets</option>
+      <option value="through10">Lesson 10 — Vive la différence! (apparence)</option>
+      <option value="through11">Lesson 11 — Le copain de Mireille</option>
+      <option value="through12">Lesson 12 — La voiture de Roger</option>
+      <option value="through13">Lesson 13 — La ville et la maison</option>
+      <option value="through14">Lesson 14 — Week-end à Paris</option>
+      <option value="through15">Lesson 15 — Au café de l'Université</option>
+      <option value="through16">Lesson 16 — Mes voisins (animaux)</option>
+      <option value="through17">Lesson 17 — L'achat des vêtements</option>
+      <option value="through18">Lesson 18 — Rien n'est parfait! (shopping)</option>
+      <option value="through19">Lesson 19 — Un choix difficile</option>
+      <option value="through20">Lesson 20 — Alice a un job</option>
+      <option value="through21">Lesson 21 — Le week-end et les vacances</option>
+      <option value="through22">Lesson 22 — Vive le week-end!</option>
+      <option value="through23">Lesson 23 — Wallabi (sports d'hiver, télé)</option>
+      <option value="through24">Lesson 24 — Où est de la chance?</option>
+      <option value="through25">Lesson 25 — Les repas</option>
+      <option value="through26">Lesson 26 — À la cantine</option>
+      <option value="through27">Lesson 27 — Un client difficile</option>
+      <option value="through28" selected>Lesson 28 — Pique-nique</option>
+    </select>
+  </label>
+  <div class="check-row">
+    <label class="checkbox-label" for="onlyChapter">
+      <input type="checkbox" id="onlyChapter">
+      <span>Only this lesson</span>
+    </label>
+  </div>
+  <label class="control-label" for="dirSelect">Direction
+    <select id="dirSelect">
+      <option value="fr-en" selected>French → English</option>
+      <option value="en-fr">English → French</option>
+    </select>
+  </label>
+  <button class="btn" id="resetBtn">Reset progress</button>
+</div>
+
+<div class="progress-wrap">
+  <div class="progress-label"><span id="progText">Card 1 of —</span><span id="pctText">0%</span></div>
+  <div class="progress-bar"><div class="progress-fill" id="progFill"></div></div>
+</div>
+
+<div class="deck" id="deck">
+  <div class="card" id="card">
+    <div class="face front">
+      <div class="tag" id="frontTag">Noun</div>
+      <div class="front-word" id="frontWord">la salle de bain</div>
+      <div class="front-gender" id="frontGender">masculine</div>
+      <button class="speak-btn" id="speakBtn" type="button">🔊 Pronunciation</button>
+      <div class="pron-status" id="pronStatus"></div>
+      <div class="hint">Click the card to reveal</div>
+    </div>
+    <div class="face back">
+      <div class="tag" id="backTag">English</div>
+      <div class="back-word" id="backWord">the bathroom</div>
+      <div class="back-example" id="backExample"></div>
+      <div class="back-extra" id="backExtra"></div>
+    </div>
+  </div>
+</div>
+
+<div class="grades hidden" id="grades">
+  <button class="grade again" data-grade="again">Again</button>
+  <button class="grade hard" data-grade="hard">Hard</button>
+  <button class="grade good" data-grade="good">Good</button>
+  <button class="grade easy" data-grade="easy">Easy</button>
+</div>
+
+<div class="done" id="done">
+  <h2>Bien joué ! 🎉</h2>
+  <p id="doneText"></p>
+  <button class="btn" id="restartBtn">Study again</button>
+</div>
+
+<div class="stats">
+  <span>Learned: <b id="statDone">0</b></span>
+  <span>Due now: <b id="statDue">0</b></span>
+  <span>Total seen: <b id="statSeen">0</b></span>
+</div>
+<div class="save-note" aria-live="polite">Progress is saved automatically in this browser on this device.</div>
+
+<script>
+"use strict";
+/* ============================================================
+   CARD DATA — Vocabulary from "Invitation au Français"
+   (Holt McDougal), Lessons 1–28.
+   Fields: set (lesson number as "lN"), fr (word), en (translation),
+   type, optional example sentence, optional extra note.
+   ============================================================ */
+const CARDS = [
+  { set:"l1", fr:"au revoir", example:"J'ai un rendez-vous avec David dans vingt minutes. Au revoir, Jean-Paul! — Au revoir, Stéphanie!", en:"goodbye", type:"expression" },
+  { set:"l1", fr:"bonjour", example:"Bonjour! Je m'appelle Trinh. — Et moi, je m'appelle Céline.", en:"hello, good day", type:"expression", extra:"Used during the day" },
+  { set:"l1", fr:"bonne journée", example:"Bonne journée, Monsieur!", en:"have a nice day", type:"expression" },
+  { set:"l1", fr:"bonne nuit", example:"Bonne nuit, maman! — Bonne nuit!", en:"good night", type:"expression", extra:"Only when going to sleep" },
+  { set:"l1", fr:"bonsoir", example:"Bonsoir! — Bonsoir, Madame.", en:"good evening, good night", type:"expression" },
+  { set:"l1", fr:"comment allez-vous ?", example:"Comment t'appelles-tu? — Je m'appelle Nathalie.", en:"how are you?", type:"expression", extra:"Formal/plural; comment ça va ? is informal" },
+  { set:"l1", fr:"comment tu t'appelles ?", example:"Jean-Paul: Comment t'appelles-tu? — Nathalie: Je m'appelle Nathalie.", en:"what's your name?", type:"expression", extra:"Informal singular" },
+  { set:"l1", fr:"comment vous appelez-vous ?", example:"Madame, comment vous appelez-vous? — Je m'appelle Sophie Martin.", en:"what's your name?", type:"expression", extra:"Formal" },
+  { set:"l1", fr:"de rien", example:"— Merci. — De rien!", en:"you're welcome", type:"expression" },
+  { set:"l1", fr:"enchanté(e)", example:"Elle s'appelle Juliette Savard. — Elle est française? — Non, elle est canadienne!", en:"nice to meet you", type:"expression", extra:"Add -e if spoken by a woman" },
+  { set:"l1", fr:"excusez-moi", example:"Ah, excusez-moi. Voici le jus d'orange, mademoiselle.", en:"excuse me", type:"expression", extra:"Formal; excuse-moi is informal" },
+  { set:"l1", fr:"j'ai vingt ans", example:"Quel âge as-tu? — J'ai treize ans.", en:"I am twenty years old", type:"expression", extra:"Avoir + age + ans" },
+  { set:"l1", fr:"j'habite à Paris", example:"Tu es de Paris? — Non, je suis de Fort-de-France.", en:"I live in Paris", type:"expression", extra:"Habitat + place without article for cities" },
+  { set:"l1", fr:"je m'appelle…", example:"Moi, je m'appelle Isabelle. — Comment t'appelles-tu?", en:"my name is…", type:"expression" },
+  { set:"l1", fr:"je vais bien, merci", example:"Ça va? — Pas très bien. Pourquoi? — Aujourd'hui, c'est mercredi.", en:"I'm fine, thanks", type:"expression" },
+  { set:"l1", fr:"l'ami", example:"In general, the “n” of un is silent, but here it's pronounced: un ami (liaison).", en:"friend (male)", type:"noun", extra:"Plural: les amis" },
+  { set:"l1", fr:"l'amie", example:"Elle est mon amie. Elle s'appelle Juliette.", en:"friend (female)", type:"noun" },
+  { set:"l1", fr:"la fille", example:"Isabelle: Tu connais la fille là-bas? — Marc: Non. Qui est-ce?", en:"girl", type:"noun" },
+  { set:"l1", fr:"le garçon", example:"Le garçon: Vous désirez, mademoiselle? — Un jus d'orange, s'il vous plaît.", en:"boy", type:"noun" },
+  { set:"l1", fr:"merci", example:"— Donne-moi une pizza, s'il te plaît. — Voilà. — Merci.", en:"thank you", type:"expression" },
+  { set:"l1", fr:"merci beaucoup", example:"Merci beaucoup pour le dîner!", en:"thank you very much", type:"expression" },
+  { set:"l1", fr:"pardon", example:"Pardon? Je n'ai pas entendu.", en:"sorry, pardon", type:"expression" },
+  { set:"l1", fr:"pas mal", example:"Ça va? — Pas mal, merci.", en:"not bad", type:"expression" },
+  { set:"l1", fr:"s'il te plaît", example:"Donne-moi une pizza, s'il te plaît. — Voilà!", en:"please", type:"expression", extra:"Informal" },
+  { set:"l1", fr:"s'il vous plaît", example:"Un jus d'orange, s'il vous plaît. — Voici le jus d'orange, mademoiselle.", en:"please", type:"expression", extra:"Formal; s'il te plaît is informal" },
+  { set:"l1", fr:"salut", example:"Salut, Dominique! Ça va? — Oui, ça va! Et toi?", en:"hi, bye", type:"expression", extra:"Informal; used to greet and say goodbye" },
+  { set:"l1", fr:"très bien", example:"Comment allez-vous? — Très bien, merci.", en:"very well", type:"expression" },
+  { set:"l1", fr:"à bientôt", example:"Au revoir, Jean-Paul. À bientôt!", en:"see you soon", type:"expression" },
+  { set:"l1", fr:"à demain", example:"Au revoir, Marc. — Au revoir, Nathalie. À demain!", en:"see you tomorrow", type:"expression" },
+  { set:"l1", fr:"ça va ?", example:"Salut, Dominique! Ça va? — Oui, ça va! Et toi?", en:"how's it going?", type:"expression", extra:"Very informal" },
+  { set:"l2", fr:"l'enfant", example:"L'enfant joue dans le jardin.", en:"child", type:"noun", extra:"Invariable plural: des enfants" },
+  { set:"l2", fr:"l'oncle", example:"Répétez (nasal vowel /ɔ̃/): non, bonjour, oncle, garçon.", en:"uncle", type:"noun" },
+  { set:"l2", fr:"la copine", example:"Dominique? Qui est-ce? — C'est une copine.", en:"girlfriend, female friend", type:"noun" },
+  { set:"l2", fr:"la cousine", example:"Ma cousine habite à Québec. Elle a seize ans.", en:"cousin (female)", type:"noun" },
+  { set:"l2", fr:"la dame", example:"La dame en rouge est ma voisine.", en:"the lady", type:"noun" },
+  { set:"l2", fr:"la famille", example:"Cécile et son frère Philippe ont organisé un pique-nique pour toute la famille.", en:"family", type:"noun" },
+  { set:"l2", fr:"la grand-mère", example:"1. le père 4. la tante 7. le grand-père 8. la grand-mère.", en:"grandmother", type:"noun", extra:"Also: la mamie (informal)" },
+  { set:"l2", fr:"la maman", example:"Ma maman prépare le dîner. Ça sent bon!", en:"mom", type:"noun", extra:"Informal" },
+  { set:"l2", fr:"la mère", example:"Ma mère s'appelle Marie. Elle a quarante ans.", en:"mother, mom", type:"noun", extra:"Maman = informal mom" },
+  { set:"l2", fr:"la sœur", example:"Qui est-ce? — C'est la sœur de Frédéric.", en:"sister", type:"noun" },
+  { set:"l2", fr:"la tante", example:"Répétez (nasal vowel /ɑ̃/): tante, oncle, français, quarante, trente.", en:"aunt", type:"noun" },
+  { set:"l2", fr:"le copain", example:"Voilà mon copain, Jean-Paul.", en:"boyfriend, male friend", type:"noun" },
+  { set:"l2", fr:"le cousin", example:"Mon cousin, ma cousine — Les photos d'Isabelle.", en:"cousin (male)", type:"noun" },
+  { set:"l2", fr:"le frère", example:"Cécile et son frère Philippe ont organisé un pique-nique pour toute la famille.", en:"brother", type:"noun" },
+  { set:"l2", fr:"le grand-père", example:"1. le père 4. la tante 7. le grand-père 8. la grand-mère.", en:"grandfather", type:"noun", extra:"Also: le papi (informal)" },
+  { set:"l2", fr:"le monsieur", example:"Le monsier là-bas est mon professeur.", en:"the gentleman", type:"noun", extra:"Referring to a man" },
+  { set:"l2", fr:"le papa", example:"Mon papa travaille à Paris.", en:"dad", type:"noun", extra:"Informal" },
+  { set:"l2", fr:"le père", example:"Mon oncle François a trente ans.", en:"father, dad", type:"noun", extra:"Papá/papa = informal dad" },
+  { set:"l2", fr:"les parents", example:"Les parents de Philippe sont à la maison.", en:"parents", type:"noun", extra:"Le parent = relative (one)" },
+  { set:"l2", fr:"madame", example:"La limonade, c'est pour vous, mademoiselle? — Non, c'est pour moi.", en:"Mrs., ma'am", type:"noun", extra:"Shortened Mme or Mme" },
+  { set:"l2", fr:"mademoiselle", example:"Vous désirez, mademoiselle? — Un jus d'orange, s'il vous plaît.", en:"miss", type:"noun", extra:"Shortened Mlle" },
+  { set:"l2", fr:"monsieur", example:"Et pour vous, monsieur? — Donnez-moi une limonade, s'il vous plaît.", en:"Mr., sir", type:"noun", extra:"Shortened M. — Monsieur Dupont" },
+  { set:"l3", fr:"allemand, allemande", example:"Nationalités: allemand, allemande — Verbes irréguliers.", en:"German", type:"adjective" },
+  { set:"l3", fr:"américain, américaine", example:"Tiens! Voilà Alain. Il est américain. Et Julie? Elle est canadienne.", en:"American", type:"adjective" },
+  { set:"l3", fr:"anglais, anglaise", example:"Liaison: un ami, un Américain, un Anglais, un artiste.", en:"English", type:"adjective" },
+  { set:"l3", fr:"australien, australienne", example:"Il est Australien. Il habite à Sydney.", en:"Australian", type:"adjective" },
+  { set:"l3", fr:"brésilien, brésilienne", example:"Elle est Brésilienne. Elle adore le football.", en:"Brazilian", type:"adjective" },
+  { set:"l3", fr:"canadien, canadienne", example:"Non, elle est canadienne. Elle est de Montréal. — Moi aussi! Quelle coïncidence!", en:"Canadian", type:"adjective" },
+  { set:"l3", fr:"chinois, chinoise", example:"Chinoise, japonaise — adjectifs de nationalité.", en:"Chinese", type:"adjective" },
+  { set:"l3", fr:"espagnol, espagnole", example:"Expressions: parler espagnol / hablar español.", en:"Spanish", type:"adjective" },
+  { set:"l3", fr:"français, française", example:"Marc: Tu es français? — Patrick: Non! Je suis américain. Je suis de Boston.", en:"French", type:"adjective" },
+  { set:"l3", fr:"italien, italienne", example:"Liaison: un ami, un Américain, un Anglais, un Italien, un artiste.", en:"Italian", type:"adjective" },
+  { set:"l3", fr:"japonais, japonaise", example:"Chinoise, japonaise — adjectifs de nationalité.", en:"Japanese", type:"adjective" },
+  { set:"l3", fr:"la belle-sœur", example:"Ma belle-sœur habite à Lyon.", en:"sister-in-law", type:"noun" },
+  { set:"l3", fr:"la femme", example:"La femme de M. Dupont est médecin.", en:"wife, woman", type:"noun" },
+  { set:"l3", fr:"la fille", example:"Isabelle: Tu connais la fille là-bas? — Marc: Non. Qui est-ce?", en:"daughter, girl", type:"noun", extra:"Fille also means daughter" },
+  { set:"l3", fr:"le beau-frère", example:"Mon beau-frère joue au tennis.", en:"brother-in-law", type:"noun" },
+  { set:"l3", fr:"le fils", example:"Le fils de Mme Boucher a quinze ans.", en:"son", type:"noun" },
+  { set:"l3", fr:"le mari", example:"Le mari de Madame Simon est ingénieur.", en:"husband", type:"noun" },
+  { set:"l3", fr:"les grands-parents", example:"Qui a quarante ans? — Quel âge a la sœur de Frédéric?", en:"grandparents", type:"noun" },
+  { set:"l3", fr:"mexicain, mexicaine", example:"Américain, espagnol, mexicain, anglais, français, suisse, canadien, italien, chinois, japonais.", en:"Mexican", type:"adjective" },
+  { set:"l4", fr:"l'eau", example:"Tu as soif? — Oui, j'ai soif. On va dans un café? Je t'invite.", en:"water", type:"noun", extra:"De l'eau = some water" },
+  { set:"l4", fr:"l'orange", example:"L'orange est sucrée. Je voudrais un jus d'orange.", en:"orange", type:"noun" },
+  { set:"l4", fr:"l'œuf", example:"Un œuf au petit-déjeuner, s'il vous plaît.", en:"egg", type:"noun", extra:"Plural: les œufs" },
+  { set:"l4", fr:"la banane", example:"La banane est jaune.", en:"banana", type:"noun" },
+  { set:"l4", fr:"la carotte", example:"La carotte est orange et bonne pour les yeux.", en:"carrot", type:"noun" },
+  { set:"l4", fr:"la fraise", example:"Les fraises des champs en été, c'est délicieux.", en:"strawberry", type:"noun" },
+  { set:"l4", fr:"la glace", example:"Voici un steak, une salade et une glace.", en:"ice cream", type:"noun", extra:"Au pluriel: des glaces = skating rink" },
+  { set:"l4", fr:"la pizza", example:"Donne-moi une pizza, s'il te plaît. — Voilà. — Merci.", en:"pizza", type:"noun" },
+  { set:"l4", fr:"la pomme", example:"Je voudrais une pomme, s'il vous plaît.", en:"apple", type:"noun" },
+  { set:"l4", fr:"la pomme de terre", example:"Les pommes de terre frites avec le steak.", en:"potato", type:"noun", extra:"Plural: les pommes de terre" },
+  { set:"l4", fr:"la salade", example:"Voici un steak, une salade et une glace.", en:"salad", type:"noun" },
+  { set:"l4", fr:"la tomate", example:"La salade contient des tomates fraîches.", en:"tomato", type:"noun" },
+  { set:"l4", fr:"la viande", example:"La viande hachée pour les boulettes.", en:"meat", type:"noun" },
+  { set:"l4", fr:"le beurre", example:"Du beurre, s'il vous plaît.", en:"butter", type:"noun" },
+  { set:"l4", fr:"le bœuf", example:"Le bœuf bourguignon est un plat français.", en:"beef", type:"noun" },
+  { set:"l4", fr:"le chocolat", example:"Répétez: un chocolat. — Donne-moi un chocolat.", en:"chocolate", type:"noun" },
+  { set:"l4", fr:"le déjeuner", example:"Le déjeuner — les repas de la journée.", en:"lunch", type:"noun" },
+  { set:"l4", fr:"le dîner", example:"To have dinner — Mots et expressions.", en:"dinner", type:"noun" },
+  { set:"l4", fr:"le fromage", example:"Le fromage français est célèbre.", en:"cheese", type:"noun" },
+  { set:"l4", fr:"le goûter", example:"Le goûter à quatre heures — la tradition française.", en:"afternoon snack", type:"noun" },
+  { set:"l4", fr:"le hamburger", example:"Je voudrais une pizza, un sandwich et un hamburger.", en:"hamburger", type:"noun" },
+  { set:"l4", fr:"le jus", example:"Céline: Un jus d'orange, s'il vous plaît. — Le garçon: Voici le jus d'orange, mademoiselle.", en:"juice", type:"noun", extra:"Jus d'orange = orange juice" },
+  { set:"l4", fr:"le pain", example:"Le pain est chaud. Je voudrais une baguette.", en:"bread", type:"noun" },
+  { set:"l4", fr:"le petit-déjeuner", example:"Petit-déjeuner — les repas de la journée.", en:"breakfast", type:"noun" },
+  { set:"l4", fr:"le poisson", example:"Le poisson grillé avec des légumes.", en:"fish", type:"noun" },
+  { set:"l4", fr:"le porc", example:"Le porc aux herbes.", en:"pork", type:"noun" },
+  { set:"l4", fr:"le poulet", example:"Le poulet rôti du dimanche.", en:"chicken", type:"noun" },
+  { set:"l4", fr:"le riz", example:"Le riz avec du poulet, c'est délicieux.", en:"rice", type:"noun" },
+  { set:"l4", fr:"le sandwich", example:"Pierre: Tu veux un sandwich ou une pizza? — Philippe: Je voudrais un sandwich… euh… et donne-moi aussi une pizza.", en:"sandwich", type:"noun" },
+  { set:"l4", fr:"le sel", example:"Le sel et le poivre, s'il vous plaît.", en:"salt", type:"noun" },
+  { set:"l4", fr:"le steak", example:"Voici un steak. — Voici un steak et une salade.", en:"steak", type:"noun" },
+  { set:"l4", fr:"le sucre", example:"Du sucre dans mon café, s'il vous plaît.", en:"sugar", type:"noun" },
+  { set:"l4", fr:"le yaourt", example:"Un yaourt aux fruits, s'il vous plaît.", en:"yogurt", type:"noun" },
+  { set:"l4", fr:"les pâtes", example:"J'aime les pâtes à la sauce tomate.", en:"pasta", type:"noun", extra:"Always plural" },
+  { set:"l5", fr:"aujourd'hui", example:"Aujourd'hui, c'est mercredi. — Zut! Demain, c'est jeudi! Le jour de l'examen.", en:"today", type:"expression" },
+  { set:"l5", fr:"cet après-midi", example:"Cet après-midi, nous allons au cinéma.", en:"this afternoon", type:"expression" },
+  { set:"l5", fr:"cette semaine", example:"Cette semaine, j'ai beaucoup de devoirs.", en:"this week", type:"expression" },
+  { set:"l5", fr:"de l'après-midi", example:"Cet après-midi, Trinh et Céline sont allées faire du shopping.", en:"in the afternoon", type:"expression" },
+  { set:"l5", fr:"de soir", example:"Il est neuf heures de soir. Je vais me coucher.", en:"in the evening", type:"expression" },
+  { set:"l5", fr:"demain", example:"Super! Demain, c'est samedi! — Demain, c'est jeudi! Le jour de l'examen.", en:"tomorrow", type:"expression" },
+  { set:"l5", fr:"dimanche", example:"It is nine o'clock Sunday morning — dimanche matin.", en:"Sunday", type:"noun" },
+  { set:"l5", fr:"du matin", example:"Il est neuf heures du matin — dimanche matin.", en:"in the morning", type:"expression", extra:"Il est huit heures du matin" },
+  { set:"l5", fr:"hier", example:"Hier — les jours passés.", en:"yesterday", type:"expression" },
+  { set:"l5", fr:"il est deux heures", example:"—Quelle heure est-il? —Il est deux heures.", en:"it is two o'clock", type:"expression" },
+  { set:"l5", fr:"il est trois heures quinze", example:"Il est trois heures quinze. Le film commence bientôt.", en:"it is three fifteen", type:"expression" },
+  { set:"l5", fr:"jeudi", example:"Demain, c'est jeudi! Le jour de l'examen.", en:"Thursday", type:"noun" },
+  { set:"l5", fr:"l'anniversaire", example:"François: C'est quand, ton anniversaire? — Isabelle: C'est le 18 mars!", en:"birthday", type:"noun", extra:"Bon anniversaire! = happy birthday!" },
+  { set:"l5", fr:"la bière", example:"Au restaurant: une bière, s'il vous plaît.", en:"beer", type:"noun" },
+  { set:"l5", fr:"la date", example:"Quelle date est-ce aujourd'hui? — C'est le 18 mars.", en:"date", type:"noun", extra:"Quelle date est-ce aujourd'hui ?" },
+  { set:"l5", fr:"la limonade", example:"Trinh: Donnez-moi une limonade, s'il vous plaît. — La limonade, c'est pour vous, mademoiselle?", en:"lemonade", type:"noun" },
+  { set:"l5", fr:"le café", example:"Trinh: On va dans un café? Je t'invite. — D'accord!", en:"coffee", type:"noun" },
+  { set:"l5", fr:"le chocolat chaud", example:"Un chocolat chaud l'hiver, s'il vous plaît.", en:"hot chocolate", type:"noun" },
+  { set:"l5", fr:"le coca", example:"Les boissons: le soda, le coca.", en:"Coca-Cola", type:"noun" },
+  { set:"l5", fr:"le lait", example:"Le lait — les boissons.", en:"milk", type:"noun" },
+  { set:"l5", fr:"le soda", example:"Les boissons: le soda, le coca.", en:"soda, pop", type:"noun" },
+  { set:"l5", fr:"le thé", example:"Je préfère le thé au café.", en:"tea", type:"noun" },
+  { set:"l5", fr:"le vin", example:"Au restaurant: un verre de vin rouge.", en:"wine", type:"noun", extra:"Du vin rouge / blanc" },
+  { set:"l5", fr:"lundi", example:"Quel jour est-ce? — C'est lundi.", en:"Monday", type:"noun", extra:"Days are not capitalized in French" },
+  { set:"l5", fr:"mardi", example:"Quel jour est-ce? — C'est mardi.", en:"Tuesday", type:"noun" },
+  { set:"l5", fr:"mercredi", example:"Nathalie: Aujourd'hui, c'est mercredi. — Demain, c'est jeudi! Le jour de l'examen.", en:"Wednesday", type:"noun" },
+  { set:"l5", fr:"quelle heure est-il ?", example:"Stéphanie: Quelle heure est-il? — Jean-Paul: Il est trois heures.", en:"what time is it?", type:"expression" },
+  { set:"l5", fr:"samedi", example:"Super! Demain, c'est samedi!", en:"Saturday", type:"noun" },
+  { set:"l5", fr:"une heure", example:"J'ai un cours pendant une heure.", en:"an hour", type:"noun", extra:"Heures plural after one" },
+  { set:"l5", fr:"une minute", example:"Une minute, s'il vous plaît! Je reviens tout de suite.", en:"a minute", type:"noun" },
+  { set:"l5", fr:"vendredi", example:"Philippe: Quel jour est-ce? — Stéphanie: C'est vendredi. — Super! Demain, c'est samedi!", en:"Friday", type:"noun" },
+  { set:"l5", fr:"à midi", example:"—Quelle heure est-il? —Il est midi.", en:"at noon", type:"expression", extra:"À minuit = at midnight" },
+  { set:"l5", fr:"à minuit", example:"À minuit — les heures de la nuit.", en:"at midnight", type:"expression" },
+  { set:"l6", fr:"août", example:"Août — les mois de l'année.", en:"August", type:"noun" },
+  { set:"l6", fr:"avril", example:"Avril — les mois de l'année.", en:"April", type:"noun" },
+  { set:"l6", fr:"décembre", example:"Décembre — les mois de l'année.", en:"December", type:"noun" },
+  { set:"l6", fr:"ensoleillé", example:"Ensoleillé — le temps; les saisons.", en:"sunny", type:"adjective", extra:"Ensoleillée for feminine" },
+  { set:"l6", fr:"février", example:"Février — les mois de l'année.", en:"February", type:"noun" },
+  { set:"l6", fr:"il fait beau", example:"Quel temps fait-il? — Il fait beau aujourd'hui.", en:"the weather is nice", type:"expression" },
+  { set:"l6", fr:"il fait chaud", example:"Il fait chaud — le temps; les saisons.", en:"it is hot", type:"expression" },
+  { set:"l6", fr:"il fait doux", example:"Il fait doux aujourd'hui. Parfait pour un pique-nique.", en:"it is mild, warm", type:"expression" },
+  { set:"l6", fr:"il fait froid", example:"Il fait froid — le temps; les saisons.", en:"it is cold", type:"expression" },
+  { set:"l6", fr:"il fait mauvais", example:"Cécile: Quel temps fait-il? — Philippe: Il fait mauvais! Regarde! Il pleut!", en:"the weather is bad", type:"expression" },
+  { set:"l6", fr:"il neige", example:"Il neige — le temps; les saisons.", en:"it is snowing", type:"expression" },
+  { set:"l6", fr:"il pleut", example:"Philippe: Oui, il fait mauvais! Regarde! Il pleut! — Zut, zut et zut!", en:"it is raining", type:"expression" },
+  { set:"l6", fr:"janvier", example:"Janvier — les mois de l'année; la date.", en:"January", type:"noun" },
+  { set:"l6", fr:"juillet", example:"Juillet — les mois de l'année.", en:"July", type:"noun" },
+  { set:"l6", fr:"juin", example:"Juin — les mois de l'année.", en:"June", type:"noun" },
+  { set:"l6", fr:"l'automne", example:"L'automne — les saisons.", en:"autumn, fall", type:"noun" },
+  { set:"l6", fr:"l'hiver", example:"L'hiver — les saisons.", en:"winter", type:"noun" },
+  { set:"l6", fr:"l'été", example:"L'été — les saisons.", en:"summer", type:"noun" },
+  { set:"l6", fr:"le printemps", example:"Le printemps — les saisons.", en:"spring", type:"noun" },
+  { set:"l6", fr:"mai", example:"Mai — les mois de l'année.", en:"May", type:"noun" },
+  { set:"l6", fr:"mars", example:"Isabelle: C'est le 18 mars! — François: Le 18 mars? Pas possible!", en:"March", type:"noun" },
+  { set:"l6", fr:"neigeux", example:"Un jour neigeux en hiver.", en:"snowy", type:"adjective", extra:"Neigeuse for feminine" },
+  { set:"l6", fr:"novembre", example:"Novembre — les mois de l'année.", en:"November", type:"noun" },
+  { set:"l6", fr:"nuageux", example:"Nuageux — le temps; les saisons.", en:"cloudy", type:"adjective", extra:"Nuageuse for feminine" },
+  { set:"l6", fr:"octobre", example:"Octobre — les mois de l'année.", en:"October", type:"noun" },
+  { set:"l6", fr:"orageux", example:"Le ciel est orageux. Prenez un parapluie!", en:"stormy", type:"adjective", extra:"Orageuse for feminine" },
+  { set:"l6", fr:"pluvieux", example:"Pluvieux — le temps; les saisons.", en:"rainy", type:"adjective", extra:"Pluvieuse for feminine" },
+  { set:"l6", fr:"quel temps fait-il ?", example:"Cécile: Quel temps fait-il? — Philippe: Il fait mauvais!", en:"what's the weather like?", type:"expression" },
+  { set:"l6", fr:"septembre", example:"Septembre — les mois de l'année.", en:"September", type:"noun" },
+  { set:"l6", fr:"venteux", example:"Venteux — le temps; les saisons.", en:"windy", type:"adjective", extra:"Venteuse for feminine" },
+  { set:"l7", fr:"aller au travail", en:"to go to work", type:"verb" },
+  { set:"l7", fr:"aller à l'école", en:"to go to school", type:"verb" },
+  { set:"l7", fr:"apprendre", en:"to learn", type:"verb" },
+  { set:"l7", fr:"arriver", en:"to arrive", type:"verb" },
+  { set:"l7", fr:"avoir cours", en:"to have class", type:"verb", extra:"J'ai cours de français = I have French class" },
+  { set:"l7", fr:"chanter", en:"to sing", type:"verb" },
+  { set:"l7", fr:"comprendre", en:"to understand", type:"verb", extra:"Je comprends, tu comprends" },
+  { set:"l7", fr:"courir", en:"to run", type:"verb", extra:"Je cours, tu cours, il court" },
+  { set:"l7", fr:"danser", en:"to dance", type:"verb" },
+  { set:"l7", fr:"dîner", en:"to have dinner", type:"verb" },
+  { set:"l7", fr:"enseigner", en:"to teach", type:"verb" },
+  { set:"l7", fr:"expliquer", en:"to explain", type:"verb" },
+  { set:"l7", fr:"faire de l'équitation", en:"to ride horses", type:"verb" },
+  { set:"l7", fr:"faire de la natation", en:"to swim", type:"verb", extra:"Natation = swimming as activity" },
+  { set:"l7", fr:"faire du ski", en:"to ski", type:"verb" },
+  { set:"l7", fr:"faire du vélo", en:"to ride a bike", type:"verb" },
+  { set:"l7", fr:"faire ses devoirs", en:"to do one's homework", type:"verb", extra:"Les devoirs = homework" },
+  { set:"l7", fr:"jouer au basketball", en:"to play basketball", type:"verb" },
+  { set:"l7", fr:"jouer au football", en:"to play soccer", type:"verb", extra:"Jouer au tennis / au basket" },
+  { set:"l7", fr:"jouer au tennis", en:"to play tennis", type:"verb" },
+  { set:"l7", fr:"jouer au volley", en:"to play volleyball", type:"verb" },
+  { set:"l7", fr:"lever la main", en:"to raise one's hand", type:"verb" },
+  { set:"l7", fr:"marcher", en:"to walk", type:"verb" },
+  { set:"l7", fr:"nager", en:"to swim", type:"verb" },
+  { set:"l7", fr:"partir", en:"to leave", type:"verb", extra:"Je pars, tu pars, il part" },
+  { set:"l7", fr:"passer un examen", en:"to take an exam", type:"verb" },
+  { set:"l7", fr:"poser une question", en:"to ask a question", type:"verb", extra:"Une question = a question" },
+  { set:"l7", fr:"prendre le petit-déjeuner", en:"to have breakfast", type:"verb" },
+  { set:"l7", fr:"prendre une douche", en:"to take a shower", type:"verb" },
+  { set:"l7", fr:"rentrer", en:"to come home", type:"verb" },
+  { set:"l7", fr:"répondre", en:"to answer", type:"verb" },
+  { set:"l7", fr:"répéter", en:"to repeat, to rehearse", type:"verb" },
+  { set:"l7", fr:"réviser", en:"to review, to revise", type:"verb", extra:"Réviser pour l'examen = study for the exam" },
+  { set:"l7", fr:"s'endormir", en:"to fall asleep", type:"verb" },
+  { set:"l7", fr:"s'habiller", en:"to get dressed", type:"verb" },
+  { set:"l7", fr:"se brosser les dents", en:"to brush one's teeth", type:"verb" },
+  { set:"l7", fr:"se coiffer", en:"to style one's hair", type:"verb" },
+  { set:"l7", fr:"se coucher", en:"to go to bed", type:"verb" },
+  { set:"l7", fr:"se doucher", en:"to shower", type:"verb" },
+  { set:"l7", fr:"se dépêcher", en:"to hurry", type:"verb", extra:"Dépêche-toi! = Hurry up!" },
+  { set:"l7", fr:"se laver", en:"to wash oneself", type:"verb" },
+  { set:"l7", fr:"se lever", en:"to get up", type:"verb", extra:"Se lever à sept heures" },
+  { set:"l7", fr:"se promener", en:"to take a walk", type:"verb" },
+  { set:"l7", fr:"se réveiller", en:"to wake up", type:"verb" },
+  { set:"l7", fr:"travailler", en:"to work", type:"verb" },
+  { set:"l7", fr:"écouter", en:"to listen", type:"verb", extra:"Écouter la radio / la musique" },
+  { set:"l7", fr:"étudier", en:"to study", type:"verb" },
+  { set:"l8", fr:"acheter", en:"to buy", type:"verb" },
+  { set:"l8", fr:"adorer", en:"to adore, to love", type:"verb", extra:"Plus strong than aimer" },
+  { set:"l8", fr:"aider", en:"to help", type:"verb", extra:"Aider quelqu'un" },
+  { set:"l8", fr:"aimer", en:"to like, to love", type:"verb", extra:"J'aime le chocolat" },
+  { set:"l8", fr:"améliorer", en:"to improve", type:"verb" },
+  { set:"l8", fr:"attendre", en:"to wait", type:"verb", extra:"Attendre le bus" },
+  { set:"l8", fr:"boire", en:"to drink", type:"verb", extra:"Je bois, tu bois, il boit" },
+  { set:"l8", fr:"changer", en:"to change", type:"verb" },
+  { set:"l8", fr:"choisir", en:"to choose", type:"verb", extra:"Je choisis, tu choisis" },
+  { set:"l8", fr:"commencer", en:"to begin", type:"verb" },
+  { set:"l8", fr:"connaître", en:"to know (person/place)", type:"verb", extra:"Je connais Paris = I know Paris" },
+  { set:"l8", fr:"continuer", en:"to continue", type:"verb" },
+  { set:"l8", fr:"croire", en:"to believe", type:"verb", extra:"Je crois que…" },
+  { set:"l8", fr:"dormir", en:"to sleep", type:"verb" },
+  { set:"l8", fr:"décider", en:"to decide", type:"verb", extra:"Décider de + infinitive" },
+  { set:"l8", fr:"détester", en:"to hate", type:"verb" },
+  { set:"l8", fr:"entrer", en:"to enter", type:"verb" },
+  { set:"l8", fr:"envoyer un email", en:"to send an email", type:"verb" },
+  { set:"l8", fr:"essayer", en:"to try on, to try", type:"verb" },
+  { set:"l8", fr:"fermer", en:"to close", type:"verb" },
+  { set:"l8", fr:"finir", en:"to finish", type:"verb" },
+  { set:"l8", fr:"lire", en:"to read", type:"verb", extra:"Je lis, tu lis, il lit" },
+  { set:"l8", fr:"manger", en:"to eat", type:"verb" },
+  { set:"l8", fr:"mettre", en:"to put, to wear", type:"verb", extra:"Je mets, tu mets, il met" },
+  { set:"l8", fr:"organiser", en:"to organize", type:"verb" },
+  { set:"l8", fr:"oublier", en:"to forget", type:"verb" },
+  { set:"l8", fr:"ouvrir", en:"to open", type:"verb", extra:"J'ouvre, tu ouvres, il ouvre" },
+  { set:"l8", fr:"parler", en:"to speak", type:"verb", extra:"Parler français / anglais" },
+  { set:"l8", fr:"payer", en:"to pay", type:"verb" },
+  { set:"l8", fr:"penser", en:"to think", type:"verb" },
+  { set:"l8", fr:"porter", en:"to wear, to carry", type:"verb" },
+  { set:"l8", fr:"préférer", en:"to prefer", type:"verb", extra:"Je préfère le thé" },
+  { set:"l8", fr:"regarder", en:"to watch, to look", type:"verb", extra:"Regarder la télé / un film" },
+  { set:"l8", fr:"regretter", en:"to regret", type:"verb" },
+  { set:"l8", fr:"rester", en:"to stay", type:"verb" },
+  { set:"l8", fr:"réussir", en:"to succeed", type:"verb", extra:"Réussir à + infinitive" },
+  { set:"l8", fr:"savoir", en:"to know (fact), to know how", type:"verb", extra:"Je sais nager = I know how to swim" },
+  { set:"l8", fr:"se souvenir", en:"to remember", type:"verb", extra:"Se souvenir de quelque chose" },
+  { set:"l8", fr:"sortir", en:"to go out", type:"verb", extra:"Je sors, tu sors, il sort" },
+  { set:"l8", fr:"surfer", en:"to surf the internet", type:"verb" },
+  { set:"l8", fr:"trouver", en:"to find, to think", type:"verb", extra:"Je trouve ce film intéressant" },
+  { set:"l8", fr:"téléphoner", en:"to phone", type:"verb", extra:"Téléphoner à quelqu'un" },
+  { set:"l8", fr:"vendre", en:"to sell", type:"verb" },
+  { set:"l8", fr:"visiter", en:"to visit", type:"verb", extra:"Visiter un musée" },
+  { set:"l8", fr:"échouer", en:"to fail", type:"verb" },
+  { set:"l8", fr:"écouter la musique", en:"to listen to music", type:"verb" },
+  { set:"l8", fr:"écrire", en:"to write", type:"verb", extra:"J'écris, tu écris, il écrit" },
+  { set:"l9", fr:"blanc, blanche", en:"white", type:"adjective" },
+  { set:"l9", fr:"bleu, bleue", en:"blue", type:"adjective" },
+  { set:"l9", fr:"brun, brune", en:"brown", type:"adjective" },
+  { set:"l9", fr:"faible", en:"weak", type:"adjective" },
+  { set:"l9", fr:"fort, forte", en:"strong", type:"adjective" },
+  { set:"l9", fr:"grand, grande", en:"big, tall", type:"adjective" },
+  { set:"l9", fr:"gris, grise", en:"gray", type:"adjective" },
+  { set:"l9", fr:"gros, grosse", en:"fat, big", type:"adjective" },
+  { set:"l9", fr:"jaune", en:"yellow", type:"adjective", extra:"Jaune is invariable in color use" },
+  { set:"l9", fr:"marron", en:"brown", type:"adjective", extra:"Also: brun, brune" },
+  { set:"l9", fr:"mignon, mignonne", en:"cute", type:"adjective" },
+  { set:"l9", fr:"mince", en:"thin, slim", type:"adjective" },
+  { set:"l9", fr:"moyen, moyenne", en:"medium-sized", type:"adjective" },
+  { set:"l9", fr:"noir, noire", en:"black", type:"adjective" },
+  { set:"l9", fr:"orange", en:"orange (color)", type:"adjective" },
+  { set:"l9", fr:"petit, petite", en:"small, short", type:"adjective" },
+  { set:"l9", fr:"rose", en:"pink", type:"adjective" },
+  { set:"l9", fr:"rouge", en:"red", type:"adjective", extra:"Rouge is invariable in color use" },
+  { set:"l9", fr:"vert, verte", en:"green", type:"adjective" },
+  { set:"l9", fr:"violet, violette", en:"purple", type:"adjective" },
+  { set:"l10", fr:"amusant, amusante", en:"funny, amusing", type:"adjective" },
+  { set:"l10", fr:"beau, belle", en:"beautiful", type:"adjective", extra:"Belle before feminine noun; bel before vowel" },
+  { set:"l10", fr:"créatif, créative", en:"creative", type:"adjective" },
+  { set:"l10", fr:"drôle", en:"funny, odd", type:"adjective", extra:"Drôle is invariable" },
+  { set:"l10", fr:"extraverti, extravertie", en:"outgoing, extroverted", type:"adjective" },
+  { set:"l10", fr:"gentil, gentille", en:"kind, nice", type:"adjective" },
+  { set:"l10", fr:"généreux, généreuse", en:"generous", type:"adjective" },
+  { set:"l10", fr:"honnête", en:"honest", type:"adjective", extra:"Honnête is invariable" },
+  { set:"l10", fr:"impoli, impolie", en:"rude, impolite", type:"adjective" },
+  { set:"l10", fr:"intelligent, intelligente", en:"intelligent", type:"adjective" },
+  { set:"l10", fr:"joli, jolie", en:"pretty, nice-looking", type:"adjective" },
+  { set:"l10", fr:"la bouche", en:"mouth", type:"noun" },
+  { set:"l10", fr:"laid, laide", en:"ugly", type:"adjective" },
+  { set:"l10", fr:"le nez", en:"nose", type:"noun" },
+  { set:"l10", fr:"le visage", en:"face", type:"noun" },
+  { set:"l10", fr:"les bras", en:"arms", type:"noun", extra:"Un bras = one arm" },
+  { set:"l10", fr:"les cheveux", en:"hair", type:"noun", extra:"Always plural" },
+  { set:"l10", fr:"les jambes", en:"legs", type:"noun", extra:"Une jambe = one leg" },
+  { set:"l10", fr:"les mains", en:"hands", type:"noun", extra:"Une main = one hand" },
+  { set:"l10", fr:"les oreilles", en:"ears", type:"noun", extra:"Une oreille = one ear" },
+  { set:"l10", fr:"les pieds", en:"feet", type:"noun", extra:"Un pied = one foot" },
+  { set:"l10", fr:"les yeux", en:"eyes", type:"noun", extra:"Un œil = one eye" },
+  { set:"l10", fr:"logique", en:"logical", type:"adjective" },
+  { set:"l10", fr:"paresseux, paresseuse", en:"lazy", type:"adjective" },
+  { set:"l10", fr:"poli, polie", en:"polite", type:"adjective" },
+  { set:"l10", fr:"sensé, sensée", en:"sensible", type:"adjective" },
+  { set:"l10", fr:"sportif, sportive", en:"sporty", type:"adjective" },
+  { set:"l10", fr:"sympathique", en:"nice, friendly", type:"adjective" },
+  { set:"l10", fr:"timide", en:"shy", type:"adjective" },
+  { set:"l10", fr:"travailleur, travailleuse", en:"hardworking", type:"adjective" },
+  { set:"l11", fr:"amical, amicale", en:"friendly", type:"adjective" },
+  { set:"l11", fr:"l'armoire", en:"wardrobe, closet", type:"noun" },
+  { set:"l11", fr:"la chaise", en:"chair", type:"noun" },
+  { set:"l11", fr:"la chambre", en:"bedroom", type:"noun" },
+  { set:"l11", fr:"la cuisine", en:"kitchen", type:"noun" },
+  { set:"l11", fr:"la fenêtre", en:"window", type:"noun" },
+  { set:"l11", fr:"la lampe", en:"lamp", type:"noun" },
+  { set:"l11", fr:"la poitrine", en:"chest", type:"noun" },
+  { set:"l11", fr:"la porte", en:"door", type:"noun" },
+  { set:"l11", fr:"la salle de bain", en:"bathroom", type:"noun" },
+  { set:"l11", fr:"la table", en:"table", type:"noun" },
+  { set:"l11", fr:"le canapé", en:"sofa, couch", type:"noun" },
+  { set:"l11", fr:"le cou", en:"neck", type:"noun" },
+  { set:"l11", fr:"le dos", en:"back", type:"noun" },
+  { set:"l11", fr:"le front", en:"forehead", type:"noun" },
+  { set:"l11", fr:"le garage", en:"garage", type:"noun" },
+  { set:"l11", fr:"le jardin", en:"garden", type:"noun" },
+  { set:"l11", fr:"le lit", en:"bed", type:"noun" },
+  { set:"l11", fr:"le menton", en:"chin", type:"noun" },
+  { set:"l11", fr:"le miroir", en:"mirror", type:"noun" },
+  { set:"l11", fr:"le mur", en:"wall", type:"noun" },
+  { set:"l11", fr:"le plafond", en:"ceiling", type:"noun" },
+  { set:"l11", fr:"le rideau", en:"curtain", type:"noun" },
+  { set:"l11", fr:"le salon", en:"living room", type:"noun" },
+  { set:"l11", fr:"le sol", en:"floor", type:"noun" },
+  { set:"l11", fr:"le tapis", en:"rug, carpet", type:"noun" },
+  { set:"l11", fr:"le ventre", en:"stomach, belly", type:"noun" },
+  { set:"l11", fr:"les joues", en:"cheeks", type:"noun", extra:"Une joue = one cheek" },
+  { set:"l11", fr:"les épaules", en:"shoulders", type:"noun", extra:"Une épaule = one shoulder" },
+  { set:"l11", fr:"s'entendre bien avec qqn", en:"to get along well with someone", type:"expression" },
+  { set:"l11", fr:"un ami", en:"a friend (male)", type:"noun", extra:"masculine" },
+  { set:"l11", fr:"un copain", en:"a male friend", type:"noun", extra:"masculine" },
+  { set:"l11", fr:"une amie", en:"a friend (female)", type:"noun", extra:"feminine" },
+  { set:"l11", fr:"une copine", en:"a female friend", type:"noun", extra:"feminine" },
+  { set:"l12", fr:"conduire", en:"to drive", type:"verb" },
+  { set:"l12", fr:"garer (sa voiture)", en:"to park (one's car)", type:"verb" },
+  { set:"l12", fr:"l'oie", en:"goose", type:"noun" },
+  { set:"l12", fr:"l'oiseau", en:"bird", type:"noun" },
+  { set:"l12", fr:"l'ours", en:"bear", type:"noun" },
+  { set:"l12", fr:"l'âne", en:"donkey", type:"noun" },
+  { set:"l12", fr:"l'éléphant", en:"elephant", type:"noun" },
+  { set:"l12", fr:"l'étagère", en:"shelf", type:"noun" },
+  { set:"l12", fr:"la boîte", en:"box", type:"noun" },
+  { set:"l12", fr:"la girafe", en:"giraffe", type:"noun" },
+  { set:"l12", fr:"la portière", en:"the door (of a car)", type:"noun", extra:"feminine" },
+  { set:"l12", fr:"la poule", en:"hen, chicken (female)", type:"noun" },
+  { set:"l12", fr:"la roue", en:"the wheel", type:"noun", extra:"feminine" },
+  { set:"l12", fr:"la tigresse", en:"tiger (female)", type:"noun", extra:"Le tigre = tiger (male)" },
+  { set:"l12", fr:"la tortue", en:"turtle", type:"noun" },
+  { set:"l12", fr:"la vache", en:"cow", type:"noun" },
+  { set:"l12", fr:"la valise", en:"suitcase", type:"noun" },
+  { set:"l12", fr:"le bureau", en:"desk, office", type:"noun" },
+  { set:"l12", fr:"le canard", en:"duck", type:"noun" },
+  { set:"l12", fr:"le capot", en:"the hood (of a car)", type:"noun", extra:"masculine" },
+  { set:"l12", fr:"le chat", en:"cat", type:"noun" },
+  { set:"l12", fr:"le cheval", en:"horse", type:"noun" },
+  { set:"l12", fr:"le chien", en:"dog", type:"noun" },
+  { set:"l12", fr:"le cochon", en:"pig", type:"noun" },
+  { set:"l12", fr:"le hamster", en:"hamster", type:"noun" },
+  { set:"l12", fr:"le lapin", en:"rabbit", type:"noun" },
+  { set:"l12", fr:"le lion", en:"lion", type:"noun" },
+  { set:"l12", fr:"le lièvre", en:"hare", type:"noun" },
+  { set:"l12", fr:"le mouton", en:"sheep", type:"noun", extra:"Plural: les moutons" },
+  { set:"l12", fr:"le pare-brise", en:"the windshield", type:"noun", extra:"masculine" },
+  { set:"l12", fr:"le phare", en:"the headlight", type:"noun", extra:"masculine" },
+  { set:"l12", fr:"le renard", en:"fox", type:"noun" },
+  { set:"l12", fr:"le sac", en:"bag", type:"noun" },
+  { set:"l12", fr:"le serpent", en:"snake", type:"noun" },
+  { set:"l12", fr:"le singe", en:"monkey", type:"noun" },
+  { set:"l12", fr:"le siège", en:"the seat", type:"noun", extra:"masculine" },
+  { set:"l12", fr:"le zèbre", en:"zebra", type:"noun" },
+  { set:"l12", fr:"lentement", en:"slowly", type:"expression" },
+  { set:"l12", fr:"rouler", en:"to drive; to roll", type:"verb" },
+  { set:"l12", fr:"réparer", en:"to repair; to fix", type:"verb" },
+  { set:"l12", fr:"un accident", en:"an accident", type:"noun", extra:"masculine" },
+  { set:"l12", fr:"un moteur", en:"an engine", type:"noun", extra:"masculine" },
+  { set:"l12", fr:"une voiture", en:"a car", type:"noun", extra:"feminine" },
+  { set:"l12", fr:"vite", en:"fast; quickly", type:"expression" },
+  { set:"l13", fr:"l'allée", en:"alley, path", type:"noun" },
+  { set:"l13", fr:"l'appartement", en:"apartment", type:"noun" },
+  { set:"l13", fr:"l'avenue", en:"avenue, boulevard", type:"noun" },
+  { set:"l13", fr:"l'hôtel", en:"hotel", type:"noun" },
+  { set:"l13", fr:"l'immeuble", en:"apartment building", type:"noun" },
+  { set:"l13", fr:"l'épicerie", en:"grocery store", type:"noun" },
+  { set:"l13", fr:"la banque", en:"bank", type:"noun" },
+  { set:"l13", fr:"la boulangerie", en:"bakery", type:"noun" },
+  { set:"l13", fr:"la boutique", en:"boutique, small shop", type:"noun" },
+  { set:"l13", fr:"la librairie", en:"bookstore", type:"noun" },
+  { set:"l13", fr:"la maison", en:"house", type:"noun" },
+  { set:"l13", fr:"la papeterie", en:"stationery store", type:"noun" },
+  { set:"l13", fr:"la pharmacie", en:"pharmacy", type:"noun" },
+  { set:"l13", fr:"la place", en:"square, plaza", type:"noun" },
+  { set:"l13", fr:"la poste", en:"post office", type:"noun" },
+  { set:"l13", fr:"la pâtisserie", en:"pastry shop", type:"noun" },
+  { set:"l13", fr:"la rue", en:"street", type:"noun" },
+  { set:"l13", fr:"la tour", en:"tower", type:"noun" },
+  { set:"l13", fr:"la ville", en:"city, town", type:"noun" },
+  { set:"l13", fr:"le bar", en:"bar", type:"noun" },
+  { set:"l13", fr:"le bâtiment", en:"building", type:"noun" },
+  { set:"l13", fr:"le café", en:"cafe, coffee shop", type:"noun" },
+  { set:"l13", fr:"le centre-ville", en:"downtown, city center", type:"noun" },
+  { set:"l13", fr:"le commerce", en:"business, shop", type:"noun" },
+  { set:"l13", fr:"le magasin", en:"store, shop", type:"noun" },
+  { set:"l13", fr:"le marché", en:"market", type:"noun", extra:"Au marché = at the market" },
+  { set:"l13", fr:"le pont", en:"bridge", type:"noun" },
+  { set:"l13", fr:"le quartier", en:"neighborhood", type:"noun" },
+  { set:"l13", fr:"le restaurant", en:"restaurant", type:"noun" },
+  { set:"l13", fr:"le supermarché", en:"supermarket", type:"noun" },
+  { set:"l14", fr:"aller au cinéma", en:"to go to the movies", type:"expression" },
+  { set:"l14", fr:"aller au théâtre", en:"to go to the theater", type:"expression" },
+  { set:"l14", fr:"chercher", en:"to look for; to search", type:"verb" },
+  { set:"l14", fr:"flâner", en:"to stroll; to wander", type:"verb" },
+  { set:"l14", fr:"l'hôpital", en:"hospital", type:"noun" },
+  { set:"l14", fr:"l'opticien", en:"eyeglass shop, optician", type:"noun" },
+  { set:"l14", fr:"l'université", en:"university", type:"noun" },
+  { set:"l14", fr:"l'école", en:"school", type:"noun" },
+  { set:"l14", fr:"la bijouterie", en:"jewelry store", type:"noun" },
+  { set:"l14", fr:"la clinique", en:"clinic", type:"noun" },
+  { set:"l14", fr:"la galerie", en:"gallery", type:"noun" },
+  { set:"l14", fr:"la piscine", en:"swimming pool", type:"noun" },
+  { set:"l14", fr:"la plage", en:"beach", type:"noun" },
+  { set:"l14", fr:"la station-service", en:"gas station", type:"noun" },
+  { set:"l14", fr:"le cinéma", en:"movie theater", type:"noun", extra:"Aller au cinéma = go to the movies" },
+  { set:"l14", fr:"le coiffeur", en:"hairdresser, barber", type:"noun" },
+  { set:"l14", fr:"le collège", en:"middle school", type:"noun" },
+  { set:"l14", fr:"le dentiste", en:"dentist", type:"noun" },
+  { set:"l14", fr:"le lycée", en:"high school", type:"noun" },
+  { set:"l14", fr:"le musée", en:"museum", type:"noun" },
+  { set:"l14", fr:"le parc", en:"park", type:"noun" },
+  { set:"l14", fr:"le stade", en:"stadium", type:"noun" },
+  { set:"l14", fr:"le théâtre", en:"theater", type:"noun" },
+  { set:"l14", fr:"le vétérinaire", en:"veterinarian", type:"noun" },
+  { set:"l14", fr:"perdre", en:"to lose", type:"verb" },
+  { set:"l14", fr:"rendre visite à qqn", en:"to visit someone", type:"expression" },
+  { set:"l14", fr:"trouver", en:"to find", type:"verb" },
+  { set:"l14", fr:"un monument", en:"a monument", type:"noun", extra:"masculine" },
+  { set:"l14", fr:"un musée", en:"a museum", type:"noun", extra:"masculine" },
+  { set:"l14", fr:"une attraction touristique", en:"a tourist attraction", type:"noun", extra:"feminine" },
+  { set:"l14", fr:"visiter", en:"to visit (a place)", type:"verb" },
+  { set:"l15", fr:"contourner", en:"to go around", type:"verb" },
+  { set:"l15", fr:"croiser", en:"to cross", type:"verb", extra:"Croiser la rue = cross the street" },
+  { set:"l15", fr:"devant", en:"in front of", type:"preposition" },
+  { set:"l15", fr:"dépasser", en:"to pass, to overtake", type:"verb" },
+  { set:"l15", fr:"emprunter", en:"to take (a road)", type:"verb", extra:"Emprunter la route = take the road" },
+  { set:"l15", fr:"l'université", en:"the university", type:"noun", extra:"feminine" },
+  { set:"l15", fr:"la fontaine", en:"fountain", type:"noun" },
+  { set:"l15", fr:"les études", en:"studies; education", type:"noun", extra:"feminine" },
+  { set:"l15", fr:"longer", en:"to go along", type:"verb", extra:"Longer la rivière = follow the river" },
+  { set:"l15", fr:"prendre", en:"to take, to grab", type:"verb", extra:"Je prends, tu prends, il prend" },
+  { set:"l15", fr:"prendre un café", en:"to have a coffee", type:"expression" },
+  { set:"l15", fr:"se reposer", en:"to rest", type:"verb" },
+  { set:"l15", fr:"suivre", en:"to follow", type:"verb" },
+  { set:"l15", fr:"tourner", en:"to turn", type:"verb", extra:"Tourner à gauche/droite" },
+  { set:"l15", fr:"tout droit", en:"straight ahead", type:"expression" },
+  { set:"l15", fr:"un cours", en:"a class; a course", type:"noun", extra:"masculine" },
+  { set:"l15", fr:"un professeur", en:"a teacher; a professor", type:"noun", extra:"masculine" },
+  { set:"l15", fr:"un étudiant", en:"a male student", type:"noun", extra:"masculine" },
+  { set:"l15", fr:"une bibliothèque", en:"a library", type:"noun", extra:"feminine" },
+  { set:"l15", fr:"une étudiante", en:"a female student", type:"noun", extra:"feminine" },
+  { set:"l15", fr:"vers l'est", en:"toward the east", type:"expression" },
+  { set:"l15", fr:"vers l'ouest", en:"toward the west", type:"expression" },
+  { set:"l15", fr:"vers le nord", en:"toward the north", type:"expression" },
+  { set:"l15", fr:"vers le sud", en:"toward the south", type:"expression" },
+  { set:"l15", fr:"à droite", en:"on the right", type:"expression" },
+  { set:"l15", fr:"à gauche", en:"on the left", type:"expression" },
+  { set:"l15", fr:"étudier", en:"to study", type:"verb" },
+  { set:"l15", fr:"éviter", en:"to avoid", type:"verb" },
+  { set:"l16", fr:"au milieu de", en:"in the middle of", type:"preposition" },
+  { set:"l16", fr:"autour de", en:"around", type:"preposition" },
+  { set:"l16", fr:"avec", en:"with", type:"preposition" },
+  { set:"l16", fr:"chez", en:"at the home of", type:"preposition", extra:"Chez le médecin = at the doctor's office" },
+  { set:"l16", fr:"contre", en:"against", type:"preposition" },
+  { set:"l16", fr:"dedans", en:"inside", type:"expression" },
+  { set:"l16", fr:"dehors", en:"outside", type:"expression" },
+  { set:"l16", fr:"depuis", en:"since, from", type:"preposition" },
+  { set:"l16", fr:"derrière", en:"behind", type:"preposition" },
+  { set:"l16", fr:"en face de", en:"across from", type:"preposition" },
+  { set:"l16", fr:"entre", en:"between", type:"preposition" },
+  { set:"l16", fr:"jusqu'à", en:"until, up to", type:"preposition" },
+  { set:"l16", fr:"loin de", en:"far from", type:"preposition" },
+  { set:"l16", fr:"par", en:"by, through", type:"preposition" },
+  { set:"l16", fr:"pour", en:"for", type:"preposition" },
+  { set:"l16", fr:"près de", en:"near", type:"preposition" },
+  { set:"l16", fr:"sans", en:"without", type:"preposition" },
+  { set:"l16", fr:"sous", en:"under", type:"preposition" },
+  { set:"l16", fr:"sur", en:"on, upon", type:"preposition" },
+  { set:"l16", fr:"à côté de", en:"next to", type:"preposition" },
+  { set:"l17", fr:"des baskets", en:"sneakers", type:"noun", extra:"feminine" },
+  { set:"l17", fr:"des chaussettes", en:"socks", type:"noun", extra:"feminine" },
+  { set:"l17", fr:"des chaussures", en:"shoes", type:"noun", extra:"feminine" },
+  { set:"l17", fr:"un chapeau", en:"a hat", type:"noun", extra:"pl: des chapeaux; masculine" },
+  { set:"l17", fr:"un imperméable", en:"a raincoat", type:"noun", extra:"masculine" },
+  { set:"l17", fr:"un jean", en:"a pair of jeans", type:"noun", extra:"masculine" },
+  { set:"l17", fr:"un manteau", en:"a coat", type:"noun", extra:"masculine" },
+  { set:"l17", fr:"un pantalon", en:"trousers; pants", type:"noun", extra:"masculine" },
+  { set:"l17", fr:"un pull", en:"a sweater", type:"noun", extra:"masculine" },
+  { set:"l17", fr:"un short", en:"shorts", type:"noun", extra:"masculine" },
+  { set:"l17", fr:"un tee-shirt", en:"a T-shirt", type:"noun", extra:"masculine" },
+  { set:"l17", fr:"une casquette", en:"a baseball cap", type:"noun", extra:"feminine" },
+  { set:"l17", fr:"une chemise", en:"a shirt (button-up)", type:"noun", extra:"feminine" },
+  { set:"l17", fr:"une jupe", en:"a skirt", type:"noun", extra:"feminine" },
+  { set:"l17", fr:"une robe", en:"a dress", type:"noun", extra:"feminine" },
+  { set:"l17", fr:"une veste", en:"a jacket", type:"noun", extra:"feminine" },
+  { set:"l18", fr:"bon marché", en:"cheap; inexpensive", type:"adjective" },
+  { set:"l18", fr:"cher, chère", en:"expensive", type:"adjective" },
+  { set:"l18", fr:"combien ça coûte?", en:"how much does it cost?", type:"expression" },
+  { set:"l18", fr:"génial, géniale", en:"great; terrific", type:"adjective" },
+  { set:"l18", fr:"joli, jolie", en:"pretty; nice-looking", type:"adjective" },
+  { set:"l18", fr:"le marché aux puces", en:"the flea market", type:"noun", extra:"masculine" },
+  { set:"l18", fr:"payer", en:"to pay", type:"verb" },
+  { set:"l18", fr:"un grand magasin", en:"a department store", type:"noun", extra:"masculine" },
+  { set:"l18", fr:"un magasin", en:"a store", type:"noun", extra:"masculine" },
+  { set:"l18", fr:"un rayon", en:"an aisle (in a store)", type:"noun", extra:"masculine" },
+  { set:"l18", fr:"une boutique", en:"a shop; a store", type:"noun", extra:"feminine" },
+  { set:"l18", fr:"une boutique de soldes", en:"a discount clothing shop", type:"noun", extra:"feminine" },
+  { set:"l18", fr:"une grande surface", en:"a low-cost chain store", type:"noun", extra:"feminine" },
+  { set:"l18", fr:"à la mode", en:"fashionable; in style", type:"expression" },
+  { set:"l18", fr:"élégant, élégante", en:"elegant", type:"adjective" },
+  { set:"l19", fr:"attendre", en:"to wait", type:"verb" },
+  { set:"l19", fr:"choisir", en:"to choose", type:"verb" },
+  { set:"l19", fr:"descendre", en:"to go down; to get off", type:"verb" },
+  { set:"l19", fr:"décider", en:"to decide", type:"verb" },
+  { set:"l19", fr:"entendre", en:"to hear", type:"verb" },
+  { set:"l19", fr:"perdre", en:"to lose", type:"verb" },
+  { set:"l19", fr:"préférer", en:"to prefer", type:"verb" },
+  { set:"l19", fr:"remonter", en:"to go back up; to climb up", type:"verb" },
+  { set:"l19", fr:"répondre", en:"to answer; to reply", type:"verb" },
+  { set:"l19", fr:"réussir", en:"to succeed; to pass (an exam)", type:"verb" },
+  { set:"l19", fr:"vendre", en:"to sell", type:"verb" },
+  { set:"l20", fr:"gagner", en:"to earn; to win", type:"verb" },
+  { set:"l20", fr:"l'argent", en:"money", type:"noun", extra:"masculine" },
+  { set:"l20", fr:"travailler", en:"to work", type:"verb" },
+  { set:"l20", fr:"un architecte", en:"an architect", type:"noun", extra:"masculine" },
+  { set:"l20", fr:"un avocat", en:"a lawyer", type:"noun", extra:"masculine" },
+  { set:"l20", fr:"un dentiste", en:"a dentist", type:"noun", extra:"masculine" },
+  { set:"l20", fr:"un emploi", en:"a job; employment", type:"noun", extra:"masculine" },
+  { set:"l20", fr:"un enseignant", en:"a teacher", type:"noun", extra:"masculine" },
+  { set:"l20", fr:"un ingénieur", en:"an engineer", type:"noun", extra:"masculine" },
+  { set:"l20", fr:"un journaliste", en:"a journalist; a reporter", type:"noun", extra:"masculine" },
+  { set:"l20", fr:"un médecin", en:"a doctor", type:"noun", extra:"masculine" },
+  { set:"l20", fr:"un étudiant", en:"a male student", type:"noun", extra:"masculine" },
+  { set:"l20", fr:"une étudiante", en:"a female student", type:"noun", extra:"feminine" },
+  { set:"l21", fr:"l'automne", en:"autumn; fall", type:"noun", extra:"masculine" },
+  { set:"l21", fr:"l'aéroport", en:"the airport", type:"noun", extra:"masculine" },
+  { set:"l21", fr:"l'hiver", en:"winter", type:"noun", extra:"masculine" },
+  { set:"l21", fr:"l'été", en:"summer", type:"noun", extra:"masculine" },
+  { set:"l21", fr:"la gare", en:"the train station", type:"noun", extra:"feminine" },
+  { set:"l21", fr:"le printemps", en:"spring", type:"noun", extra:"masculine" },
+  { set:"l21", fr:"le train", en:"the train", type:"noun", extra:"masculine" },
+  { set:"l21", fr:"les vacances", en:"vacations; holidays", type:"noun", extra:"feminine" },
+  { set:"l21", fr:"un billet", en:"a ticket", type:"noun", extra:"masculine" },
+  { set:"l21", fr:"une valise", en:"a suitcase", type:"noun", extra:"feminine" },
+  { set:"l21", fr:"voyager", en:"to travel", type:"verb" },
+  { set:"l22", fr:"faire du sport", en:"to play sports; to exercise", type:"expression" },
+  { set:"l22", fr:"jouer aux jeux vidéo", en:"to play video games", type:"expression" },
+  { set:"l22", fr:"le temps libre", en:"free time", type:"noun", extra:"masculine" },
+  { set:"l22", fr:"nager", en:"to swim", type:"verb" },
+  { set:"l22", fr:"pêcher", en:"to fish", type:"verb" },
+  { set:"l22", fr:"regarder un film", en:"to watch a movie", type:"expression" },
+  { set:"l22", fr:"s'amuser", en:"to have fun; to enjoy oneself", type:"verb" },
+  { set:"l22", fr:"se divertir", en:"to have fun; to be entertained", type:"verb" },
+  { set:"l22", fr:"se promener", en:"to take a walk; to stroll", type:"verb" },
+  { set:"l22", fr:"écouter de la musique", en:"to listen to music", type:"expression" },
+  { set:"l23", fr:"faire du ski", en:"to go skiing", type:"expression" },
+  { set:"l23", fr:"la neige", en:"snow", type:"noun", extra:"feminine" },
+  { set:"l23", fr:"le ski", en:"skiing; skis", type:"noun", extra:"masculine" },
+  { set:"l23", fr:"les nouvelles", en:"the news", type:"noun", extra:"feminine" },
+  { set:"l23", fr:"regarder la télé", en:"to watch TV", type:"expression" },
+  { set:"l23", fr:"télévision", en:"television", type:"noun", extra:"feminine" },
+  { set:"l23", fr:"un journal", en:"a newspaper", type:"noun", extra:"masculine" },
+  { set:"l23", fr:"un magazine", en:"a magazine", type:"noun", extra:"masculine" },
+  { set:"l23", fr:"un programme", en:"a program (TV)", type:"noun", extra:"masculine" },
+  { set:"l23", fr:"un snowboard", en:"a snowboard", type:"noun", extra:"masculine" },
+  { set:"l23", fr:"une chaîne", en:"a channel (TV)", type:"noun", extra:"feminine" },
+  { set:"l24", fr:"avoir de la chance", en:"to be lucky", type:"expression" },
+  { set:"l24", fr:"gagner", en:"to win; to gain", type:"verb" },
+  { set:"l24", fr:"heureux, heureuse", en:"happy; lucky", type:"adjective" },
+  { set:"l24", fr:"la chance", en:"luck; chance", type:"noun", extra:"feminine" },
+  { set:"l24", fr:"malchance", en:"bad luck", type:"noun", extra:"feminine" },
+  { set:"l24", fr:"malheureux, malheureuse", en:"unhappy", type:"adjective" },
+  { set:"l24", fr:"perdre", en:"to lose", type:"verb" },
+  { set:"l24", fr:"peut-être", en:"maybe; perhaps", type:"expression" },
+  { set:"l24", fr:"probablement", en:"probably", type:"expression" },
+  { set:"l25", fr:"boire", en:"to drink", type:"verb" },
+  { set:"l25", fr:"commander", en:"to order (food)", type:"verb" },
+  { set:"l25", fr:"l'addition", en:"the bill (at a restaurant)", type:"noun", extra:"feminine" },
+  { set:"l25", fr:"le déjeuner", en:"lunch", type:"noun", extra:"masculine" },
+  { set:"l25", fr:"le dîner", en:"dinner", type:"noun", extra:"masculine" },
+  { set:"l25", fr:"manger", en:"to eat", type:"verb" },
+  { set:"l25", fr:"un dessert", en:"a dessert", type:"noun", extra:"masculine" },
+  { set:"l25", fr:"un menu", en:"a menu", type:"noun", extra:"masculine" },
+  { set:"l25", fr:"un petit-déjeuner", en:"breakfast", type:"noun", extra:"masculine" },
+  { set:"l25", fr:"un plat", en:"a dish; a plate of food", type:"noun", extra:"masculine" },
+  { set:"l25", fr:"un serveur", en:"a waiter", type:"noun", extra:"masculine" },
+  { set:"l25", fr:"une entrée", en:"an appetizer; an entrance", type:"noun", extra:"feminine" },
+  { set:"l25", fr:"une serveuse", en:"a waitress", type:"noun", extra:"feminine" },
+  { set:"l26", fr:"boire", en:"to drink", type:"verb" },
+  { set:"l26", fr:"de l'eau minérale", en:"mineral water", type:"expression" },
+  { set:"l26", fr:"devoir", en:"to have to; must", type:"verb" },
+  { set:"l26", fr:"du pain", en:"bread", type:"expression" },
+  { set:"l26", fr:"la cafétéria", en:"the cafeteria", type:"noun", extra:"feminine" },
+  { set:"l26", fr:"la cantine", en:"the cafeteria (school)", type:"noun", extra:"feminine" },
+  { set:"l26", fr:"pouvoir", en:"to be able to; can", type:"verb" },
+  { set:"l26", fr:"prendre", en:"to take; to have (food)", type:"verb" },
+  { set:"l26", fr:"un verre d'eau", en:"a glass of water", type:"expression" },
+  { set:"l26", fr:"vouloir", en:"to want", type:"verb" },
+  { set:"l27", fr:"aider", en:"to help", type:"verb" },
+  { set:"l27", fr:"apporter", en:"to bring; to carry", type:"verb" },
+  { set:"l27", fr:"avec plaisir", en:"with pleasure", type:"expression" },
+  { set:"l27", fr:"demander", en:"to ask; to request", type:"verb" },
+  { set:"l27", fr:"difficile", en:"difficult; hard", type:"adjective" },
+  { set:"l27", fr:"désolé, désolée", en:"sorry; regretful", type:"adjective" },
+  { set:"l27", fr:"excusez-moi", en:"excuse me", type:"expression" },
+  { set:"l27", fr:"merci beaucoup", en:"thank you very much", type:"expression" },
+  { set:"l27", fr:"servir", en:"to serve", type:"verb" },
+  { set:"l27", fr:"un client", en:"a customer; a client", type:"noun", extra:"masculine" },
+  { set:"l28", fr:"accepter une invitation", en:"to accept an invitation", type:"expression" },
+  { set:"l28", fr:"inviter qqn", en:"to invite someone", type:"verb" },
+  { set:"l28", fr:"manger dehors", en:"to eat outside", type:"expression" },
+  { set:"l28", fr:"refuser une invitation", en:"to turn down an invitation", type:"expression" },
+  { set:"l28", fr:"sortir", en:"to go out", type:"verb" },
+  { set:"l28", fr:"un croissant", en:"a croissant", type:"noun", extra:"masculine" },
+  { set:"l28", fr:"un jus d'orange", en:"an orange juice", type:"expression" },
+  { set:"l28", fr:"un parc", en:"a park", type:"noun", extra:"masculine" },
+  { set:"l28", fr:"un pique-nique", en:"a picnic", type:"noun", extra:"masculine" },
+  { set:"l28", fr:"un sandwich", en:"a sandwich", type:"noun", extra:"masculine" },
+];
+
+/* ============================================================
+   SPACED REPETITION (simple SM-2-ish)
+   ============================================================ */
+const STORE_KEY = "frFlashcards_l1_28_v1";
+let state = loadState();
+
+function loadState() {
+  try {
+    const raw = localStorage.getItem(STORE_KEY);
+    if (raw) return JSON.parse(raw);
+  } catch (e) {}
+  return { progress: {}, seen: {} };
+}
+function saveState() {
+  try { localStorage.setItem(STORE_KEY, JSON.stringify(state)); } catch (e) {}
+}
+
+function getProg(id) {
+  if (!state.progress[id]) state.progress[id] = { reps: 0, interval: 0, ease: 2.5, due: 0 };
+  return state.progress[id];
+}
+function markSeen(id) {
+  state.seen[id] = (state.seen[id] || 0) + 1;
+}
+
+const STUDY_THROUGH = {};
+for (let _i = 1; _i <= 28; _i++) STUDY_THROUGH["through" + _i] = _i;
+// Cards store their lesson as set:"lN"; derive the number from it.
+function cardLesson(c) { return parseInt(c.set.slice(1), 10); }
+
+function onlySelectedChapter() {
+  return $("onlyChapter").checked;
+}
+
+function cardsForSet(setFilter) {
+  const lastLesson = STUDY_THROUGH[setFilter] !== undefined ? STUDY_THROUGH[setFilter] : 28;
+  return CARDS.filter(c => onlySelectedChapter()
+    ? cardLesson(c) === lastLesson
+    : cardLesson(c) <= lastLesson);
+}
+
+function shuffle(cards) {
+  const result = [...cards];
+  for (let i = result.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [result[i], result[j]] = [result[j], result[i]];
+  }
+  return result;
+}
+
+function buildDeck(setFilter) {
+  const now = Date.now();
+  const due = cardsForSet(setFilter).filter(c => {
+    const p = state.progress[cardId(c)];
+    return !p || p.due <= now;
+  });
+  return shuffle(due);
+}
+function cardId(c) { return c.fr.replace(/\W+/g, "_"); }
+function getDue(c) {
+  const p = state.progress[cardId(c)];
+  return p ? p.due : 0;
+}
+
+function grade(id, g) {
+  const p = getProg(id);
+  const now = Date.now();
+  if (g === "again") {
+    p.reps = 0;
+    p.interval = 1;
+    p.ease = Math.max(1.3, p.ease - 0.2);
+  } else {
+    p.reps += 1;
+    if (g === "hard") {
+      p.interval = Math.max(1, Math.round(p.interval * 1.2));
+      p.ease = Math.max(1.3, p.ease - 0.15);
+    } else if (g === "good") {
+      p.interval = p.reps === 1 ? 10 : p.reps === 2 ? 60 : Math.round(p.interval * p.ease);
+    } else {
+      p.interval = p.reps === 1 ? 30 : p.reps === 2 ? 240 : Math.round(p.interval * p.ease * 1.3);
+      p.ease = Math.min(3.0, p.ease + 0.1);
+    }
+    p.due = now + p.interval * 60000;
+  }
+  saveState();
+}
+
+/* ============================================================
+   UI
+   ============================================================ */
+const $ = id => document.getElementById(id);
+let queue = [];
+let idx = 0;
+let flipped = false;
+let dir = "fr-en";
+
+function currentSet() { return $("setSelect").value; }
+
+/* ============================================================
+   Pronunciation — pre-rendered MP3s hosted alongside this page
+   (audio/<slug>.mp3, listed in manifest.json). Plays from the
+   same origin: no CORS, no proxy, near-instant after first load.
+   Falls back to live Google Translate TTS (direct stream, then
+   CORS proxy) only for words missing a local file.
+   ============================================================ */
+let pronAudio = null;
+let pronToken = 0;
+let currentFrench = null;
+let audioManifest = null; // word -> "audio/xxx.mp3"
+
+async function loadManifest() {
+  try {
+    const res = await fetch("manifest.json", {cache: "no-store"});
+    if (res.ok) audioManifest = await res.json();
+  } catch (e) { /* offline or missing — streaming fallback covers it */ }
+}
+
+function localAudioPath(word) {
+  if (!audioManifest || !word) return null;
+  const key = Object.keys(audioManifest).find(k => k.toLowerCase() === word.toLowerCase());
+  if (!key) return null;
+  let p = audioManifest[key];
+  return p.startsWith("audio/") ? p : "audio/" + p;
+}
+
+function ttsUrl(text, bust) {
+  let u = "https://translate.google.com/translate_tts?ie=UTF-8&client=tw-ob&q=" + encodeURIComponent(text) + "&tl=fr&tt=en";
+  if (bust) u += "&_cb=" + bust;
+  return u;
+}
+
+function fetchWithTimeout(url, ms) {
+  const ctrl = new AbortController();
+  const t = setTimeout(() => ctrl.abort(), ms);
+  return fetch(url, {cache: "no-store", signal: ctrl.signal}).finally(() => clearTimeout(t));
+}
+
+async function fetchTtsBytes(word) {
+  // attempt 1: direct (fails fast when CORS-blocked)
+  try {
+    const res = await fetchWithTimeout(ttsUrl(word), 5000);
+    if (res.ok) {
+      const blob = await res.blob();
+      if (blob.type.includes("audio")) return blob;
+    }
+  } catch (e) { /* blocked or timed out — try proxy */ }
+  // attempt 2: public CORS proxy (returns JSON: {"contents":"data:audio/mpeg;base64,..."})
+  const proxied = "https://api.allorigins.win/get?url=" + encodeURIComponent(ttsUrl(word));
+  let res;
+  try {
+    res = await fetchWithTimeout(proxied, 15000);
+  } catch (e) {
+    throw new Error("proxy timed out after 15s — click 🔊 again");
+  }
+  if (!res.ok) throw new Error("proxy error (" + res.status + ") — click 🔊 again");
+  const data = await res.json();
+  const m = (data.contents || "").match(/^data:audio\/[^;]+;base64,(.+)$/s);
+  if (!m) throw new Error("proxy returned no audio — click 🔊 again");
+  const bytes = Uint8Array.from(atob(m[1]), c => c.charCodeAt(0));
+  return new Blob([bytes], {type: "audio/mpeg"});
+}
+
+function stopPron() {
+  pronToken++;
+  if (pronAudio) {
+    pronAudio.pause();
+    pronAudio.removeAttribute("src");
+    pronAudio.load();
+    pronAudio = null;
+  }
+}
+
+function updateSpeakButton(frenchWord) {
+  currentFrench = frenchWord;
+  const btn = $("speakBtn");
+  if (!frenchWord) {
+    btn.style.display = "none";
+    $("pronStatus").textContent = "";
+    stopPron();
+    return;
+  }
+  btn.style.display = "";
+  stopPron();
+}
+
+async function playPron(token, word, t0, viaFallback) {
+  const status = $("pronStatus");
+  // Fast path: pre-rendered MP3 hosted with this page (same origin, no CORS).
+  if (!viaFallback) {
+    const local = localAudioPath(word);
+    if (local) {
+      const a = document.createElement("audio");
+      pronAudio = a;
+      a.src = local;
+      status.textContent = "Playing…";
+      a.onended = () => { if (token === pronToken) { status.textContent = ""; pronAudio = null; } };
+      a.onerror = async () => {
+        if (token !== pronToken || !a.error) return;
+        // Local file missing/corrupt — fall back to live TTS.
+        await playPron(token, word, t0, true);
+      };
+      try { await a.play(); } catch(e) {
+        if (token === pronToken) status.textContent = "Click 🔊 again to start playback.";
+      }
+      return;
+    }
+  }
+  if (viaFallback) {
+    status.textContent = "Streaming blocked — downloading… (≤15s)";
+    try {
+      const blob = await fetchTtsBytes(word);
+      const url = URL.createObjectURL(blob);
+      const a = new Audio(url);
+      a.onended = () => { URL.revokeObjectURL(url); if (token === pronToken) status.textContent = ""; };
+      a.onerror = () => { URL.revokeObjectURL(url); if (token === pronToken) status.textContent = "Downloaded but playback failed — click 🔊 again."; };
+      status.textContent = "Playing (in memory, nothing stored)…";
+      await a.play();
+    } catch(e) {
+      if (token === pronToken) status.textContent = e.message;
+    }
+    return;
+  }
+  const a = document.createElement("audio");
+  a.preload = "auto";
+  pronAudio = a;
+  a.src = ttsUrl(word, Date.now());
+  status.textContent = "Loading pronunciation…";
+  a.onplaying = () => { if (token === pronToken) status.textContent = "Playing…"; };
+  a.onended = () => { if (token === pronToken) { status.textContent = ""; pronAudio = null; } };
+  a.onerror = async () => {
+    if (token !== pronToken || !a.error) return;
+    if (a.error.code === 4) {
+      await playPron(token, word, t0, true);
+    } else {
+      status.textContent = "Playback error — check internet, then click 🔊 again.";
+    }
+  };
+  try { await a.play(); } catch(e) {
+    if (token === pronToken) status.textContent = "Click 🔊 again to start playback.";
+  }
+}
+
+$("speakBtn").addEventListener("click", (e) => {
+  e.stopPropagation(); // don't flip the card
+  if (!currentFrench) return;
+  const token = ++pronToken;
+  playPron(token, currentFrench, performance.now(), false);
+});
+
+function render() {
+  const total = cardsForSet(currentSet()).length;
+  const shown = queue.length;
+
+  const c = queue[idx];
+  if (!c) { showDone(); return; }
+
+  const frontIsIt = dir === "fr-en";
+  const front = frontIsIt ? c.fr : c.en;
+  const back  = frontIsIt ? c.en : c.fr;
+
+  $("frontWord").textContent = front;
+  $("backWord").textContent = back;
+  $("pronStatus").textContent = "";
+  updateSpeakButton(frontIsIt ? c.fr : null);
+  
+  // Build tag: type + irregular marker
+  let tagText = c.type;
+  if (c.irregular) tagText += " · irregular";
+  $("frontTag").textContent = tagText + (c.gender && frontIsIt ? " · " + c.gender : "");
+  $("backTag").textContent = frontIsIt ? "English" : "French";
+  $("frontGender").textContent = frontIsIt && c.gender ? (c.gender === "both" ? "masc. or fem." : c.gender === "m" ? "masculine" : c.gender === "f" ? "feminine" : c.gender) : "";
+  const exText = c.example ? "« " + c.example + " »" : "";
+  $("backExample").textContent = exText;
+  $("backExample").style.display = c.example ? "block" : "none";
+  $("backExtra").textContent = c.extra || "";
+
+  const doneCount = Math.max(0, idx);
+  $("progText").textContent = shown ? `Card ${idx + 1} of ${shown}` : "No cards due";
+  $("pctText").textContent = total ? Math.round(doneCount / total * 100) + "%" : "0%";
+  $("progFill").style.width = total ? (doneCount / total * 100) + "%" : "0%";
+
+  $("grades").classList.toggle("hidden", !flipped);
+}
+
+function setCardFace(showBack) {
+  const front = document.querySelector(".face.front");
+  const back = document.querySelector(".face.back");
+  front.style.display = showBack ? "none" : "flex";
+  front.style.opacity = showBack ? "0" : "1";
+  back.style.display = showBack ? "flex" : "none";
+  back.style.opacity = showBack ? "1" : "0";
+}
+
+function flip() {
+  if (!queue.length) return;
+  flipped = !flipped;
+  $("card").classList.toggle("flipped", flipped);
+  setCardFace(flipped);
+  if (flipped) {
+    markSeen(cardId(queue[idx]));
+    saveState();
+    updateStats();
+  }
+  $("grades").classList.toggle("hidden", !flipped);
+}
+
+function advance(g) {
+  if (!flipped) return;
+  const c = queue[idx];
+  grade(cardId(c), g);
+  idx++;
+  flipped = false;
+  $("card").classList.remove("flipped");
+  setCardFace(false);
+  updateStats();
+  render();
+}
+
+function updateStats() {
+  const total = CARDS.length;
+  const now = Date.now();
+  const learned = Object.values(state.progress).filter(p => p.reps >= 2 && p.interval >= 60).length;
+  const dueNow = cardsForSet(currentSet()).filter(c => {
+    const p = state.progress[cardId(c)];
+    return !p || p.due <= now;
+  }).length;
+  const seen = Object.keys(state.seen).length;
+  $("statDone").textContent = learned;
+  $("statDue").textContent = dueNow;
+  $("statSeen").textContent = seen;
+}
+
+function showDone() {
+  $("deck").style.display = "none";
+  $("grades").style.display = "none";
+  $("done").style.display = "block";
+  const total = cardsForSet(currentSet()).length;
+  $("doneText").innerHTML =
+    `You reviewed all <b>${queue.length}</b> due card${queue.length !== 1 ? "s" : ""}.<br>` +
+    `The rest of the set will come back later via spaced repetition.<br>` +
+    `<span style="font-size:.85em;color:var(--muted)">Tip: press "Study again" to re-drill the same batch immediately.</span>`;
+  updateStats();
+}
+
+function startDeck() {
+  $("done").style.display = "none";
+  $("deck").style.display = "";
+  $("grades").style.display = "";
+  queue = buildDeck(currentSet());
+  idx = 0;
+  flipped = false;
+  $("card").classList.remove("flipped");
+  setCardFace(false);
+  if (!queue.length) {
+    showDone();
+    $("doneText").innerHTML = `Nothing is due right now for this set. 🎉<br>Cards you marked Again/Hard will return within minutes.`;
+  } else {
+    render();
+  }
+}
+
+/* events */
+$("card").addEventListener("click", () => { if (queue.length) flip(); });
+document.querySelectorAll(".grade").forEach(btn => {
+  btn.addEventListener("click", e => { e.stopPropagation(); advance(btn.dataset.grade); });
+});
+$("setSelect").addEventListener("change", startDeck);
+$("onlyChapter").addEventListener("change", startDeck);
+$("dirSelect").addEventListener("change", e => { dir = e.target.value; render(); });
+$("resetBtn").addEventListener("click", () => {
+  if (confirm("Reset all flashcard progress? This clears your spaced-repetition schedule.")) {
+    state = { progress: {}, seen: {} };
+    saveState();
+    startDeck();
+  }
+});
+$("restartBtn").addEventListener("click", startDeck);
+
+/* keyboard shortcuts */
+document.addEventListener("keydown", e => {
+  if (!queue.length) return;
+  if (e.key === " " || e.key === "Enter") { e.preventDefault(); flip(); }
+  else if (flipped) {
+    if (e.key === "1") advance("again");
+    if (e.key === "2") advance("hard");
+    if (e.key === "3") advance("good");
+    if (e.key === "4") advance("easy");
+  }
+});
+
+/* init */
+loadManifest();   // pre-rendered MP3 map (fires async; first click may still stream)
+startDeck();
+updateStats();
+</script>
+</body>
+</html>
