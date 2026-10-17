@@ -1,0 +1,2136 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Italian Made Simple — Flashcards (All Chapters)</title>
+<style>
+  :root {
+    --bg: #f4f1ea;
+    --card-bg: #ffffff;
+    --ink: #2b2620;
+    --muted: #7a7168;
+    --accent: #b3502e;
+    --accent-soft: #e9d9cf;
+    --good: #3e7c4f;
+    --warn: #b07d2a;
+    --bad: #a33b2e;
+    --radius: 14px;
+    --shadow: 0 6px 24px rgba(43,38,32,.12);
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: Georgia, 'Times New Roman', serif;
+    background: var(--bg);
+    color: var(--ink);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 24px 16px 48px;
+  }
+  header { text-align: center; margin-bottom: 18px; max-width: 640px; }
+  h1 { font-size: 1.5rem; letter-spacing: .02em; }
+  .subtitle { color: var(--muted); font-size: .9rem; margin-top: 4px; font-style: italic; }
+
+  .controls {
+    display: flex; gap: 10px; flex-wrap: wrap; justify-content: center;
+    margin-bottom: 14px; width: 100%; max-width: 520px;
+  }
+  .control-label { display: flex; flex-direction: column; gap: 4px; color: var(--muted); font-size: .78rem; text-align: left; }
+  .checkbox-label { display: flex; align-items: center; gap: 7px; min-height: 44px; align-self: end; padding: 0 5px; color: var(--ink); font-size: .9rem; cursor: pointer; user-select: none; }
+  .checkbox-label input { width: 19px; height: 19px; accent-color: var(--accent); }
+  select, button.btn {
+    font-family: inherit; font-size: 1rem;
+    min-height: 44px; padding: 9px 12px; border-radius: 8px;
+    border: 1px solid #d8cfc2; background: var(--card-bg); color: var(--ink);
+    cursor: pointer;
+  }
+  button.btn { align-self: end; }
+  button.btn:hover { border-color: var(--accent); color: var(--accent); }
+
+  .progress-wrap { width: 100%; max-width: 520px; margin-bottom: 14px; }
+  .progress-label { display: flex; justify-content: space-between; font-size: .8rem; color: var(--muted); margin-bottom: 4px; }
+  .progress-bar { height: 8px; background: var(--accent-soft); border-radius: 99px; overflow: hidden; }
+  .progress-fill { height: 100%; background: var(--accent); width: 0%; transition: width .3s ease; }
+
+  .deck { width: 100%; max-width: 520px; }
+  .card {
+    position: relative; width: 100%; min-height: 300px;
+    cursor: pointer; touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .face {
+    position: absolute; inset: 0;
+    background: var(--card-bg); border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    padding: 32px 28px; text-align: center;
+    transition: opacity .25s ease;
+  }
+  .face.front { z-index: 2; }
+  .face.back { z-index: 1; opacity: 0; pointer-events: none; }
+  .card.flipped .face.front { opacity: 0; pointer-events: none; }
+  .card.flipped .face.back { opacity: 1; pointer-events: auto; }
+  .tag {
+    font-size: .68rem; letter-spacing: .12em; text-transform: uppercase;
+    color: var(--accent); background: var(--accent-soft);
+    padding: 3px 10px; border-radius: 99px; margin-bottom: 18px;
+  }
+  .front-word { font-size: 2.2rem; line-height: 1.25; }
+  .front-gender { font-size: 1rem; color: var(--muted); margin-top: 6px; }
+  .hint { position: absolute; bottom: 14px; left: 0; right: 0; font-size: .75rem; color: var(--muted); font-style: italic; }
+  .speak-btn {
+    border: 1px solid #d8cfc2; background: var(--card-bg); color: var(--ink);
+    border-radius: 99px; padding: 7px 14px; margin-top: 14px;
+    font-family: inherit; font-size: .9rem; cursor: pointer; min-height: 38px;
+  }
+  .speak-btn:hover { border-color: var(--accent); color: var(--accent); }
+  .pron-status { position: absolute; bottom: 36px; left: 0; right: 0; font-size: .72rem; color: var(--muted); font-style: italic; text-align: center; min-height: 1em; }
+  .back-word { font-size: 1.9rem; line-height: 1.25; }
+  .back-extra { font-size: 1.05rem; color: var(--muted); margin-top: 10px; line-height: 1.5; }
+
+  .grades { display: flex; gap: 10px; margin-top: 18px; width: 100%; max-width: 520px; }
+  .grade {
+    flex: 1; padding: 12px 6px; border-radius: 10px; border: none;
+    font-family: inherit; font-size: .95rem; font-weight: bold; cursor: pointer;
+    color: #fff; transition: transform .1s, filter .1s;
+  }
+  .grade:hover { filter: brightness(1.08); transform: translateY(-1px); }
+  .grade.again { background: var(--bad); }
+  .grade.hard   { background: var(--warn); }
+  .grade.good   { background: var(--good); }
+  .grade.easy   { background: #4a6fa5; }
+  .grades.hidden { visibility: hidden; }
+
+  .stats { margin-top: 22px; display: flex; gap: 18px; flex-wrap: wrap; justify-content: center; font-size: .85rem; color: var(--muted); }
+  .stats b { color: var(--ink); }
+  .save-note { margin-top: 9px; max-width: 520px; color: var(--muted); text-align: center; font-size: .76rem; }
+
+  .done {
+    display: none; width: 100%; max-width: 520px;
+    background: var(--card-bg); border-radius: var(--radius); box-shadow: var(--shadow);
+    padding: 40px 30px; text-align: center;
+  }
+  .done h2 { color: var(--accent); margin-bottom: 10px; }
+  .done p { color: var(--muted); margin-bottom: 20px; line-height: 1.6; }
+
+  .check-row { display: flex; flex-wrap: wrap; gap: 9px 16px; align-items: center; justify-content: center; }
+  @media (max-width: 600px) {
+    body { padding: max(16px, env(safe-area-inset-top)) 14px calc(28px + env(safe-area-inset-bottom)); }
+    header { margin-bottom: 14px; }
+    h1 { font-size: 1.28rem; }
+    .subtitle { font-size: .82rem; }
+    .controls { display: grid; grid-template-columns: 1fr 1fr; gap: 9px; }
+    .check-row { display: flex; flex-wrap: wrap; gap: 9px; grid-column: 1 / -1; }
+    .control-label { min-width: 0; }
+    .control-label select { width: 100%; min-width: 0; }
+    .controls .btn { grid-column: 1 / -1; width: 100%; }
+    .card { min-height: 285px; }
+    .face { padding: 26px 20px; }
+    .front-word { font-size: 1.72rem; }
+    .back-word { font-size: 1.48rem; }
+    .back-extra { font-size: .98rem; }
+    .grades { gap: 7px; margin-top: 14px; }
+    .grade { min-height: 48px; padding: 10px 3px; font-size: .9rem; }
+    .stats { gap: 10px; font-size: .78rem; }
+  }
+  @media (max-width: 360px) {
+    .controls { grid-template-columns: 1fr; }
+    .front-word { font-size: 1.5rem; }
+    .grade { font-size: .8rem; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>Italiano Semplice · Flashcards</h1>
+  <div class="subtitle">Vocabulary from Italian Made Simple (Mazzoni) — All Chapters 1–40</div>
+</header>
+
+<div class="controls" aria-label="Study settings">
+  <label class="control-label" for="setSelect">Study through
+    <select id="setSelect">
+      <option value="through0">Introduction — Numbers &amp; Days</option>
+      <option value="through1">Chapter 1 — 53 cards total</option>
+      <option value="through2">Chapter 2 — 88 cards total</option>
+      <option value="through3">Chapter 3 — 133 cards total</option>
+      <option value="through4">Chapter 4 — 188 cards total</option>
+      <option value="through5">Chapter 5 — 225 cards total</option>
+      <option value="through7">Chapter 7 — 280 cards total</option>
+      <option value="through8">Chapter 8 — 336 cards total</option>
+      <option value="through9">Chapter 9 — 405 cards total</option>
+      <option value="through10">Chapter 10 — 463 cards total</option>
+      <option value="through11">Chapter 11 — 500 cards total</option>
+      <option value="through13">Chapter 13 — 538 cards total</option>
+      <option value="through14">Chapter 14 — 582 cards total</option>
+      <option value="through15">Chapter 15 — 607 cards total</option>
+      <option value="through16">Chapter 16 — 649 cards total</option>
+      <option value="through17">Chapter 17 — 697 cards total</option>
+      <option value="through19">Chapter 19 — 750 cards total</option>
+      <option value="through20">Chapter 20 — 778 cards total</option>
+      <option value="through21">Chapter 21 — 812 cards total</option>
+      <option value="through22">Chapter 22 — 849 cards total</option>
+      <option value="through23">Chapter 23 — 884 cards total</option>
+      <option value="through24">Chapter 24 — 925 cards total</option>
+      <option value="through25">Chapter 25 — 964 cards total</option>
+      <option value="through26">Chapter 26 — 1014 cards total</option>
+      <option value="through27">Chapter 27 — 1046 cards total</option>
+      <option value="through28">Chapter 28 — 1082 cards total</option>
+      <option value="through29">Chapter 29 — 1107 cards total</option>
+      <option value="through30">Chapter 30 — 1145 cards total</option>
+      <option value="through31">Chapter 31 — 1182 cards total</option>
+      <option value="through32">Chapter 32 — 1206 cards total</option>
+      <option value="through33">Chapter 33 — 1247 cards total</option>
+      <option value="through34">Chapter 34 — 1277 cards total</option>
+      <option value="through35">Chapter 35 — 1318 cards total</option>
+      <option value="through36">Chapter 36 — 1360 cards total</option>
+      <option value="through37">Chapter 37 — 1390 cards total</option>
+      <option value="through38">Chapter 38 — 1417 cards total</option>
+      <option value="through39">Chapter 39 — 1435 cards total</option>
+      <option value="through40">Chapter 40 — 1460 cards total</option>
+    </select>
+  </label>
+  <div class="check-row">
+    <label class="checkbox-label" for="onlyChapter">
+      <input type="checkbox" id="onlyChapter">
+      <span>Only this chapter</span>
+    </label>
+    <label class="checkbox-label" for="includeIntro">
+      <input type="checkbox" id="includeIntro" checked>
+      <span>Include numbers &amp; days</span>
+    </label>
+  </div>
+  <label class="control-label" for="dirSelect">Direction
+    <select id="dirSelect">
+      <option value="it-en">Italian → English</option>
+      <option value="en-it">English → Italian</option>
+    </select>
+  </label>
+  <button class="btn" id="resetBtn">Reset progress</button>
+</div>
+
+<div class="progress-wrap">
+  <div class="progress-label"><span id="progText">Card 1 of —</span><span id="pctText">0%</span></div>
+  <div class="progress-bar"><div class="progress-fill" id="progFill"></div></div>
+</div>
+
+<div class="deck" id="deck">
+  <div class="card" id="card">
+    <div class="face front">
+      <div class="tag" id="frontTag">Noun</div>
+      <div class="front-word" id="frontWord">il bagno</div>
+      <div class="front-gender" id="frontGender">masculine</div>
+      <button class="speak-btn" id="speakBtn" type="button">🔊 Pronunciation</button>
+      <div class="pron-status" id="pronStatus"></div>
+      <div class="hint">Click the card to reveal</div>
+    </div>
+    <div class="face back">
+      <div class="tag" id="backTag">English</div>
+      <div class="back-word" id="backWord">bathroom</div>
+      <div class="back-extra" id="backExtra"></div>
+    </div>
+  </div>
+</div>
+
+<div class="grades hidden" id="grades">
+  <button class="grade again" data-grade="again">Again</button>
+  <button class="grade hard" data-grade="hard">Hard</button>
+  <button class="grade good" data-grade="good">Good</button>
+  <button class="grade easy" data-grade="easy">Easy</button>
+</div>
+
+<div class="done" id="done">
+  <h2>Complimenti! 🎉</h2>
+  <p id="doneText"></p>
+  <button class="btn" id="restartBtn">Study again</button>
+</div>
+
+<div class="stats">
+  <span>Learned: <b id="statDone">0</b></span>
+  <span>Due now: <b id="statDue">0</b></span>
+  <span>Total seen: <b id="statSeen">0</b></span>
+</div>
+<div class="save-note" aria-live="polite">Progress is saved automatically in this browser on this device.</div>
+
+<script>
+"use strict";
+/* ============================================================
+   CARD DATA — Vocabulary from Cristina Mazzoni,
+   "Italian Made Simple" (Revised & Updated):
+   All chapters 1-40 (excluding review chapters 6, 12, 18).
+   Fields: it (word), en (translation), type, gender, irregular, extra note.
+   Stress marks shown as uppercase letters (book convention).
+   ============================================================ */
+const CARDS = [
+  // ---- Introduction: numbers & days of the week ----
+  { set:"ch0", it:"uno", en:"one", type:"number", extra:"As article before masculine consonants: un libro" },
+  { set:"ch0", it:"due", en:"two", type:"number" },
+  { set:"ch0", it:"tre", en:"three", type:"number", extra:"Also 'tré' with stress; 'per tre' = for three" },
+  { set:"ch0", it:"quattro", en:"four", type:"number" },
+  { set:"ch0", it:"cinque", en:"five", type:"number" },
+  { set:"ch0", it:"sei", en:"six", type:"number" },
+  { set:"ch0", it:"sette", en:"seven", type:"number" },
+  { set:"ch0", it:"otto", en:"eight", type:"number" },
+  { set:"ch0", it:"nove", en:"nine", type:"number" },
+  { set:"ch0", it:"dieci", en:"ten", type:"number" },
+  { set:"ch0", it:"undici", en:"eleven", type:"number" },
+  { set:"ch0", it:"dodici", en:"twelve", type:"number" },
+  { set:"ch0", it:"tredici", en:"thirteen", type:"number" },
+  { set:"ch0", it:"quattordici", en:"fourteen", type:"number" },
+  { set:"ch0", it:"quindici", en:"fifteen", type:"number" },
+  { set:"ch0", it:"sedici", en:"sixteen", type:"number" },
+  { set:"ch0", it:"diciassette", en:"seventeen", type:"number" },
+  { set:"ch0", it:"diciotto", en:"eighteen", type:"number" },
+  { set:"ch0", it:"diciannove", en:"nineteen", type:"number" },
+  { set:"ch0", it:"venti", en:"twenty", type:"number" },
+  { set:"ch0", it:"trenta", en:"thirty", type:"number" },
+  { set:"ch0", it:"quaranta", en:"forty", type:"number" },
+  { set:"ch0", it:"cinquanta", en:"fifty", type:"number" },
+  { set:"ch0", it:"sessanta", en:"sixty", type:"number" },
+  { set:"ch0", it:"settanta", en:"seventy", type:"number" },
+  { set:"ch0", it:"ottanta", en:"eighty", type:"number" },
+  { set:"ch0", it:"novanta", en:"ninety", type:"number" },
+  { set:"ch0", it:"cento", en:"one hundred", type:"number" },
+  { set:"ch0", it:"mille", en:"one thousand", type:"number", extra:"Invarable: duemila, tremila…" },
+  { set:"ch0", it:"il giorno", en:"day", type:"noun", gender:"m" },
+  { set:"ch0", it:"il lunedì", en:"Monday", type:"day", extra:"Days are capitalized in book convention" },
+  { set:"ch0", it:"il martedì", en:"Tuesday", type:"day" },
+  { set:"ch0", it:"il mercoledì", en:"Wednesday", type:"day" },
+  { set:"ch0", it:"il giovedì", en:"Thursday", type:"day" },
+  { set:"ch0", it:"il venerdì", en:"Friday", type:"day" },
+  { set:"ch0", it:"il sabato", en:"Saturday", type:"day" },
+  { set:"ch0", it:"la domenica", en:"Sunday", type:"day", gender:"f" },
+  { set:"ch0", it:"la settimana", en:"week", type:"noun", gender:"f" },
+  { set:"ch0", it:"questo pomeriggio", en:"this afternoon", type:"expression" },
+  { set:"ch0", it:"questa sera", en:"tonight, this evening", type:"expression" },
+  { set:"ch0", it:"domani", en:"tomorrow", type:"adverb" },
+  { set:"ch0", it:"ieri", en:"yesterday", type:"adverb" },
+  { set:"ch0", it:"oggi", en:"today", type:"adverb" },
+  { set:"ch0", it:"tra una settimana", en:"in a week", type:"expression" },
+  { set:"ch0", it:"la prossima settimana", en:"next week", type:"expression" },
+  { set:"ch1", it:"l'anno", en:"year", type:"noun", gender:"m" },
+  { set:"ch1", it:"il bagno", en:"bathroom", type:"noun", gender:"m" },
+  { set:"ch1", it:"il bambino", en:"little boy / young child", type:"noun", gender:"m", extra:"Feminine: la bambina" },
+  { set:"ch1", it:"la bambina", en:"little girl", type:"noun", gender:"f", extra:"Masculine: il bambino" },
+  { set:"ch1", it:"la cAmera / la cAmera da letto", en:"bedroom", type:"adjective", gender:"f" },
+  { set:"ch1", it:"il capitolo", en:"chapter", type:"noun", gender:"m" },
+  { set:"ch1", it:"la casa", en:"house, home", type:"noun", gender:"f" },
+  { set:"ch1", it:"la cucina", en:"kitchen", type:"noun", gender:"f" },
+  { set:"ch1", it:"la donna", en:"woman", type:"noun", gender:"f" },
+  { set:"ch1", it:"il dottore", en:"doctor", type:"noun", gender:"m", extra:"Feminine: la dottoressa" },
+  { set:"ch1", it:"la famiglia", en:"family", type:"noun", gender:"f" },
+  { set:"ch1", it:"il figlio", en:"son / child", type:"noun", gender:"m", extra:"Plural: i figli (sons, children)" },
+  { set:"ch1", it:"i figli", en:"children, sons", type:"noun", gender:"m" },
+  { set:"ch1", it:"l'insegnante", en:"teacher", type:"noun", gender:"both", extra:"Can be masculine or feminine" },
+  { set:"ch1", it:"l'italiano", en:"the Italian language / the Italian man", type:"noun", gender:"m" },
+  { set:"ch1", it:"la madre", en:"mother", type:"noun", gender:"f" },
+  { set:"ch1", it:"il padre", en:"father", type:"noun", gender:"m" },
+  { set:"ch1", it:"la sala da pranzo", en:"dining room", type:"noun", gender:"f" },
+  { set:"ch1", it:"il salotto", en:"living room", type:"noun", gender:"m" },
+  { set:"ch1", it:"il signor(e)", en:"Mr., sir, gentleman", type:"noun", gender:"m", extra:"Written without the final -e in most uses" },
+  { set:"ch1", it:"la signora", en:"Mrs., Ms., madam", type:"noun", gender:"f", extra:"More common than la signorina" },
+  { set:"ch1", it:"la signorina", en:"Miss, young lady", type:"noun", gender:"f", extra:"More old-fashioned" },
+  { set:"ch1", it:"la sorella", en:"sister", type:"noun", gender:"f", extra:"Brother: il fratello" },
+  { set:"ch1", it:"la stanza", en:"room", type:"noun", gender:"f" },
+  { set:"ch1", it:"l'uomo", en:"man", type:"noun", gender:"m" },
+  { set:"ch1", it:"americano / americana", en:"American", type:"adjective", gender:"m/f", extra:"Plural: americani / americane" },
+  { set:"ch1", it:"felice", en:"happy", type:"adjective", extra:"No gender change; plural: felici" },
+  { set:"ch1", it:"grande", en:"big", type:"adjective", extra:"No gender change; plural: grandi" },
+  { set:"ch1", it:"italiano / italiana", en:"Italian", type:"adjective", gender:"m/f" },
+  { set:"ch1", it:"mio / mia", en:"my", type:"possessive", extra:"Plural: miei / mie" },
+  { set:"ch1", it:"suo / sua", en:"his, her, your (formal)", type:"possessive", extra:"Plural: suoi / sue" },
+  { set:"ch1", it:"abitare", en:"to live (reside)", type:"verb", extra:"io abito, tu abiti, lui abita…; abito (I live)" },
+  { set:"ch1", it:"avere", en:"to have", type:"verb", irregular:true, extra:"io ho, Lei ha — used with age: ho 40 anni; ha (he/she/it has)" },
+  { set:"ch1", it:"mi chiamo", en:"my name is", type:"noun" },
+  { set:"ch1", it:"chiamarsi", en:"to be named / to call oneself", type:"verb", extra:"Mi chiamo Mario.; mi chiamo (my name is)" },
+  { set:"ch1", it:"essere", en:"to be", type:"verb", irregular:true, extra:"sono, sei, è, siamo, siete, sono; sono (I am), è (he/she/it is), sono (they are)" },
+  { set:"ch1", it:"insegnare", en:"to teach", type:"verb", extra:"io insegno, tu insegni, lei insegna…; insegno (I teach), insegna (he/she/it teaches)" },
+  { set:"ch1", it:"lavorare", en:"to work", type:"verb", extra:"io lavoro, tu lavori, lui lavora…; lavoro (I work)" },
+  { set:"ch1", it:"a", en:"at, in", type:"noun" },
+  { set:"ch1", it:"anche", en:"also, too", type:"adverb" },
+  { set:"ch1", it:"buongiorno", en:"good morning / good day", type:"greeting", extra:"Formal greeting, used during the day." },
+  { set:"ch1", it:"ciao", en:"hi / bye", type:"greeting", extra:"Informal — only with friends, family, people you use tu with." },
+  { set:"ch1", it:"con", en:"with", type:"preposition" },
+  { set:"ch1", it:"di", en:"of", type:"preposition" },
+  { set:"ch1", it:"e", en:"and", type:"conjunction" },
+  { set:"ch1", it:"ecco", en:"here is / here are", type:"expression", extra:"Ecco Maria! = Here's Maria!" },
+  { set:"ch1", it:"in centro", en:"downtown", type:"expression" },
+  { set:"ch1", it:"ma", en:"but", type:"conjunction" },
+  { set:"ch1", it:"per", en:"for", type:"preposition" },
+  { set:"ch1", it:"perché", en:"because / why", type:"adverb", extra:"Because = cause; why = question" },
+  { set:"ch1", it:"piacere!", en:"nice to meet you!", type:"expression", extra:"Literally: \\\"pleasure!\\\" Said when meeting someone." },
+  { set:"ch1", it:"quando", en:"when", type:"adverb" },
+  { set:"ch1", it:"tutto il giorno", en:"all day long", type:"expression" },
+  { set:"ch2", it:"la cosa", en:"thing", type:"noun", gender:"f" },
+  { set:"ch2", it:"la ditta, l’azienda", en:"firm, company", type:"expression", gender:"f" },
+  { set:"ch2", it:"la ditta di software, l’azienda di software", en:"software company", type:"verb", gender:"f" },
+  { set:"ch2", it:"la lezione", en:"lesson", type:"noun", gender:"f" },
+  { set:"ch2", it:"la lingua", en:"language", type:"noun", gender:"f" },
+  { set:"ch2", it:"il nome", en:"name", type:"noun", gender:"m" },
+  { set:"ch2", it:"l'origine", en:"origin", type:"noun", gender:"f", extra:"L'origine del signor Campi è italiana." },
+  { set:"ch2", it:"il posto", en:"place", type:"noun", gender:"m", extra:"Plural: i posti" },
+  { set:"ch2", it:"la primavera", en:"spring (season)", type:"noun", gender:"f", extra:"The season of rebirth" },
+  { set:"ch2", it:"il rappresentante", en:"salesman", type:"noun", gender:"m", extra:"Mario Campi's job" },
+  { set:"ch2", it:"il rivenditore", en:"vendor / reseller", type:"noun", gender:"m", extra:"Buys from Mario's company, sells onward" },
+  { set:"ch2", it:"la scuola", en:"school", type:"noun", gender:"f" },
+  { set:"ch2", it:"il software", en:"software", type:"noun", gender:"m", extra:"Borrowed word" },
+  { set:"ch2", it:"l'ufficio", en:"office", type:"noun", gender:"m" },
+  { set:"ch2", it:"il viaggio", en:"trip / journey", type:"noun", gender:"m", extra:"Fare un viaggio = to take a trip" },
+  { set:"ch2", it:"bello / bella", en:"beautiful", type:"adjective", gender:"m/f" },
+  { set:"ch2", it:"bravo / brava", en:"good (at something)", type:"adjective", gender:"m/f", extra:"Un ragazzo bravo = a good boy" },
+  { set:"ch2", it:"intelligente", en:"intelligent", type:"adjective", extra:"No gender change; plural: intelligenti" },
+  { set:"ch2", it:"interessante", en:"interesting", type:"adjective", extra:"No gender change; plural: interessanti" },
+  { set:"ch2", it:"molto / molta", en:"much / very", type:"adjective" },
+  { set:"ch2", it:"simpatico / simpatica", en:"nice, fun (person)", type:"adjective", gender:"m/f", extra:"Describes personality" },
+  { set:"ch2", it:"desiderare", en:"to desire, to want", type:"verb", extra:"Politer than volere" },
+  { set:"ch2", it:"fare", en:"to make, to do", type:"verb", irregular:true, extra:"faccio, fai, fa, facciamo, fate, fanno" },
+  { set:"ch2", it:"imparare", en:"to learn", type:"verb" },
+  { set:"ch2", it:"importare", en:"to import", type:"verb", extra:"Il rivenditore importa software dall'America." },
+  { set:"ch2", it:"parlare", en:"to speak", type:"verb", extra:"io parlo, tu parli, lui parla…" },
+  { set:"ch2", it:"studiare", en:"to study", type:"verb" },
+  { set:"ch2", it:"visitare", en:"to visit", type:"verb" },
+  { set:"ch2", it:"a domani", en:"see you tomorrow", type:"expression" },
+  { set:"ch2", it:"a dopo / a più tardi", en:"see you later", type:"expression" },
+  { set:"ch2", it:"a lunedì (martedì, mercoledì, ecc.)", en:"see you Monday (Tuesday, Wednesday,", type:"expression" },
+  { set:"ch2", it:"eccEtera", en:"etcetera", type:"noun" },
+  { set:"ch2", it:"là, lì", en:"there", type:"noun" },
+  { set:"ch2", it:"qua, qui", en:"here", type:"noun" },
+  { set:"ch2", it:"rapidamente", en:"quickly", type:"adverb", extra:"From rapido + -mente" },
+  { set:"ch3", it:"il cestino", en:"basket", type:"noun", gender:"m" },
+  { set:"ch3", it:"il computer", en:"computer", type:"noun", gender:"m" },
+  { set:"ch3", it:"il divano", en:"couch", type:"noun", gender:"m" },
+  { set:"ch3", it:"la domanda", en:"question", type:"noun", gender:"f" },
+  { set:"ch3", it:"la fotografIa", en:"photograph", type:"noun", gender:"f" },
+  { set:"ch3", it:"la lAmpada", en:"lamp", type:"noun", gender:"f" },
+  { set:"ch3", it:"la matita", en:"pencil", type:"noun", gender:"f" },
+  { set:"ch3", it:"l’orologio", en:"watch", type:"noun" },
+  { set:"ch3", it:"la parete", en:"wall", type:"noun", gender:"f" },
+  { set:"ch3", it:"la parola", en:"word", type:"noun", gender:"f" },
+  { set:"ch3", it:"la penna", en:"pen", type:"noun", gender:"f" },
+  { set:"ch3", it:"la porta", en:"door", type:"noun", gender:"f" },
+  { set:"ch3", it:"la risposta", en:"answer", type:"noun", gender:"f" },
+  { set:"ch3", it:"lo scaffale", en:"shelf", type:"noun", gender:"m" },
+  { set:"ch3", it:"la scrivania", en:"desk", type:"noun", gender:"f" },
+  { set:"ch3", it:"a sedia", en:"chair", type:"noun" },
+  { set:"ch3", it:"lo specchio", en:"mirror", type:"noun", gender:"m" },
+  { set:"ch3", it:"la tAvola, il tAvolo", en:"table", type:"expression", gender:"f" },
+  { set:"ch3", it:"la tecnologia", en:"technology", type:"noun", gender:"f" },
+  { set:"ch3", it:"altri / altre", en:"other (plural)", type:"adjective", extra:"Singular: altro / altra" },
+  { set:"ch3", it:"aperto / aperta", en:"open", type:"adjective", gender:"m/f" },
+  { set:"ch3", it:"famoso / famosa", en:"famous", type:"adjective", gender:"m/f" },
+  { set:"ch3", it:"importante", en:"important", type:"adjective", extra:"No gender change; plural: importanti" },
+  { set:"ch3", it:"infelice", en:"unhappy", type:"adjective", extra:"No gender change; plural: infelici" },
+  { set:"ch3", it:"pigro / pigra", en:"lazy", type:"adjective", gender:"m/f" },
+  { set:"ch3", it:"questo / questa", en:"this", type:"demonstrative", extra:"Plural: questi / queste" },
+  { set:"ch3", it:"utile", en:"useful", type:"adjective", extra:"No gender change; plural: utili" },
+  { set:"ch3", it:"dice", en:"he/she it says", type:"noun" },
+  { set:"ch3", it:"dire", en:"to say", type:"verb", irregular:true, extra:"io dico, tu dici, lui dice…" },
+  { set:"ch3", it:"domandare", en:"to ask", type:"verb", extra:"Fare domande = to ask questions" },
+  { set:"ch3", it:"fa domande", en:"he/she asks questions", type:"noun" },
+  { set:"ch3", it:"fare domande", en:"to ask questions", type:"verb" },
+  { set:"ch3", it:"indicare", en:"to point out, to indicate", type:"verb" },
+  { set:"ch3", it:"rispondere", en:"to answer", type:"verb", extra:"io rispondo, tu rispondi, lui risponde…; risponde (he/she/it answers)" },
+  { set:"ch3", it:"io ho", en:"I have", type:"noun" },
+  { set:"ch3", it:"Lei ha", en:"you have", type:"noun", extra:"formal" },
+  { set:"ch3", it:"io vedo", en:"I see", type:"noun" },
+  { set:"ch3", it:"vede Lei?", en:"do you see?", type:"noun", extra:"formal" },
+  { set:"ch3", it:"allora", en:"then, so", type:"adverb" },
+  { set:"ch3", it:"a memoria", en:"by heart", type:"expression", extra:"Memorizzare a memoria = to learn by heart" },
+  { set:"ch3", it:"bisogna", en:"it is necessary, one must", type:"expression", extra:"Bisogna studiare = One must study" },
+  { set:"ch3", it:"così", en:"in this way, so", type:"adverb" },
+  { set:"ch3", it:"come", en:"how", type:"adverb" },
+  { set:"ch3", it:"e così", en:"via and so on", type:"noun" },
+  { set:"ch3", it:"o", en:"or", type:"conjunction" },
+  { set:"ch4", it:"la camelia", en:"camelia", type:"noun", gender:"f" },
+  { set:"ch4", it:"la campagna", en:"country", type:"noun", gender:"f" },
+  { set:"ch4", it:"la carta", en:"paper", type:"noun", gender:"f" },
+  { set:"ch4", it:"la città", en:"city, town", type:"noun", gender:"f" },
+  { set:"ch4", it:"la finestra", en:"window", type:"noun", gender:"f" },
+  { set:"ch4", it:"la giornata", en:"day", type:"noun", gender:"f" },
+  { set:"ch4", it:"il libro", en:"book", type:"noun", gender:"m" },
+  { set:"ch4", it:"il parco", en:"park", type:"noun", gender:"m" },
+  { set:"ch4", it:"il pomeriggio", en:"afternoon", type:"noun", gender:"m" },
+  { set:"ch4", it:"il poster", en:"poster", type:"noun", gender:"m" },
+  { set:"ch4", it:"la rivista", en:"magazine, journal", type:"noun", gender:"f" },
+  { set:"ch4", it:"il sole", en:"sun", type:"noun", gender:"m" },
+  { set:"ch4", it:"la strada", en:"street", type:"noun", gender:"f" },
+  { set:"ch4", it:"lo studente / la studentessa", en:"student", type:"noun", gender:"m/f", extra:"Student can be masculine or feminine" },
+  { set:"ch4", it:"il tavolino", en:"small table", type:"noun", gender:"m", extra:"Diminutive of il tavolo" },
+  { set:"ch4", it:"il vaso", en:"vase", type:"noun", gender:"m" },
+  { set:"ch4", it:"la Francia", en:"France", type:"noun", gender:"f", extra:"Language: il francese" },
+  { set:"ch4", it:"il Senegal", en:"Senegal", type:"noun", gender:"m" },
+  { set:"ch4", it:"il francese", en:"French", type:"noun", gender:"m" },
+  { set:"ch4", it:"l’Austria", en:"Austria", type:"noun", gender:"f" },
+  { set:"ch4", it:"la Germania", en:"Germany", type:"noun", gender:"f", extra:"Language: il tedesco" },
+  { set:"ch4", it:"il tedesco", en:"German", type:"noun", gender:"m" },
+  { set:"ch4", it:"l’Inghilterra", en:"England", type:"noun", gender:"f", extra:"Language: l’inglese" },
+  { set:"ch4", it:"gli Stati Uniti", en:"United States", type:"noun", gender:"m", extra:"Plural country name" },
+  { set:"ch4", it:"l’inglese", en:"English", type:"noun" },
+  { set:"ch4", it:"la Spagna", en:"Spain", type:"noun", gender:"f", extra:"Language: lo spagnolo" },
+  { set:"ch4", it:"lo spagnolo", en:"Spanish", type:"noun", gender:"m" },
+  { set:"ch4", it:"eccellente", en:"excellent", type:"adjective", extra:"No gender change; plural: eccellenti" },
+  { set:"ch4", it:"esatto", en:"exact, exactly", type:"noun" },
+  { set:"ch4", it:"fantastico / fantastica", en:"fantastic", type:"adjective", gender:"m/f" },
+  { set:"ch4", it:"favoloso / favolosa", en:"fabulous", type:"adjective", gender:"m/f" },
+  { set:"ch4", it:"magnifico / magnifica", en:"magnificent", type:"adjective", gender:"m/f" },
+  { set:"ch4", it:"piccolo / piccola", en:"small", type:"adjective", gender:"m/f" },
+  { set:"ch4", it:"stupendo / stupenda", en:"stupendous", type:"adjective", gender:"m/f" },
+  { set:"ch4", it:"conoscere", en:"to know, to be acquainted with", type:"verb", irregular:true, extra:"Conosco Roma. Conosco Maria." },
+  { set:"ch4", it:"sapere", en:"to know, to know how", type:"verb", irregular:true, extra:"So? So che ora è?" },
+  { set:"ch4", it:"al, allo, all’, alla, ai, agli, alle", en:"at the, to the (contractions)", type:"preposition", extra:"a + definite article" },
+  { set:"ch4", it:"basta", en:"enough, that’s enough", type:"expression", extra:"Basta! = Enough!" },
+  { set:"ch4", it:"bene", en:"well", type:"adverb" },
+  { set:"ch4", it:"c’è", en:"there is", type:"expression", extra:"ci + è" },
+  { set:"ch4", it:"ci sono", en:"there are", type:"expression" },
+  { set:"ch4", it:"da", en:"from, since, for", type:"preposition" },
+  { set:"ch4", it:"davanti", en:"in front of", type:"adverb", extra:"Davanti a = in front of" },
+  { set:"ch4", it:"fra", en:"between", type:"preposition", extra:"Fra due e tre = between two and three" },
+  { set:"ch4", it:"intorno", en:"around", type:"adverb", extra:"Intorno a = around" },
+  { set:"ch4", it:"molto", en:"very, much", type:"adverb" },
+  { set:"ch4", it:"nel, nello, nell’, nella, nei, negli, nelle", en:"in the (contractions)", type:"preposition", extra:"in + definite article" },
+  { set:"ch4", it:"oggi", en:"today", type:"adverb" },
+  { set:"ch4", it:"per favore, per piacere", en:"please", type:"verb" },
+  { set:"ch4", it:"sopra", en:"over, above", type:"adverb", extra:"Sopra a = over, above" },
+  { set:"ch4", it:"sotto", en:"under", type:"adverb", extra:"Sotto a = under" },
+  { set:"ch4", it:"su", en:"on", type:"preposition" },
+  { set:"ch4", it:"sul, sullo, sull’, sulla, sui, sugli, sulle", en:"on the (contractions)", type:"preposition", extra:"su + definite article" },
+  { set:"ch4", it:"tra", en:"between, among", type:"preposition" },
+  { set:"ch4", it:"vicino", en:"near, close", type:"adjective", extra:"Vicino a = near" },
+  { set:"ch5", it:"l’aeroplano, l’aEreo", en:"airplane", type:"noun" },
+  { set:"ch5", it:"l’albergo", en:"hotel", type:"noun" },
+  { set:"ch5", it:"l’Autobus", en:"bus", type:"noun" },
+  { set:"ch5", it:"la bicicletta, la bici", en:"bicycle, bike", type:"expression", gender:"f" },
+  { set:"ch5", it:"Dio", en:"God", type:"noun" },
+  { set:"ch5", it:"l’informazione", en:"information", type:"noun" },
+  { set:"ch5", it:"la mAcchina", en:"car", type:"noun", gender:"f" },
+  { set:"ch5", it:"la motocicletta, la moto", en:"motorcycle, motorbike", type:"expression", gender:"f" },
+  { set:"ch5", it:"il motorino", en:"moped, motor scooter", type:"noun", gender:"m" },
+  { set:"ch5", it:"il paese", en:"country, small town", type:"noun", gender:"m" },
+  { set:"ch5", it:"la parte", en:"part", type:"noun", gender:"f" },
+  { set:"ch5", it:"il piede", en:"foot", type:"noun", gender:"m", extra:"Plural: i piedi" },
+  { set:"ch5", it:"il santo / la santa", en:"saint", type:"noun", gender:"m/f" },
+  { set:"ch5", it:"la verità", en:"truth", type:"noun", gender:"f" },
+  { set:"ch5", it:"il volo", en:"flight", type:"noun", gender:"m", extra:"Aeroport: aeroporto" },
+  { set:"ch5", it:"comune", en:"common, ordinary", type:"adjective", extra:"No gender change; plural: comuni" },
+  { set:"ch5", it:"gentile", en:"kind, polite", type:"adjective", extra:"No gender change; plural: gentili" },
+  { set:"ch5", it:"rapido / rapida", en:"quick, fast", type:"adjective", gender:"m/f", extra:"Adverb: rapidamente" },
+  { set:"ch5", it:"seduto / seduta", en:"sitting, seated", type:"adjective", gender:"m/f", extra:"Past participle of sedersi" },
+  { set:"ch5", it:"vario / varia", en:"various, changing", type:"adjective", gender:"m/f" },
+  { set:"ch5", it:"ascoltare", en:"to listen", type:"verb", extra:"Ascoltare la musica = to listen to music" },
+  { set:"ch5", it:"chiedere", en:"to ask", type:"verb", irregular:true, extra:"Chiedo un caffè. Chiedi aiuto." },
+  { set:"ch5", it:"cominciare", en:"to begin, to start", type:"verb", extra:"Cominciamo a parlare italiano." },
+  { set:"ch5", it:"contare", en:"to count, to plan", type:"verb", extra:"Contare fino a dieci = to count to ten" },
+  { set:"ch5", it:"conversare", en:"to converse", type:"verb" },
+  { set:"ch5", it:"costare", en:"to cost", type:"verb", extra:"Quanto costa? = How much does it cost?" },
+  { set:"ch5", it:"lasciare", en:"to leave, to let", type:"verb", irregular:true, extra:"Lascio la città. Lasciami dormire." },
+  { set:"ch5", it:"prenotare", en:"to reserve, to book", type:"verb", extra:"Prenotare una stanza = to book a room" },
+  { set:"ch5", it:"viaggiare", en:"to travel", type:"verb", extra:"Viaggio in Italia in primavera." },
+  { set:"ch5", it:"attentamente", en:"attentively", type:"adverb", extra:"From attento + -mente" },
+  { set:"ch5", it:"di niente", en:"you’re welcome, don’t mention it", type:"expression", extra:"Response to grazie" },
+  { set:"ch5", it:"domani", en:"tomorrow", type:"adverb" },
+  { set:"ch5", it:"forse", en:"maybe, perhaps", type:"adverb" },
+  { set:"ch5", it:"mille", en:"grazie! a thousand thanks!", type:"noun" },
+  { set:"ch5", it:"naturalmente", en:"of course", type:"adverb" },
+  { set:"ch5", it:"senza", en:"without", type:"preposition" },
+  { set:"ch5", it:"soltanto, solo, solamente", en:"only", type:"adverb" },
+  { set:"ch7", it:"la banca", en:"bank", type:"noun", gender:"f" },
+  { set:"ch7", it:"il biscotto", en:"cookie", type:"noun", gender:"m" },
+  { set:"ch7", it:"il bisogno", en:"need", type:"noun", gender:"m" },
+  { set:"ch7", it:"il cognato / la cognata", en:"brother-in-law", type:"adjective", gender:"both" },
+  { set:"ch7", it:"la cura", en:"care", type:"noun", gender:"f" },
+  { set:"ch7", it:"la fame", en:"hunger", type:"noun", gender:"f" },
+  { set:"ch7", it:"la farmacIa", en:"pharmacy", type:"noun", gender:"f" },
+  { set:"ch7", it:"la febbre", en:"fever", type:"noun", gender:"f" },
+  { set:"ch7", it:"il fratello", en:"brother", type:"noun", gender:"m" },
+  { set:"ch7", it:"il genitore", en:"parent", type:"noun", gender:"m" },
+  { set:"ch7", it:"l’invito", en:"invitation", type:"noun" },
+  { set:"ch7", it:"la malattIa", en:"illness", type:"noun", gender:"f" },
+  { set:"ch7", it:"la mamma", en:"mom, mommy", type:"noun", gender:"f", extra:"Informal for madre" },
+  { set:"ch7", it:"il marito", en:"husband", type:"noun", gender:"m" },
+  { set:"ch7", it:"la moglie", en:"wife", type:"noun", gender:"f" },
+  { set:"ch7", it:"il nipote / la nipote", en:"nephew/niece, grandson/granddaughter", type:"noun", gender:"m/f", extra:"Covers both generations" },
+  { set:"ch7", it:"il nonno / la nonna", en:"grandfather / grandmother", type:"noun", gender:"m/f" },
+  { set:"ch7", it:"il papà", en:"dad, daddy", type:"noun", gender:"m", extra:"Informal for padre" },
+  { set:"ch7", it:"la piazza", en:"square (public)", type:"noun", gender:"f", extra:"La piazza del village center" },
+  { set:"ch7", it:"il raffreddore", en:"cold (viral infection)", type:"noun", gender:"m", extra:"Avere il raffreddore = to have a cold" },
+  { set:"ch7", it:"la sete", en:"thirst", type:"noun", gender:"f", extra:"Avere sete = to be thirsty" },
+  { set:"ch7", it:"il sonno", en:"sleep", type:"noun", gender:"m", extra:"Avere sonno = to be sleepy" },
+  { set:"ch7", it:"la voglia", en:"desire, urge", type:"noun", gender:"f", extra:"Avere voglia di = to feel like" },
+  { set:"ch7", it:"la zia / lo zio", en:"aunt / uncle", type:"noun", gender:"m/f" },
+  { set:"ch7", it:"allegro / allegra", en:"cheerful, merry", type:"adjective", gender:"m/f" },
+  { set:"ch7", it:"altro / altra", en:"other, another", type:"adjective", extra:"Plural: altri / altre" },
+  { set:"ch7", it:"amichevole", en:"friendly", type:"adjective", extra:"No gender change; plural: amichevoli" },
+  { set:"ch7", it:"giovane", en:"young", type:"adjective", extra:"No gender change; plural: giovani" },
+  { set:"ch7", it:"immediato / immediata", en:"immediate", type:"adjective", gender:"m/f" },
+  { set:"ch7", it:"improvviso / improvvisa", en:"sudden", type:"adjective", gender:"m/f", extra:"Adverb: improvvisamente" },
+  { set:"ch7", it:"maggiore", en:"greater, older", type:"noun" },
+  { set:"ch7", it:"malata", en:"sick", type:"noun" },
+  { set:"ch7", it:"puntuale", en:"punctual, on time", type:"adjective", extra:"No gender change; plural: puntuali" },
+  { set:"ch7", it:"sicuro / sicura", en:"sure, safe", type:"adjective", gender:"m/f", extra:"Sicuro di = sure of" },
+  { set:"ch7", it:"solo / sola", en:"alone, only", type:"adjective", gender:"m/f" },
+  { set:"ch7", it:"accettare", en:"to accept", type:"verb", extra:"Accettare un invito = to accept an invitation" },
+  { set:"ch7", it:"aspettare", en:"to wait", type:"verb", extra:"Aspetta qui, per favore." },
+  { set:"ch7", it:"avere 10, 20, 40 anni avere fame", en:"to", type:"expression" },
+  { set:"ch7", it:"avere fame", en:"to be hungry", type:"expression", extra:"Ho fame = I’m hungry" },
+  { set:"ch7", it:"avere sete", en:"to be thirsty", type:"expression", extra:"Ho sete = I’m thirsty" },
+  { set:"ch7", it:"avere sonno", en:"to be sleepy", type:"expression", extra:"Ho sonno = I’m sleepy" },
+  { set:"ch7", it:"invitare", en:"to invite", type:"verb", extra:"Invitare qualcuno a cena = to invite someone to dinner" },
+  { set:"ch7", it:"salutare", en:"to greet, to say hello", type:"verb", extra:"Salutare gli amici = to greet friends" },
+  { set:"ch7", it:"sbagliare", en:"to make a mistake, to be wrong", type:"verb", extra:"Non sbagliare! = Don’t make a mistake!" },
+  { set:"ch7", it:"allegramente", en:"cheerfully", type:"adverb", extra:"From allegro + -mente" },
+  { set:"ch7", it:"amichevolmente", en:"in a friendly way", type:"adverb", extra:"From amichevole + -mente" },
+  { set:"ch7", it:"eccetto", en:"except", type:"preposition", extra:"Tutti eccetto Mario = everyone except Mario" },
+  { set:"ch7", it:"immediatamente", en:"immediately", type:"adverb" },
+  { set:"ch7", it:"improvvisamente", en:"suddenly", type:"adverb" },
+  { set:"ch7", it:"lontano", en:"far away", type:"adjective", extra:"Lontano da = far from" },
+  { set:"ch7", it:"prego", en:"you're welcome / please", type:"expression", extra:"Also used to offer something: \\\"after you\\\"." },
+  { set:"ch7", it:"puntualmente", en:"punctually, on time", type:"adverb", extra:"Arrivare puntualmente = to arrive on time" },
+  { set:"ch7", it:"sempre", en:"always", type:"adverb" },
+  { set:"ch7", it:"sicuramente", en:"surely, certainly", type:"adverb" },
+  { set:"ch7", it:"volentieri", en:"happily, willingly", type:"adverb", extra:"With pleasure" },
+  { set:"ch8", it:"broom, what am I going to sweep my little house with?", en:"1", type:"expression" },
+  { set:"ch8", it:"il bar", en:"bar, coffee shop", type:"noun", gender:"m" },
+  { set:"ch8", it:"la carta geogrAfica", en:"map", type:"expression", gender:"f" },
+  { set:"ch8", it:"la casetta", en:"small house", type:"noun", gender:"f" },
+  { set:"ch8", it:"il catAlogo", en:"catalogue", type:"noun", gender:"m" },
+  { set:"ch8", it:"la chiesa", en:"church", type:"noun", gender:"f" },
+  { set:"ch8", it:"il cielo", en:"sky", type:"noun", gender:"m" },
+  { set:"ch8", it:"la collina", en:"hill", type:"noun", gender:"f" },
+  { set:"ch8", it:"il colore", en:"color", type:"noun", gender:"m" },
+  { set:"ch8", it:"il disordine", en:"mess, disorder", type:"noun", gender:"m" },
+  { set:"ch8", it:"l’edificio", en:"building", type:"noun", gender:"m" },
+  { set:"ch8", it:"il fiore", en:"flower", type:"noun", gender:"m", extra:"Plural: i fiori" },
+  { set:"ch8", it:"il futuro", en:"future", type:"noun", gender:"m", extra:"Nel futuro = in the future" },
+  { set:"ch8", it:"il giardino", en:"garden", type:"noun", gender:"m" },
+  { set:"ch8", it:"il giornale", en:"newspaper", type:"noun", gender:"m", extra:"Leggere il giornale = to read the newspaper" },
+  { set:"ch8", it:"il grattacielo", en:"skyscraper", type:"noun", gender:"m" },
+  { set:"ch8", it:"l’idea", en:"idea", type:"noun", gender:"f" },
+  { set:"ch8", it:"la lettera", en:"letter", type:"noun", gender:"f", extra:"Scrivere una lettera = to write a letter" },
+  { set:"ch8", it:"la luna", en:"moon", type:"noun", gender:"f" },
+  { set:"ch8", it:"il mondo", en:"world", type:"noun", gender:"m", extra:"Il mondo intero = the whole world" },
+  { set:"ch8", it:"il piano", en:"floor (of building)", type:"noun", gender:"m", extra:"Al primo piano = on the first floor" },
+  { set:"ch8", it:"il poeta", en:"poet", type:"noun", gender:"m" },
+  { set:"ch8", it:"il sogno", en:"dream", type:"noun", gender:"m", extra:"Fare un sogno = to dream" },
+  { set:"ch8", it:"lo stadio", en:"stadium", type:"noun", gender:"m" },
+  { set:"ch8", it:"la stampante", en:"printer", type:"noun", gender:"f" },
+  { set:"ch8", it:"la stazione", en:"station", type:"noun", gender:"f", extra:"La stazione dei treni = the train station" },
+  { set:"ch8", it:"il supermercato", en:"supermarket", type:"noun", gender:"m", extra:"Fare la spesa al supermercato = to shop at the supermarket" },
+  { set:"ch8", it:"il teatro", en:"theater", type:"noun", gender:"m", extra:"Andare al teatro = to go to the theater" },
+  { set:"ch8", it:"il tetto", en:"roof", type:"noun", gender:"m" },
+  { set:"ch8", it:"la via", en:"street", type:"noun", gender:"f", extra:"Via Roma = Rome Street" },
+  { set:"ch8", it:"la volta", en:"time (occasion)", type:"noun", gender:"f", extra:"Una volta = once" },
+  { set:"ch8", it:"alcuni / alcune", en:"some, a few", type:"adjective" },
+  { set:"ch8", it:"azzurro / azzurra", en:"light blue", type:"adjective", gender:"m/f" },
+  { set:"ch8", it:"bianco / bianca", en:"white", type:"adjective", gender:"m/f" },
+  { set:"ch8", it:"comodo / comoda", en:"comfortable", type:"adjective", gender:"m/f" },
+  { set:"ch8", it:"giallo / gialla", en:"yellow", type:"adjective", gender:"m/f" },
+  { set:"ch8", it:"grigio / grigia", en:"gray", type:"adjective", gender:"m/f" },
+  { set:"ch8", it:"immenso / immensa", en:"immense, vast", type:"adjective", gender:"m/f" },
+  { set:"ch8", it:"lungo / lunga", en:"long", type:"adjective", gender:"m/f" },
+  { set:"ch8", it:"marrone", en:"brown", type:"adjective", extra:"Invariable — no gender/plural change" },
+  { set:"ch8", it:"pieno / piena", en:"full", type:"adjective", gender:"m/f", extra:"Pieno di = full of" },
+  { set:"ch8", it:"rosa", en:"pink", type:"adjective", extra:"Invariable — no gender/plural change" },
+  { set:"ch8", it:"rosso / rossa", en:"red", type:"adjective", gender:"m/f" },
+  { set:"ch8", it:"verde", en:"green", type:"adjective", extra:"Invariable — no gender/plural change" },
+  { set:"ch8", it:"viola", en:"purple", type:"adjective", extra:"Invariable — no gender/plural change" },
+  { set:"ch8", it:"arrivare", en:"to arrive", type:"verb", extra:"Arrivare a Roma = to arrive in Rome" },
+  { set:"ch8", it:"esagerare", en:"to exaggerate", type:"verb", extra:"Non esagerare! = Don’t exaggerate!" },
+  { set:"ch8", it:"rivedere", en:"to see again, to review", type:"verb", extra:"Rivedo i miei genitori = I see my parents again" },
+  { set:"ch8", it:"sperare", en:"to hope", type:"verb", extra:"Spero di vederti presto = I hope to see you soon" },
+  { set:"ch8", it:"ancora", en:"again, still, yet", type:"adverb" },
+  { set:"ch8", it:"a proposito", en:"by the way", type:"expression" },
+  { set:"ch8", it:"male", en:"badly, badly off", type:"adverb", extra:"Stare male = to feel unwell" },
+  { set:"ch8", it:"né…né…", en:"neither … nor…", type:"noun" },
+  { set:"ch8", it:"specialmente", en:"especially", type:"adverb" },
+  { set:"ch8", it:"un po’ di", en:"some, a little bit of", type:"expression", extra:"Un po’ di pane = a little bread" },
+  { set:"ch8", it:"velocemente", en:"quickly, fast", type:"adverb", extra:"Correre velocemente = to run fast" },
+  { set:"ch9", it:"l’amico", en:"friend", type:"noun" },
+  { set:"ch9", it:"l’Acqua", en:"water", type:"noun" },
+  { set:"ch9", it:"il banco", en:"bar", type:"noun", gender:"m", extra:"part of the bar where drinks are placed" },
+  { set:"ch9", it:"il barista / la barista", en:"bartender, bar worker", type:"adjective", gender:"both" },
+  { set:"ch9", it:"il bene", en:"good", type:"noun", gender:"m" },
+  { set:"ch9", it:"la bevanda", en:"drink", type:"noun", gender:"f" },
+  { set:"ch9", it:"la bIbita", en:"soft drink", type:"noun", gender:"f" },
+  { set:"ch9", it:"il bicchiere", en:"glass", type:"verb", gender:"m" },
+  { set:"ch9", it:"la birra", en:"beer", type:"noun", gender:"f" },
+  { set:"ch9", it:"la bottiglia", en:"bottle", type:"noun", gender:"f", extra:"Una bottiglia d’acqua = a bottle of water" },
+  { set:"ch9", it:"il cappuccino", en:"espresso with steamed milk", type:"noun", gender:"m", extra:"Typical Italian morning coffee" },
+  { set:"ch9", it:"il caffè", en:"coffee", type:"noun", gender:"m", extra:"Un caffè = a coffee (espresso)" },
+  { set:"ch9", it:"il cameriere / la cameriera", en:"waiter / waitress", type:"noun", gender:"m/f" },
+  { set:"ch9", it:"la cassa", en:"cash register", type:"noun", gender:"f" },
+  { set:"ch9", it:"il cioccolato / la cioccolata", en:"chocolate", type:"noun", gender:"m/f", extra:"Cioccolato = chocolate bar; cioccolata = hot chocolate / chocolate in general" },
+  { set:"ch9", it:"il complimento", en:"compliment", type:"noun", gender:"m", extra:"Fare un complimento = to pay a compliment" },
+  { set:"ch9", it:"la conversazione", en:"conversation", type:"noun", gender:"f" },
+  { set:"ch9", it:"il cornetto", en:"croissant", type:"noun", gender:"m", extra:"Italian cornetti are sweeter than French ones" },
+  { set:"ch9", it:"il corso", en:"course (of study)", type:"noun", gender:"m", extra:"Un corso di italiano = an Italian course" },
+  { set:"ch9", it:"il latte", en:"milk", type:"noun", gender:"m" },
+  { set:"ch9", it:"la lattina", en:"can (metal)", type:"noun", gender:"f", extra:"Una lattina di soda = a can of soda" },
+  { set:"ch9", it:"il lavoro", en:"work, job", type:"noun", gender:"m", extra:"Trova lavoro = find work" },
+  { set:"ch9", it:"la mancia", en:"tip (money left)", type:"noun", gender:"f", extra:"Lasciare la mancia = to leave a tip" },
+  { set:"ch9", it:"la notizia", en:"news, piece of news", type:"noun", gender:"f", extra:"Le notizie = the news (plural)" },
+  { set:"ch9", it:"lo scapolo", en:"bachelor", type:"noun", gender:"m" },
+  { set:"ch9", it:"la sorpresa", en:"surprise", type:"noun", gender:"f", extra:"Fare una sorpresa = to surprise someone" },
+  { set:"ch9", it:"il succo di frutta", en:"fruit juice", type:"noun", gender:"m", extra:"Often nectars with sugar and pulp in Italy" },
+  { set:"ch9", it:"il tè, il the", en:"tea", type:"expression", gender:"m" },
+  { set:"ch9", it:"l’università", en:"university", type:"noun", gender:"f", extra:"Andare all’università = to go to university" },
+  { set:"ch9", it:"la vacanza", en:"vacation", type:"noun", gender:"f", extra:"Fare le vacanze = to take a vacation" },
+  { set:"ch9", it:"lo yogurt", en:"yogurt", type:"noun", gender:"m", extra:"Pronounce in the Italian way" },
+  { set:"ch9", it:"carino / carina", en:"cute, pretty", type:"adjective", gender:"m/f" },
+  { set:"ch9", it:"contento / contenta", en:"glad, happy", type:"adjective", gender:"m/f", extra:"Sono contento = I’m glad" },
+  { set:"ch9", it:"decaffeinato / decaffeinata", en:"decaffeinated", type:"adjective", gender:"m/f", extra:"Caffè decaffeinato = decaf coffee" },
+  { set:"ch9", it:"differente", en:"different", type:"noun" },
+  { set:"ch9", it:"diffIcile", en:"difficult", type:"noun" },
+  { set:"ch9", it:"diverso / diversa", en:"different", type:"adjective", gender:"m/f" },
+  { set:"ch9", it:"freddo / fredda", en:"cold", type:"adjective", gender:"m/f", extra:"Acqua fredda = cold water" },
+  { set:"ch9", it:"indiscreto / indiscreta", en:"indiscreet", type:"adjective" },
+  { set:"ch9", it:"macchiato / macchiata", en:"stained (latte macchiato)", type:"adjective", gender:"m/f", extra:"Latte macchiato = milk with some coffee; caffè macchiato = coffee with some milk" },
+  { set:"ch9", it:"latte macchiato", en:"milk with some coffee (coffee shop drink)", type:"expression" },
+  { set:"ch9", it:"privato / privata", en:"private", type:"adjective", gender:"m/f" },
+  { set:"ch9", it:"tutti / tutte", en:"all, everyone", type:"pronoun", extra:"Tutti insieme = all together" },
+  { set:"ch9", it:"tutti e due / tutte e due", en:"both", type:"pronoun", extra:"Also spelled tutt’e due" },
+  { set:"ch9", it:"augurare", en:"to wish (good wishes)", type:"verb", extra:"Augurare buona fortuna = to wish good luck" },
+  { set:"ch9", it:"cambiare", en:"to change", type:"verb", extra:"Cambiare idea = to change one’s mind" },
+  { set:"ch9", it:"capire", en:"to understand", type:"verb", irregular:true, extra:"Capisco, capisci, capisce…" },
+  { set:"ch9", it:"credere", en:"to believe", type:"verb", irregular:true, extra:"Credo in te = I believe in you" },
+  { set:"ch9", it:"frequentare", en:"to attend (school), to frequent", type:"verb", extra:"Frequentare l’università = to attend university" },
+  { set:"ch9", it:"leggere", en:"to read", type:"verb", extra:"Leggo un libro = I read a book" },
+  { set:"ch9", it:"permettere", en:"to allow, to permit", type:"verb", extra:"Mi permetti di entrare? = Do you allow me to enter?" },
+  { set:"ch9", it:"piacere", en:"to like, to please", type:"verb", irregular:true, extra:"Mi piace = I like it. Ti piace? = Do you like it?" },
+  { set:"ch9", it:"ricevere", en:"to receive", type:"verb", irregular:true, extra:"Ricevo una lettera = I receive a letter" },
+  { set:"ch9", it:"scrivere", en:"to write", type:"verb", irregular:true, extra:"Scrivo una lettera = I write a letter" },
+  { set:"ch9", it:"sembrare", en:"to seem, to appear", type:"verb", extra:"Sembra felice = He/she seems happy" },
+  { set:"ch9", it:"succedere", en:"to happen", type:"verb", irregular:true, extra:"Cosa succede? = What’s happening?" },
+  { set:"ch9", it:"trovare", en:"to find", type:"verb", irregular:true, extra:"Trovo il mio portafoglio = I find my wallet" },
+    { set:"ch9", it:"a dire il vero", en:"to tell the truth", type:"expression" },
+  { set:"ch9", it:"al più presto possibile", en:"as soon as possible", type:"expression" },
+  { set:"ch9", it:"a meraviglia", en:"wonderfully", type:"adverb", extra:"Funziona a meraviglia = It works wonderfully" },
+  { set:"ch9", it:"assiduamente", en:"assiduously, diligently", type:"adverb" },
+  { set:"ch9", it:"di solito", en:"usually", type:"adverb", extra:"Di solito vado a letto presto = I usually go to bed early" },
+  { set:"ch9", it:"d’oro", en:"golden", type:"noun" },
+  { set:"ch9", it:"meglio", en:"better", type:"adverb", extra:"Comparative of bene" },
+  { set:"ch9", it:"perciò", en:"therefore, so", type:"adverb" },
+  { set:"ch9", it:"qualcosa", en:"something", type:"pronoun", extra:"Ho qualcosa da dirti = I have something to tell you" },
+  { set:"ch9", it:"spesso", en:"often", type:"adverb", extra:"Vengo spesso = I come often" },
+  { set:"ch10", it:"il bricco", en:"pitcher", type:"noun", gender:"m" },
+  { set:"ch10", it:"la canzone", en:"song", type:"noun", gender:"f" },
+  { set:"ch10", it:"la cerAmica", en:"ceramic", type:"noun", gender:"f" },
+  { set:"ch10", it:"la cittadina", en:"small town", type:"noun", gender:"f" },
+  { set:"ch10", it:"il coltello", en:"knife", type:"noun", gender:"m" },
+  { set:"ch10", it:"la crostata", en:"pie", type:"noun", gender:"f" },
+  { set:"ch10", it:"il cucchiaino", en:"teaspoon", type:"noun", gender:"m" },
+  { set:"ch10", it:"il cucchiaio", en:"spoon", type:"noun", gender:"m" },
+  { set:"ch10", it:"il cuore", en:"heart", type:"noun", gender:"m" },
+  { set:"ch10", it:"il disegno", en:"design, drawing", type:"noun", gender:"m" },
+  { set:"ch10", it:"il distributore", en:"distributor", type:"noun", gender:"m" },
+  { set:"ch10", it:"la forchetta", en:"fork", type:"noun", gender:"f" },
+  { set:"ch10", it:"la frutta", en:"fruit", type:"noun", gender:"f", extra:"Mangiare la frutta = to eat fruit" },
+  { set:"ch10", it:"la maiolica", en:"a type of ceramic (majolica)", type:"noun", gender:"f", extra:"Traditional Italian painted pottery" },
+  { set:"ch10", it:"il mese", en:"month", type:"noun", gender:"m" },
+  { set:"ch10", it:"il mestiere", en:"job, craft, trade", type:"noun", gender:"m", extra:"Che mestiere fai? = What’s your job?" },
+  { set:"ch10", it:"l’oggetto d’arte", en:"art object", type:"noun", gender:"m" },
+  { set:"ch10", it:"il piattino", en:"saucer", type:"noun", gender:"m", extra:"Diminutive of il piatto" },
+  { set:"ch10", it:"il piatto", en:"plate", type:"noun", gender:"m", extra:"Anche = dish (food)" },
+  { set:"ch10", it:"il prodotto", en:"product", type:"noun", gender:"m" },
+  { set:"ch10", it:"la regione", en:"region", type:"noun", gender:"f", extra:"La Toscana è una regione = Tuscany is a region" },
+  { set:"ch10", it:"il salatino", en:"cracker, saltine", type:"noun", gender:"m" },
+  { set:"ch10", it:"il sottofondo", en:"background (sound)", type:"noun", gender:"m", extra:"Musica di sottofondo = background music" },
+  { set:"ch10", it:"lo stereo", en:"stereo (hi-fi system)", type:"noun", gender:"m" },
+  { set:"ch10", it:"lo stile", en:"style", type:"noun", gender:"m", extra:"Stile di vita = lifestyle" },
+  { set:"ch10", it:"la tazza", en:"cup, mug", type:"noun", gender:"f", extra:"Una tazza di tè = a cup of tea" },
+  { set:"ch10", it:"la teiera", en:"teapot", type:"noun", gender:"f" },
+  { set:"ch10", it:"il torrone", en:"nougat", type:"noun", gender:"m", extra:"Traditional Italian confection" },
+  { set:"ch10", it:"la vita", en:"life", type:"noun", gender:"f", extra:"La vita è bella = Life is beautiful" },
+  { set:"ch10", it:"la zuccheriera", en:"sugar bowl", type:"noun", gender:"f" },
+  { set:"ch10", it:"lo zucchero", en:"sugar", type:"noun", gender:"m", extra:"Zucchero nel caffè = sugar in coffee" },
+  { set:"ch10", it:"amato / amata", en:"loved, beloved", type:"adjective", gender:"m/f", extra:"Past participle of amare" },
+  { set:"ch10", it:"attraente", en:"attractive", type:"adjective", extra:"No gender change; plural: attraenti" },
+  { set:"ch10", it:"celebre", en:"famous, renowned", type:"adjective", extra:"No gender change; plural: celebri" },
+  { set:"ch10", it:"certo / certa", en:"certain, sure", type:"adjective", gender:"m/f", extra:"Sono certo = I’m certain" },
+  { set:"ch10", it:"legato / legata", en:"tied, bound", type:"adjective", gender:"m/f", extra:"Past participle of legare" },
+  { set:"ch10", it:"ornato / ornata", en:"decorated, ornate", type:"adjective", gender:"m/f", extra:"Past participle of ornare" },
+  { set:"ch10", it:"necessario / necessaria", en:"necessary", type:"adjective", gender:"m/f", extra:"È necessario = It is necessary" },
+  { set:"ch10", it:"perfetto / perfetta", en:"perfect", type:"adjective", gender:"m/f", extra:"Perfetto! = Perfect!" },
+  { set:"ch10", it:"personale", en:"personal", type:"adjective", extra:"No gender change; plural: personali" },
+  { set:"ch10", it:"qualche", en:"some (singular noun)", type:"adjective", extra:"Qualche parola = a few words" },
+  { set:"ch10", it:"vero / vera", en:"true, real", type:"adjective", gender:"m/f", extra:"La verità = the truth" },
+  { set:"ch10", it:"comandare", en:"to order, to command", type:"verb", extra:"Il capitano comanda la nave = The captain commands the ship" },
+  { set:"ch10", it:"controllare", en:"to control, to check", type:"verb", extra:"Controllare l’orario = to check the schedule" },
+  { set:"ch10", it:"fare merenda", en:"to have a snack", type:"expression", extra:"Faccio merenda alle quattro = I have a snack at four" },
+  { set:"ch10", it:"restare", en:"to stay, to remain", type:"verb", irregular:true, extra:"Resto a casa = I stay home" },
+  { set:"ch10", it:"rimanere", en:"to stay, to remain", type:"verb", irregular:true, extra:"Rimango qui = I stay here" },
+  { set:"ch10", it:"tornare / ritornare", en:"to return, to go back", type:"verb", extra:"Torno a casa = I go home" },
+  { set:"ch10", it:"rivendere", en:"to resell", type:"verb", extra:"Il rivenditore rivende software = The reseller resells software" },
+  { set:"ch10", it:"venire", en:"to come", type:"verb", irregular:true, extra:"Vengo, vieni, viene, veniamo, venite, vengono" },
+  { set:"ch10", it:"adesso", en:"now", type:"adverb" },
+  { set:"ch10", it:"certamente", en:"certainly", type:"adverb" },
+  { set:"ch10", it:"che bello!", en:"how nice, how beautiful!", type:"expression", extra:"Che bello! = How nice!" },
+  { set:"ch10", it:"neanche / nemmeno / neppure", en:"not even", type:"adverb", extra:"Non ci vado nemmeno = I don’t even go there" },
+  { set:"ch10", it:"per esempio", en:"for example", type:"expression" },
+  { set:"ch10", it:"perfettamente", en:"perfectly", type:"adverb", extra:"Parlo perfettamente italiano = I speak Italian perfectly" },
+  { set:"ch10", it:"per fortuna!", en:"luckily, fortunately", type:"expression", extra:"Per fortuna! = Luckily!" },
+  { set:"ch10", it:"soprattutto", en:"most of all, especially", type:"adverb", extra:"Mi piace soprattutto il caffè = I especially like coffee" },
+  { set:"ch11", it:"l’affare", en:"business", type:"verb" , extra:"Gli affari = business matters" },
+  { set:"ch11", it:"la categoria", en:"category", type:"noun", gender:"f" , extra:"Categoria di parole = word class" },
+  { set:"ch11", it:"la civiltà", en:"civilization", type:"noun", gender:"f" , extra:"Civiltà moderna = modern civilization" },
+  { set:"ch11", it:"la data", en:"date", type:"noun", gender:"f" , extra:"La data di oggi = today's date" },
+  { set:"ch11", it:"il denaro", en:"money", type:"noun", gender:"m" , extra:"Usare il denaro = to use money" },
+  { set:"ch11", it:"l’occasione", en:"opportunity, occasion", type:"noun" , extra:"In quale occasione? = on what occasion?" },
+  { set:"ch11", it:"l’ora", en:"hour", type:"noun" , extra:"Che ora è? = What time is it?" },
+  { set:"ch11", it:"il progresso", en:"progress", type:"noun", gender:"m" , extra:"Fare progressi = to make progress" },
+  { set:"ch11", it:"la quantità", en:"quantity", type:"noun", gender:"f" , extra:"Esprimere quantità = express quantities" },
+  { set:"ch11", it:"la radio", en:"radio", type:"noun", gender:"f" },
+  { set:"ch11", it:"la scienza", en:"science", type:"noun", gender:"f" },
+  { set:"ch11", it:"i soldi", en:"money", type:"noun", gender:"m" },
+  { set:"ch11", it:"lo studio", en:"study", type:"noun", gender:"m" , extra:"Fare progressi negli studi = make progress in studies" },
+  { set:"ch11", it:"il telEfono", en:"telephone", type:"noun", gender:"m" , extra:"Numero di telefono = phone number" },
+  { set:"ch11", it:"la televisione", en:"television", type:"noun", gender:"f" },
+  { set:"ch11", it:"la temperatura", en:"temperature", type:"noun", gender:"f" , extra:"La temperatura è alta = temperature is high" },
+  { set:"ch11", it:"essenziale", en:"essential", type:"noun" },
+  { set:"ch11", it:"facile", en:"easy", type:"noun" },
+  { set:"ch11", it:"indispensAbile", en:"indispensable", type:"noun" },
+  { set:"ch11", it:"moderno / moderna", en:"modern", type:"adjective" },
+  { set:"ch11", it:"prOssimo / prOssima", en:"next", type:"adjective" , extra:"A giovedì prossimo = see you next Thursday" },
+  { set:"ch11", it:"quotidiano / quotidiana", en:"daily", type:"adjective" , extra:"Vita quotidiana = daily life" },
+  { set:"ch11", it:"dire sul serio", en:"to be serious", type:"verb", extra:"about something one says" },
+  { set:"ch11", it:"esprImere", en:"to express", type:"verb" },
+  { set:"ch11", it:"immaginare", en:"to imagine", type:"verb" },
+  { set:"ch11", it:"indovinare", en:"to guess", type:"verb" },
+  { set:"ch11", it:"pensare", en:"to think", type:"verb" , extra:"Pensare a = to think about" },
+  { set:"ch11", it:"prestare", en:"to lend", type:"verb" , extra:"Prestare denaro = to lend money" },
+  { set:"ch11", it:"provare", en:"to try, to feel", type:"verb" , extra:"Provare a = to try to" },
+  { set:"ch11", it:"risparmiare", en:"to save", type:"verb" , extra:"Risparmiare denaro = save money" },
+  { set:"ch11", it:"spEndere", en:"to spend", type:"verb" , extra:"Spendere soldi = spend money" },
+  { set:"ch11", it:"telefonare", en:"to telephone", type:"verb" , extra:"Telefonare a = to call someone" },
+  { set:"ch11", it:"usare", en:"to use", type:"verb" , extra:"Usare correttamente = use correctly" },
+  { set:"ch11", it:"correttamente", en:"correctly", type:"adverb" },
+  { set:"ch11", it:"davvero", en:"really", type:"noun" },
+  { set:"ch11", it:"nel frattempo", en:"in the meantime", type:"noun" },
+  { set:"ch11", it:"tutto il possIbile", en:"everything possible", type:"expression" , extra:"Fare tutto il possibile = do everything possible" },
+  { set:"ch13", it:"la biglietterIa", en:"ticket counter", type:"noun", gender:"f" },
+  { set:"ch13", it:"il biglietto", en:"ticket", type:"noun", gender:"m" },
+  { set:"ch13", it:"il centEsimo", en:"cent", type:"noun", gender:"m" },
+  { set:"ch13", it:"il collega", en:"colleague", type:"noun", gender:"m" },
+  { set:"ch13", it:"il conto", en:"bill, check, account", type:"noun", gender:"m" },
+  { set:"ch13", it:"la distanza", en:"distance", type:"noun", gender:"f" },
+  { set:"ch13", it:"il dOllaro", en:"dollar", type:"noun", gender:"m" },
+  { set:"ch13", it:"l’Euro", en:"euro", type:"noun" },
+  { set:"ch13", it:"i grandi magazzini", en:"department store", type:"expression", gender:"m" },
+  { set:"ch13", it:"la matemAtica", en:"mathematics", type:"noun", gender:"f" },
+  { set:"ch13", it:"il mercato", en:"market", type:"noun", gender:"m" },
+  { set:"ch13", it:"il pasto", en:"meal", type:"noun", gender:"m" },
+  { set:"ch13", it:"la prAtica", en:"practice", type:"noun", gender:"f" },
+  { set:"ch13", it:"il problema", en:"problem", type:"noun", gender:"m" },
+  { set:"ch13", it:"il programma", en:"program", type:"noun", gender:"m" },
+  { set:"ch13", it:"il resto", en:"change", type:"noun", gender:"m", extra:"of money" },
+  { set:"ch13", it:"il sistema", en:"system", type:"noun", gender:"m" },
+  { set:"ch13", it:"lo sportello", en:"ticket window", type:"noun", gender:"m" },
+  { set:"ch13", it:"l’unità", en:"unit", type:"noun" },
+  { set:"ch13", it:"europEo / europEa", en:"European", type:"adjective" },
+  { set:"ch13", it:"migliore", en:"better", type:"noun" },
+  { set:"ch13", it:"monetario / monetaria", en:"monetary", type:"adjective" },
+  { set:"ch13", it:"sEmplice", en:"simple", type:"noun" },
+  { set:"ch13", it:"uguale", en:"same, equal", type:"noun" },
+  { set:"ch13", it:"calcolare", en:"to calculate", type:"verb" },
+  { set:"ch13", it:"comprare", en:"to buy", type:"verb" },
+  { set:"ch13", it:"fare le cOmpere / fare cOmpere", en:"to go shopping", type:"verb", extra:"usually not for food" },
+  { set:"ch13", it:"fare le spese / fare spese", en:"to go shopping", type:"adjective", extra:"usually not for food" },
+  { set:"ch13", it:"fare la spesa", en:"to go grocery shopping", type:"verb" },
+  { set:"ch13", it:"incontrare", en:"to meet", type:"verb" },
+  { set:"ch13", it:"pagare", en:"to pay", type:"verb" },
+  { set:"ch13", it:"pesare", en:"to weigh", type:"verb" },
+  { set:"ch13", it:"valere", en:"to be worth", type:"verb" },
+  { set:"ch13", it:"circa", en:"about", type:"noun" },
+  { set:"ch13", it:"meno less,", en:"minus", type:"noun" },
+  { set:"ch13", it:"più more,", en:"plus", type:"noun" },
+  { set:"ch13", it:"proprio", en:"really", type:"noun" },
+  { set:"ch13", it:"ugualmente", en:"all the same, equally", type:"adverb" },
+  { set:"ch14", it:"l’aeroporto", en:"airport", type:"noun" },
+  { set:"ch14", it:"l’argomento", en:"topic", type:"noun" },
+  { set:"ch14", it:"il calcolo", en:"calculation", type:"noun", gender:"m" },
+  { set:"ch14", it:"il chilo, il chilogrammo", en:"kilo", type:"expression", gender:"m" },
+  { set:"ch14", it:"il chilometro", en:"kilometer", type:"noun", gender:"m" },
+  { set:"ch14", it:"la cintura", en:"belt", type:"noun", gender:"f" },
+  { set:"ch14", it:"la colazione", en:"breakfast", type:"noun", gender:"f" },
+  { set:"ch14", it:"il commesso / la commessa", en:"salesperson", type:"adjective", gender:"both" },
+  { set:"ch14", it:"il giorno", en:"day", type:"noun", gender:"m" },
+  { set:"ch14", it:"il guanto", en:"glove", type:"noun", gender:"m" },
+  { set:"ch14", it:"la libbra", en:"pound", type:"noun", gender:"f", extra:"weighing measure" },
+  { set:"ch14", it:"il miglio (le miglia)", en:"mile", type:"expression", gender:"m" },
+  { set:"ch14", it:"il negozio", en:"shop", type:"noun", gender:"m" },
+  { set:"ch14", it:"il negozio di abbigliamento", en:"clothing shop", type:"expression", gender:"m" },
+  { set:"ch14", it:"il paio", en:"pair", type:"noun", gender:"m" },
+  { set:"ch14", it:"la pelle", en:"leather, skin", type:"noun", gender:"f" },
+  { set:"ch14", it:"il peso", en:"weight", type:"noun", gender:"m" },
+  { set:"ch14", it:"il prezzo", en:"price", type:"noun", gender:"m" },
+  { set:"ch14", it:"il regalo", en:"gift", type:"noun", gender:"m" },
+  { set:"ch14", it:"il secolo", en:"century", type:"noun", gender:"m" },
+  { set:"ch14", it:"la somma", en:"sum", type:"noun", gender:"f" },
+  { set:"ch14", it:"la spesa", en:"expense, shopping", type:"noun", gender:"f" },
+  { set:"ch14", it:"il totale", en:"total", type:"noun", gender:"m" },
+  { set:"ch14", it:"l’uso", en:"use", type:"noun" },
+  { set:"ch14", it:"la valigia", en:"suitcase", type:"noun", gender:"f" },
+  { set:"ch14", it:"la virgola", en:"comma", type:"noun", gender:"f" },
+  { set:"ch14", it:"caro / cara", en:"expensive, dear", type:"adjective" },
+  { set:"ch14", it:"continentale", en:"continental", type:"noun" },
+  { set:"ch14", it:"conveniente", en:"reasonably priced", type:"noun" },
+  { set:"ch14", it:"corretto / corretta", en:"correct", type:"adjective" },
+  { set:"ch14", it:"pesante", en:"heavy", type:"noun" },
+  { set:"ch14", it:"stesso / stessa", en:"same, self", type:"adjective" },
+  { set:"ch14", it:"convertire", en:"to convert", type:"verb" },
+  { set:"ch14", it:"dividere", en:"to divide", type:"verb" },
+  { set:"ch14", it:"farcela", en:"to make it", type:"verb" },
+  { set:"ch14", it:"moltiplicare", en:"to multiply", type:"verb" },
+  { set:"ch14", it:"portare", en:"to bring, to carry", type:"verb" },
+  { set:"ch14", it:"regalare", en:"to give as a gift", type:"verb" },
+  { set:"ch14", it:"ancora un po’", en:"a little more", type:"expression" },
+  { set:"ch14", it:"ben detto!", en:"well said!", type:"noun" },
+  { set:"ch14", it:"in ritardo", en:"late", type:"noun" },
+  { set:"ch14", it:"ognuno", en:"each one", type:"noun" },
+  { set:"ch14", it:"lo stesso", en:"all the same", type:"noun", gender:"m" },
+  { set:"ch14", it:"tardi", en:"late", type:"noun" },
+  { set:"ch15", it:"l’andata", en:"one-way", type:"noun" },
+  { set:"ch15", it:"la cena", en:"dinner", type:"noun", gender:"f" },
+  { set:"ch15", it:"il cInema", en:"movie theater, cinema", type:"noun", gender:"m" },
+  { set:"ch15", it:"la classe", en:"class", type:"noun", gender:"f" },
+  { set:"ch15", it:"il latin lover", en:"latin lover", type:"expression", gender:"m" },
+  { set:"ch15", it:"la mattina, il mattino", en:"morning", type:"expression", gender:"f" },
+  { set:"ch15", it:"la notte", en:"night", type:"noun", gender:"f" },
+  { set:"ch15", it:"l’ora di cena", en:"dinnertime", type:"expression" },
+  { set:"ch15", it:"l’ora di pranzo", en:"lunchtime", type:"expression" },
+  { set:"ch15", it:"l’ossessione", en:"obsession", type:"noun" },
+  { set:"ch15", it:"il pranzo", en:"lunch", type:"noun", gender:"m" },
+  { set:"ch15", it:"il ritorno", en:"return", type:"noun", gender:"m" },
+  { set:"ch15", it:"la sera", en:"evening", type:"noun", gender:"f" },
+  { set:"ch15", it:"la società", en:"society", type:"noun", gender:"f" },
+  { set:"ch15", it:"lo spettacolo", en:"show", type:"noun", gender:"m" },
+  { set:"ch15", it:"il viaggiatore", en:"traveler", type:"noun", gender:"m" },
+  { set:"ch15", it:"romAntico / romAntica", en:"romantic", type:"adjective" },
+  { set:"ch15", it:"tanto / tanta", en:"much", type:"adjective" },
+  { set:"ch15", it:"fare la parte", en:"to play the part", type:"verb" },
+  { set:"ch15", it:"funzionare", en:"to work", type:"verb" },
+  { set:"ch15", it:"partire", en:"to leave", type:"verb", irregular:true },
+  { set:"ch15", it:"che peccato! peccato!", en:"too bad!", type:"expression" },
+  { set:"ch15", it:"insieme", en:"together", type:"noun" },
+  { set:"ch15", it:"mi dispiace", en:"I’m sorry", type:"noun" },
+  { set:"ch15", it:"purtroppo", en:"unfortunately", type:"noun" },
+  { set:"ch16", it:"l’alleato", en:"ally", type:"noun" },
+  { set:"ch16", it:"la caduta", en:"fall", type:"noun", gender:"f" },
+  { set:"ch16", it:"la camicia", en:"shirt", type:"noun", gender:"f" },
+  { set:"ch16", it:"la caramella", en:"candy", type:"noun", gender:"f" },
+  { set:"ch16", it:"il comandante", en:"commander", type:"noun", gender:"m" },
+  { set:"ch16", it:"il compleanno", en:"birthday", type:"noun", gender:"m" },
+  { set:"ch16", it:"la dittatura", en:"dictatorship", type:"noun", gender:"f" },
+  { set:"ch16", it:"l’enciclopedIa", en:"encyclopedia", type:"noun" },
+  { set:"ch16", it:"l’evento", en:"event", type:"noun" },
+  { set:"ch16", it:"la fine", en:"end", type:"noun", gender:"f" },
+  { set:"ch16", it:"la fondazione", en:"foundation", type:"noun", gender:"f" },
+  { set:"ch16", it:"la guerra", en:"war", type:"noun", gender:"f" },
+  { set:"ch16", it:"l’impressione", en:"impression", type:"noun" },
+  { set:"ch16", it:"l’inizio", en:"beginning", type:"noun" },
+  { set:"ch16", it:"l’Internet", en:"internet", type:"noun" },
+  { set:"ch16", it:"la leggenda", en:"legend", type:"noun", gender:"f" },
+  { set:"ch16", it:"la morte", en:"death", type:"noun", gender:"f" },
+  { set:"ch16", it:"il perIodo", en:"period", type:"noun", gender:"m" },
+  { set:"ch16", it:"il sito", en:"site", type:"noun", gender:"m" },
+  { set:"ch16", it:"la storia", en:"history, story", type:"noun", gender:"f" },
+  { set:"ch16", it:"la vittoria", en:"victory", type:"noun", gender:"f" },
+  { set:"ch16", it:"affascinante", en:"fascinating, charmin", type:"noun" },
+  { set:"ch16", it:"antico / antica", en:"ancient", type:"adjective" },
+  { set:"ch16", it:"corrispondente", en:"corresponding", type:"noun" },
+  { set:"ch16", it:"giusto / giusta", en:"right, just", type:"adjective" },
+  { set:"ch16", it:"incluso / inclusa", en:"included", type:"adjective" },
+  { set:"ch16", it:"militare", en:"military", type:"verb" },
+  { set:"ch16", it:"mondiale", en:"of the world", type:"noun" },
+  { set:"ch16", it:"ogni", en:"each", type:"noun" },
+  { set:"ch16", it:"recente", en:"recent", type:"noun" },
+  { set:"ch16", it:"triste", en:"sad", type:"noun" },
+  { set:"ch16", it:"cliccare", en:"to click", type:"verb" },
+  { set:"ch16", it:"confessare", en:"to confess", type:"verb" },
+  { set:"ch16", it:"fare bella figura", en:"to make a good impression, to look good", type:"verb" },
+  { set:"ch16", it:"fare brutta figura", en:"to make a bad impression, to look bad", type:"verb" },
+  { set:"ch16", it:"interessare", en:"to interest", type:"verb" },
+  { set:"ch16", it:"affatto", en:"at all", type:"noun" },
+  { set:"ch16", it:"altrettanto", en:"as much", type:"noun" },
+  { set:"ch16", it:"avanti", en:"before, come in", type:"noun" },
+  { set:"ch16", it:"ora", en:"now", type:"noun" },
+  { set:"ch16", it:"presto", en:"soon", type:"noun" },
+  { set:"ch16", it:"sotto forma di", en:"as, in the shape of", type:"expression" },
+  { set:"ch17", it:"l’abitante", en:"inhabitant", type:"noun" },
+  { set:"ch17", it:"l’altezza", en:"height", type:"noun" },
+  { set:"ch17", it:"la bugIa", en:"lie", type:"noun", gender:"f" },
+  { set:"ch17", it:"la catena di montagne", en:"mountain range", type:"expression", gender:"f" },
+  { set:"ch17", it:"la cima", en:"top", type:"noun", gender:"f" },
+  { set:"ch17", it:"le congratulazioni", en:"congratulations", type:"noun", gender:"f" },
+  { set:"ch17", it:"il dubbio", en:"doubt", type:"noun", gender:"m" },
+  { set:"ch17", it:"l’est", en:"East", type:"noun" },
+  { set:"ch17", it:"il fiume", en:"river", type:"noun", gender:"m" },
+  { set:"ch17", it:"la geografIa", en:"geography", type:"noun", gender:"f" },
+  { set:"ch17", it:"il mare", en:"sea", type:"noun", gender:"m" },
+  { set:"ch17", it:"il modo", en:"way", type:"noun", gender:"m" },
+  { set:"ch17", it:"la montagna", en:"mountain", type:"noun", gender:"f" },
+  { set:"ch17", it:"il nord", en:"North", type:"noun", gender:"m" },
+  { set:"ch17", it:"l’ovest", en:"West", type:"noun" },
+  { set:"ch17", it:"la penIsola", en:"peninsula", type:"noun", gender:"f" },
+  { set:"ch17", it:"il porto", en:"harbor", type:"noun", gender:"m" },
+  { set:"ch17", it:"il premio", en:"prize", type:"noun", gender:"m" },
+  { set:"ch17", it:"lo stivale", en:"boot", type:"noun", gender:"m" },
+  { set:"ch17", it:"il sud", en:"South", type:"noun", gender:"m" },
+  { set:"ch17", it:"alto / alta", en:"tall", type:"adjective" },
+  { set:"ch17", it:"basso / bassa", en:"short", type:"adjective" },
+  { set:"ch17", it:"comprensivo / comprensiva", en:"understanding", type:"adjective" },
+  { set:"ch17", it:"impaziente", en:"impatient", type:"noun" },
+  { set:"ch17", it:"incantEvole", en:"enchanting", type:"noun" },
+  { set:"ch17", it:"infinito / infinita", en:"infinite", type:"adjective" },
+  { set:"ch17", it:"largo / larga", en:"wide", type:"adjective" },
+  { set:"ch17", it:"paziente", en:"patient", type:"noun" },
+  { set:"ch17", it:"situato / situata", en:"situated", type:"adjective" },
+  { set:"ch17", it:"stretto / stretta", en:"narrow", type:"adjective" },
+  { set:"ch17", it:"televisivo / televisiva", en:"relating to television", type:"adjective" },
+  { set:"ch17", it:"dire una bugia, dire le bugie", en:"to tell a lie, to tell lies", type:"expression" },
+  { set:"ch17", it:"dire la verità", en:"to tell the truth", type:"verb" },
+  { set:"ch17", it:"essere d’accordo", en:"to agree", type:"verb" },
+  { set:"ch17", it:"offrire", en:"to offer", type:"verb" },
+  { set:"ch17", it:"superare", en:"to overcome", type:"verb" },
+  { set:"ch17", it:"a nord di", en:"North of", type:"expression" },
+  { set:"ch17", it:"al nord in/to", en:"the north", type:"adjective" },
+  { set:"ch17", it:"a sud di", en:"South of", type:"expression" },
+  { set:"ch17", it:"al sud in/to", en:"the south", type:"adjective" },
+  { set:"ch17", it:"a est di", en:"East of", type:"expression" },
+  { set:"ch17", it:"all’est in/to", en:"the east", type:"adjective" },
+  { set:"ch17", it:"a ovest di", en:"West of", type:"expression" },
+  { set:"ch17", it:"all’ovest in/to", en:"the west", type:"adjective" },
+  { set:"ch17", it:"be’", en:"well", type:"noun" },
+  { set:"ch17", it:"comunque", en:"anyway", type:"noun" },
+  { set:"ch17", it:"onestamente", en:"honestly", type:"adverb" },
+  { set:"ch17", it:"veramente", en:"truly", type:"adverb" },
+  { set:"ch19", it:"la brioche", en:"breakfast pastry", type:"noun", gender:"f" },
+  { set:"ch19", it:"i cereali", en:"cereal", type:"noun", gender:"m" },
+  { set:"ch19", it:"il cliente", en:"customer, client", type:"noun", gender:"m" },
+  { set:"ch19", it:"il colesterolo", en:"cholesterol", type:"noun", gender:"m" },
+  { set:"ch19", it:"la contraddizione", en:"contradiction", type:"noun", gender:"f" },
+  { set:"ch19", it:"la doccia", en:"shower", type:"noun", gender:"f" },
+  { set:"ch19", it:"dormiglione / dormigliona", en:"person who likes to sleep a lot", type:"adjective" },
+  { set:"ch19", it:"la natura", en:"nature", type:"noun", gender:"f" },
+  { set:"ch19", it:"l’ora di punta", en:"rush hour", type:"expression" },
+  { set:"ch19", it:"la pancetta", en:"bacon", type:"noun", gender:"f" },
+  { set:"ch19", it:"il pane", en:"bread", type:"noun", gender:"m" },
+  { set:"ch19", it:"la posta", en:"mail", type:"noun", gender:"f" },
+  { set:"ch19", it:"il succo d’arancia, la spremuta d’arancia", en:"orange juice", type:"expression", gender:"m" },
+  { set:"ch19", it:"la sveglia", en:"alarm clock", type:"noun", gender:"f" },
+  { set:"ch19", it:"il tempo", en:"time, weather", type:"noun", gender:"m" },
+  { set:"ch19", it:"la terrazza", en:"balcony", type:"noun", gender:"f" },
+  { set:"ch19", it:"l’uovo,", en:"plur.", type:"noun" },
+  { set:"ch19", it:"le uova", en:"egg", type:"noun", gender:"f" },
+  { set:"ch19", it:"la vIsita", en:"visit", type:"noun", gender:"f" },
+  { set:"ch19", it:"elettrOnico / elettrOnica", en:"electronic", type:"adjective" },
+  { set:"ch19", it:"mattiniero / mattiniera", en:"morning person", type:"adjective" },
+  { set:"ch19", it:"normale", en:"normal", type:"noun" },
+  { set:"ch19", it:"pronto / pronta", en:"ready", type:"adjective" },
+  { set:"ch19", it:"stanco / stanca", en:"tired", type:"adjective" },
+  { set:"ch19", it:"tostato / tostata", en:"toasted", type:"adjective" },
+  { set:"ch19", it:"alzarsi", en:"to get up", type:"verb" },
+  { set:"ch19", it:"americanizzarsi", en:"to become americanized", type:"verb" },
+  { set:"ch19", it:"camminare", en:"to walk", type:"verb" },
+  { set:"ch19", it:"cenare", en:"to have dinner", type:"verb" },
+  { set:"ch19", it:"dedicare", en:"to dedicate", type:"verb" },
+  { set:"ch19", it:"Essere in orario", en:"to be on time", type:"verb" },
+  { set:"ch19", it:"fare colazione", en:"to have breakfast", type:"verb" },
+  { set:"ch19", it:"fare piacere", en:"to please", type:"verb", irregular:true },
+  { set:"ch19", it:"farsi la doccia", en:"to shower", type:"verb" },
+  { set:"ch19", it:"lavarsi", en:"to wash oneself", type:"verb" },
+  { set:"ch19", it:"mangiare", en:"to eat", type:"verb" },
+  { set:"ch19", it:"passare", en:"to pass, to spend", type:"verb" },
+  { set:"ch19", it:"pranzare", en:"to have lunch", type:"verb" },
+  { set:"ch19", it:"preoccuparsi", en:"to worry", type:"verb" },
+  { set:"ch19", it:"scEndere", en:"to climb down, to get off", type:"verb" },
+  { set:"ch19", it:"sedersi", en:"to sit", type:"verb" },
+  { set:"ch19", it:"sentirsi", en:"to feel", type:"verb" },
+  { set:"ch19", it:"vestirsi", en:"to get dressed", type:"verb" },
+  { set:"ch19", it:"alla fine", en:"finally, at the end", type:"noun" },
+  { set:"ch19", it:"di buon’ora", en:"early in the morning", type:"noun" },
+  { set:"ch19", it:"di tanto in tanto", en:"from time to time", type:"expression" },
+  { set:"ch19", it:"infine", en:"finally", type:"noun" },
+  { set:"ch19", it:"in gEnere", en:"generally", type:"verb" },
+  { set:"ch19", it:"in punto", en:"on the dot", type:"noun" },
+  { set:"ch19", it:"poi", en:"then", type:"noun" },
+  { set:"ch19", it:"prima", en:"at first", type:"noun" },
+  { set:"ch19", it:"un’oretta", en:"about an hour", type:"noun" },
+  { set:"ch19", it:"verso", en:"around", type:"noun" },
+  { set:"ch20", it:"il burro", en:"butter", type:"noun", gender:"m" },
+  { set:"ch20", it:"la carne", en:"meat", type:"noun", gender:"f" },
+  { set:"ch20", it:"il centro commerciale", en:"shopping center", type:"expression", gender:"m" },
+  { set:"ch20", it:"la distrazione", en:"distraction", type:"noun", gender:"f" },
+  { set:"ch20", it:"il formaggio", en:"cheese", type:"noun", gender:"m" },
+  { set:"ch20", it:"il locale", en:"bar, restaurant, pub", type:"noun", gender:"m" },
+  { set:"ch20", it:"la macchinetta", en:"small machine", type:"noun", gender:"f" },
+  { set:"ch20", it:"il nido", en:"nest", type:"noun", gender:"m" },
+  { set:"ch20", it:"i pantaloni", en:"pants", type:"noun", gender:"m" },
+  { set:"ch20", it:"la pEntola", en:"pot", type:"noun", gender:"f" },
+  { set:"ch20", it:"il pesce", en:"fish", type:"noun", gender:"m" },
+  { set:"ch20", it:"il quartiere", en:"neighborhood", type:"verb", gender:"m" },
+  { set:"ch20", it:"il tempo lIbero", en:"free time", type:"expression", gender:"m" },
+  { set:"ch20", it:"l’uccello", en:"bird", type:"noun" },
+  { set:"ch20", it:"il vicino di casa / la vicina di casa", en:"neighbor", type:"adjective", gender:"both" },
+  { set:"ch20", it:"curioso / curiosa", en:"curious", type:"adjective" },
+  { set:"ch20", it:"fornito / fornita", en:"stocked", type:"adjective" },
+  { set:"ch20", it:"fortunato / fortunata", en:"lucky", type:"adjective" },
+  { set:"ch20", it:"bere", en:"to drink", type:"verb" },
+  { set:"ch20", it:"diventare", en:"to become", type:"verb" },
+  { set:"ch20", it:"permEttersi", en:"to afford, to allow oneself", type:"verb" },
+  { set:"ch20", it:"uscire", en:"to leave, to go out", type:"verb" },
+  { set:"ch20", it:"volere dire", en:"to mean", type:"verb", irregular:true },
+  { set:"ch20", it:"comodamente", en:"comfortably", type:"adverb" },
+  { set:"ch20", it:"in assoluto", en:"of all", type:"noun" },
+  { set:"ch20", it:"in periferIa", en:"on the outskirts, in the suburbs", type:"noun" },
+  { set:"ch20", it:"piuttosto", en:"rather", type:"noun" },
+  { set:"ch20", it:"temporaneamente", en:"temporarily", type:"adverb" },
+  { set:"ch21", it:"l’attaccapanni", en:"coat rack", type:"noun" },
+  { set:"ch21", it:"l’entusiasmo", en:"enthusiasm", type:"noun" },
+  { set:"ch21", it:"l’impermeAbile", en:"raincoat", type:"noun" },
+  { set:"ch21", it:"l’ombrello", en:"umbrella", type:"noun" },
+  { set:"ch21", it:"la poltrona", en:"armchair", type:"noun", gender:"f" },
+  { set:"ch21", it:"il portaombrelli", en:"umbrella rack", type:"noun", gender:"m" },
+  { set:"ch21", it:"la segretaria", en:"secretary", type:"noun", gender:"f" },
+  { set:"ch21", it:"il sorriso", en:"smile", type:"noun", gender:"m" },
+  { set:"ch21", it:"il tipo", en:"type", type:"noun", gender:"m" },
+  { set:"ch21", it:"la tisana", en:"herbal tea", type:"noun", gender:"f" },
+  { set:"ch21", it:"il vassoio", en:"tray", type:"noun", gender:"m" },
+  { set:"ch21", it:"la voce", en:"voice", type:"noun", gender:"f" },
+  { set:"ch21", it:"adatto / adatta", en:"appropriate", type:"adjective" },
+  { set:"ch21", it:"animato / animata", en:"animated", type:"adjective" },
+  { set:"ch21", it:"bagnato / bagnata", en:"wet", type:"adjective" },
+  { set:"ch21", it:"bollente", en:"boiling", type:"noun" },
+  { set:"ch21", it:"caffeinato / caffeinata", en:"caffeinated", type:"adjective" },
+  { set:"ch21", it:"caldo / calda", en:"hot", type:"adjective" },
+  { set:"ch21", it:"dedicato / dedicata", en:"dedicated", type:"adjective" },
+  { set:"ch21", it:"orrIbile", en:"horrible", type:"noun" },
+  { set:"ch21", it:"terribile", en:"terrible", type:"noun" },
+  { set:"ch21", it:"entrare", en:"to enter", type:"verb" },
+  { set:"ch21", it:"mEttere", en:"to put", type:"verb" },
+  { set:"ch21", it:"pErdere", en:"to lose", type:"verb" },
+  { set:"ch21", it:"piOvere a catinelle", en:"to rain cats and dogs", type:"verb" },
+  { set:"ch21", it:"ringraziare", en:"to thank", type:"verb" },
+  { set:"ch21", it:"riscaldarsi", en:"to warm up", type:"verb" },
+  { set:"ch21", it:"servire", en:"to serve", type:"verb" },
+  { set:"ch21", it:"sorrIdere", en:"to smile", type:"verb" },
+  { set:"ch21", it:"versare", en:"to pour", type:"verb" },
+  { set:"ch21", it:"fino a, fino a quando", en:"until", type:"expression" },
+  { set:"ch21", it:"mentre", en:"while", type:"noun" },
+  { set:"ch21", it:"pure", en:"also", type:"noun" },
+  { set:"ch21", it:"troppo", en:"too, too much", type:"noun" },
+  { set:"ch22", it:"l’Albero", en:"tree", type:"noun" },
+  { set:"ch22", it:"l’aria", en:"air", type:"noun" },
+  { set:"ch22", it:"il cambiamento", en:"change", type:"noun", gender:"m" },
+  { set:"ch22", it:"il clima", en:"climate", type:"noun", gender:"m" },
+  { set:"ch22", it:"la differenza", en:"difference", type:"noun", gender:"f" },
+  { set:"ch22", it:"l’influenza", en:"influence", type:"noun" },
+  { set:"ch22", it:"l’Isola", en:"island", type:"noun" },
+  { set:"ch22", it:"il mezzo, i mezzi", en:"means", type:"expression", gender:"m" },
+  { set:"ch22", it:"la nebbia", en:"fog", type:"noun", gender:"f" },
+  { set:"ch22", it:"la nUvola", en:"cloud", type:"noun", gender:"f" },
+  { set:"ch22", it:"la presenza", en:"presence", type:"noun", gender:"f" },
+  { set:"ch22", it:"il territorio", en:"territory, area", type:"noun", gender:"m" },
+  { set:"ch22", it:"fresco / fresca", en:"fresh", type:"adjective" },
+  { set:"ch22", it:"esagerato / esagerata", en:"exaggerated", type:"adjective" },
+  { set:"ch22", it:"eterno / eterna", en:"eternal", type:"adjective" },
+  { set:"ch22", it:"intero / intera", en:"entire", type:"adjective" },
+  { set:"ch22", it:"luminoso / luminosa", en:"light", type:"adjective" },
+  { set:"ch22", it:"mite", en:"mild", type:"noun" },
+  { set:"ch22", it:"moderato / moderata", en:"moderate", type:"adjective" },
+  { set:"ch22", it:"neutrale", en:"neutral", type:"noun" },
+  { set:"ch22", it:"nuvoloso", en:"cloudy", type:"noun" },
+  { set:"ch22", it:"piacEvole", en:"pleasant", type:"noun" },
+  { set:"ch22", it:"rifiutato / rifiutata", en:"rejected", type:"adjective" },
+  { set:"ch22", it:"sereno", en:"clear", type:"noun" },
+  { set:"ch22", it:"variAbile", en:"variable", type:"noun" },
+  { set:"ch22", it:"decIdere", en:"to decide", type:"verb" },
+  { set:"ch22", it:"nevicare", en:"to snow", type:"verb" },
+  { set:"ch22", it:"scherzare", en:"to joke", type:"verb" },
+  { set:"ch22", it:"splEndere", en:"to shine", type:"verb" },
+  { set:"ch22", it:"a causa di", en:"because of", type:"expression" },
+  { set:"ch22", it:"altrove", en:"elsewhere", type:"noun" },
+  { set:"ch22", it:"a poco a poco", en:"little by little", type:"expression" },
+  { set:"ch22", it:"fuori", en:"outside", type:"noun" },
+  { set:"ch22", it:"infatti", en:"in fact, indeed", type:"noun" },
+  { set:"ch22", it:"inoltre", en:"furthermore", type:"noun" },
+  { set:"ch22", it:"qui / qua", en:"here", type:"adjective" },
+  { set:"ch22", it:"tutto d’un tratto", en:"suddenly", type:"expression" },
+  { set:"ch23", it:"il consiglio", en:"advice", type:"noun", gender:"m" },
+  { set:"ch23", it:"l’esame", en:"exam", type:"noun" },
+  { set:"ch23", it:"la foglia", en:"leaf", type:"noun", gender:"f" },
+  { set:"ch23", it:"la frontiera", en:"border", type:"noun", gender:"f" },
+  { set:"ch23", it:"il luogo", en:"place", type:"noun", gender:"m" },
+  { set:"ch23", it:"la poesIa", en:"poem, poetry", type:"noun", gender:"f" },
+  { set:"ch23", it:"il prato", en:"lawn", type:"noun", gender:"m" },
+  { set:"ch23", it:"il profumo", en:"scent, perfume", type:"noun", gender:"m" },
+  { set:"ch23", it:"lo smog", en:"smog", type:"noun", gender:"m" },
+  { set:"ch23", it:"la spiaggia", en:"beach", type:"noun", gender:"f" },
+  { set:"ch23", it:"il venticello", en:"breeze", type:"noun", gender:"m" },
+  { set:"ch23", it:"la vista", en:"view", type:"noun", gender:"f" },
+  { set:"ch23", it:"abbondante", en:"abundant", type:"noun" },
+  { set:"ch23", it:"asciutto / asciutta", en:"dry", type:"adjective" },
+  { set:"ch23", it:"coperto / coperta", en:"covered", type:"adjective" },
+  { set:"ch23", it:"delizioso / deliziosa", en:"delightful", type:"adjective" },
+  { set:"ch23", it:"denso / densa", en:"dense", type:"adjective" },
+  { set:"ch23", it:"dolce", en:"sweet", type:"noun" },
+  { set:"ch23", it:"entusiasta", en:"enthusiastic", type:"noun" },
+  { set:"ch23", it:"meraviglioso / meravigliosa", en:"marvelous", type:"adjective" },
+  { set:"ch23", it:"nativo / nativa", en:"native", type:"adjective" },
+  { set:"ch23", it:"vicino / vicina", en:"close", type:"adjective" },
+  { set:"ch23", it:"visIbile", en:"visible", type:"noun" },
+  { set:"ch23", it:"assomigliare, somigliare", en:"to resemble", type:"verb" },
+  { set:"ch23", it:"brillare", en:"to shine", type:"verb" },
+  { set:"ch23", it:"distare", en:"to be far from", type:"verb" },
+  { set:"ch23", it:"dovere", en:"to have to, must, may, to owe", type:"verb", irregular:true },
+  { set:"ch23", it:"esistere", en:"to exist", type:"verb" },
+  { set:"ch23", it:"sentire dire", en:"to hear say", type:"verb", irregular:true },
+  { set:"ch23", it:"spiegare", en:"to explain", type:"verb" },
+  { set:"ch23", it:"del nord", en:"Northern", type:"noun" },
+  { set:"ch23", it:"del sud", en:"Southern", type:"noun" },
+  { set:"ch23", it:"qualsIasi", en:"any", type:"noun" },
+  { set:"ch23", it:"qualunque", en:"any", type:"noun" },
+  { set:"ch23", it:"quindi", en:"therefore", type:"noun" },
+  { set:"ch24", it:"l’abitUdine", en:"habit", type:"noun" },
+  { set:"ch24", it:"l’arte", en:"art", type:"noun" },
+  { set:"ch24", it:"il basIlico", en:"basil", type:"noun", gender:"m" },
+  { set:"ch24", it:"il cibo", en:"food", type:"noun", gender:"m" },
+  { set:"ch24", it:"il frigo, il frigorIfero", en:"refrigerator", type:"expression", gender:"m" },
+  { set:"ch24", it:"l’insalata", en:"salad", type:"noun" },
+  { set:"ch24", it:"la lista", en:"list", type:"noun", gender:"f" },
+  { set:"ch24", it:"l’olio d’oliva", en:"olive oil", type:"noun" },
+  { set:"ch24", it:"la partenza", en:"departure", type:"noun", gender:"f" },
+  { set:"ch24", it:"la passione", en:"passion", type:"noun", gender:"f" },
+  { set:"ch24", it:"la pastasciutta", en:"pasta", type:"noun", gender:"f" },
+  { set:"ch24", it:"il piacere", en:"pleasure", type:"verb", gender:"m" },
+  { set:"ch24", it:"il pollo", en:"chicken", type:"noun", gender:"m" },
+  { set:"ch24", it:"la qualità", en:"quality", type:"noun", gender:"f" },
+  { set:"ch24", it:"il risotto", en:"rice pilaf", type:"noun", gender:"m" },
+  { set:"ch24", it:"il sapore", en:"flavor", type:"noun", gender:"m" },
+  { set:"ch24", it:"il segreto", en:"secret", type:"noun", gender:"m" },
+  { set:"ch24", it:"la specialità", en:"specialty", type:"noun", gender:"f" },
+  { set:"ch24", it:"lo spezzatino", en:"meat stew", type:"noun", gender:"m" },
+  { set:"ch24", it:"il sugo", en:"sauce", type:"noun", gender:"m" },
+  { set:"ch24", it:"il turista", en:"tourist", type:"noun", gender:"m" },
+  { set:"ch24", it:"la varietà", en:"variety", type:"noun", gender:"f" },
+  { set:"ch24", it:"il vino", en:"wine", type:"noun", gender:"m" },
+  { set:"ch24", it:"lo zafferano", en:"saffron", type:"noun", gender:"m" },
+  { set:"ch24", it:"a person", en:"who totally refrains from", type:"noun" },
+  { set:"ch24", it:"maturo / matura", en:"ripe", type:"adjective" },
+  { set:"ch24", it:"misto / mista", en:"mixed", type:"adjective" },
+  { set:"ch24", it:"monOtono / monOtona", en:"monotonous", type:"adjective" },
+  { set:"ch24", it:"naturale", en:"natural", type:"noun" },
+  { set:"ch24", it:"arrEndersi", en:"to give up", type:"verb" },
+  { set:"ch24", it:"assaggiare", en:"to taste", type:"verb" },
+  { set:"ch24", it:"avere l’acquolina in bocca", en:"to have one’s mouth water", type:"expression" },
+  { set:"ch24", it:"conservare", en:"to keep, to preserve", type:"verb" },
+  { set:"ch24", it:"cucinare", en:"to cook", type:"verb" },
+  { set:"ch24", it:"variare", en:"to vary", type:"verb" },
+  { set:"ch24", it:"a seconda di", en:"depending on", type:"expression" },
+  { set:"ch24", it:"accidenti!", en:"wow! shucks!", type:"noun" },
+  { set:"ch24", it:"altro che!", en:"of course!", type:"noun" },
+  { set:"ch24", it:"come no!", en:"of course!", type:"noun" },
+  { set:"ch24", it:"di stagione", en:"in season", type:"noun" },
+  { set:"ch24", it:"facilmente", en:"easily", type:"adverb" },
+  { set:"ch25", it:"l’appuntamento", en:"appointment, date", type:"noun" },
+  { set:"ch25", it:"l’artista", en:"artist", type:"noun" },
+  { set:"ch25", it:"l’attrazione", en:"attraction", type:"noun" },
+  { set:"ch25", it:"la bellezza", en:"beauty", type:"noun", gender:"f" },
+  { set:"ch25", it:"la carezza", en:"caress", type:"noun", gender:"f" },
+  { set:"ch25", it:"l’Epoca", en:"time period", type:"noun" },
+  { set:"ch25", it:"il fAscino", en:"charm", type:"noun", gender:"m" },
+  { set:"ch25", it:"la grandezza", en:"greatness, size", type:"noun", gender:"f" },
+  { set:"ch25", it:"la guida", en:"guide", type:"noun", gender:"f" },
+  { set:"ch25", it:"la letteratura", en:"literature", type:"noun", gender:"f" },
+  { set:"ch25", it:"il monumento", en:"monument", type:"noun", gender:"m" },
+  { set:"ch25", it:"la mUsica", en:"music", type:"noun", gender:"f" },
+  { set:"ch25", it:"la pittura", en:"painting", type:"noun", gender:"f" },
+  { set:"ch25", it:"il poeta / la poetessa", en:"poet", type:"adjective", gender:"both" },
+  { set:"ch25", it:"lo scrittore / la scrittrice", en:"writer", type:"adjective", gender:"both" },
+  { set:"ch25", it:"la scultura", en:"sculpture", type:"noun", gender:"f" },
+  { set:"ch25", it:"la sede", en:"location", type:"noun", gender:"f" },
+  { set:"ch25", it:"il tema", en:"theme", type:"noun", gender:"m" },
+  { set:"ch25", it:"il tesoro", en:"treasure", type:"noun", gender:"m" },
+  { set:"ch25", it:"l’uomo d’affari / la donna d’affari", en:"businessman, businesswoman", type:"adjective", gender:"f" },
+  { set:"ch25", it:"il vulcano", en:"volcano", type:"noun", gender:"m" },
+  { set:"ch25", it:"attivo / attiva", en:"active", type:"adjective" },
+  { set:"ch25", it:"eccezionale", en:"exceptional", type:"noun" },
+  { set:"ch25", it:"insOlito / insOlita", en:"unusual", type:"adjective" },
+  { set:"ch25", it:"preparato / preparata", en:"prepared", type:"adjective" },
+  { set:"ch25", it:"turIstico / turIstica", en:"touristic", type:"adjective" },
+  { set:"ch25", it:"abbandonare", en:"to abandon", type:"verb" },
+  { set:"ch25", it:"cEdere", en:"to yield", type:"verb" },
+  { set:"ch25", it:"circondare", en:"to surround", type:"verb" },
+  { set:"ch25", it:"descrIvere", en:"to describe", type:"verb" },
+  { set:"ch25", it:"dispiacere", en:"to be sorry, to displease", type:"verb" },
+  { set:"ch25", it:"innamorarsi di", en:"to fall in love with", type:"verb" },
+  { set:"ch25", it:"interessarsi", en:"to be interested in", type:"verb" },
+  { set:"ch25", it:"nominare", en:"to name", type:"verb" },
+  { set:"ch25", it:"a quanto pare", en:"from what it seems", type:"expression" },
+  { set:"ch25", it:"cAspita!", en:"wow!", type:"noun" },
+  { set:"ch25", it:"dappertutto", en:"everywhere", type:"noun" },
+  { set:"ch25", it:"di persona", en:"in person", type:"noun" },
+  { set:"ch25", it:"più…più…", en:"the more … the more…", type:"noun" },
+  { set:"ch26", it:"l’ambiente", en:"environment", type:"noun" },
+  { set:"ch26", it:"l’amore", en:"love", type:"noun" },
+  { set:"ch26", it:"la caratterIstica", en:"characteristic", type:"noun", gender:"f" },
+  { set:"ch26", it:"il dolore", en:"pain", type:"noun", gender:"m" },
+  { set:"ch26", it:"l’eccezione", en:"exception", type:"noun" },
+  { set:"ch26", it:"l’effetto", en:"effect", type:"noun" },
+  { set:"ch26", it:"l’emozione", en:"emotion", type:"noun" },
+  { set:"ch26", it:"la fAbbrica", en:"factory", type:"noun", gender:"f" },
+  { set:"ch26", it:"il fIsico", en:"physique", type:"noun", gender:"m" },
+  { set:"ch26", it:"la gioia", en:"joy", type:"noun", gender:"f" },
+  { set:"ch26", it:"l’industria", en:"industry", type:"noun" },
+  { set:"ch26", it:"il luogo comune", en:"common place, cliché", type:"expression", gender:"m" },
+  { set:"ch26", it:"il medioevo", en:"Middle Ages", type:"noun", gender:"m" },
+  { set:"ch26", it:"i normanni", en:"Normans", type:"noun", gender:"m" },
+  { set:"ch26", it:"l’odio", en:"hatred", type:"noun" },
+  { set:"ch26", it:"la permanenza", en:"permanence", type:"noun", gender:"f" },
+  { set:"ch26", it:"il pOpolo", en:"people", type:"noun", gender:"m" },
+  { set:"ch26", it:"la questione", en:"issue", type:"noun", gender:"f" },
+  { set:"ch26", it:"la restrizione", en:"restriction", type:"noun", gender:"f" },
+  { set:"ch26", it:"lo stereOtipo", en:"stereotype", type:"noun", gender:"m" },
+  { set:"ch26", it:"il temperamento", en:"temperament", type:"noun", gender:"m" },
+  { set:"ch26", it:"il tiramisù", en:"a dessert made with espresso-soaked ladyfingers and mascarpone cheese", type:"noun", gender:"m" },
+  { set:"ch26", it:"il vigore", en:"vigor", type:"noun", gender:"m" },
+  { set:"ch26", it:"biondo / bionda", en:"blond-haired", type:"adjective" },
+  { set:"ch26", it:"breve", en:"brief", type:"noun" },
+  { set:"ch26", it:"considerEvole", en:"considerable", type:"noun" },
+  { set:"ch26", it:"disponIbile", en:"available", type:"noun" },
+  { set:"ch26", it:"moro / mora", en:"dark-haired", type:"adjective" },
+  { set:"ch26", it:"passionale", en:"passionate", type:"noun" },
+  { set:"ch26", it:"polItico / polItica", en:"political", type:"adjective" },
+  { set:"ch26", it:"rilassante", en:"relaxing", type:"noun" },
+  { set:"ch26", it:"rilassato / rilassata", en:"relaxed", type:"adjective" },
+  { set:"ch26", it:"teso / tesa", en:"tense", type:"adjective" },
+  { set:"ch26", it:"cadere", en:"to fall", type:"verb" },
+  { set:"ch26", it:"cercare", en:"to look for", type:"verb" },
+  { set:"ch26", it:"discUtere", en:"to discuss", type:"verb" },
+  { set:"ch26", it:"ordinare", en:"to order", type:"verb" },
+  { set:"ch26", it:"osservare", en:"to observe", type:"verb" },
+  { set:"ch26", it:"ripEtere", en:"to repeat", type:"verb" },
+  { set:"ch26", it:"chissà", en:"who knows", type:"noun" },
+  { set:"ch26", it:"chissà perché", en:"I wonder why", type:"noun" },
+  { set:"ch26", it:"durante", en:"during", type:"noun" },
+  { set:"ch26", it:"finalmente", en:"finally", type:"adverb" },
+  { set:"ch26", it:"in comune", en:"in common", type:"noun" },
+  { set:"ch26", it:"in media", en:"on average", type:"noun" },
+  { set:"ch26", it:"in pieno", en:"fully", type:"noun" },
+  { set:"ch26", it:"malgrado", en:"despite", type:"noun" },
+  { set:"ch26", it:"prevalentemente", en:"mostly", type:"adverb" },
+  { set:"ch26", it:"prima di tutto", en:"first of all", type:"expression" },
+  { set:"ch26", it:"secondo me, secondo te, ecc.", en:"in my opinion, in your opinion, etc.", type:"expression" },
+  { set:"ch27", it:"l’agenzia di viaggi", en:"travel agency", type:"expression" },
+  { set:"ch27", it:"l’artigiano", en:"craftsman", type:"noun" },
+  { set:"ch27", it:"il bagaglio / i bagagli", en:"baggage", type:"adjective", gender:"m" },
+  { set:"ch27", it:"la basIlica", en:"basilica", type:"noun", gender:"f" },
+  { set:"ch27", it:"la collezione", en:"collection", type:"noun", gender:"f" },
+  { set:"ch27", it:"i dintorni", en:"surroundings", type:"noun", gender:"m" },
+  { set:"ch27", it:"la gita", en:"day trip", type:"noun", gender:"f" },
+  { set:"ch27", it:"il giro", en:"trip", type:"noun", gender:"m" },
+  { set:"ch27", it:"il lago", en:"lake", type:"noun", gender:"m" },
+  { set:"ch27", it:"il musEo", en:"museum", type:"noun", gender:"m" },
+  { set:"ch27", it:"l’oggetto", en:"object", type:"noun" },
+  { set:"ch27", it:"l’Opera", en:"work, opera", type:"noun" },
+  { set:"ch27", it:"il papa", en:"pope", type:"noun", gender:"m" },
+  { set:"ch27", it:"il progetto", en:"project", type:"noun", gender:"m" },
+  { set:"ch27", it:"lo scavo", en:"excavation", type:"noun", gender:"m" },
+  { set:"ch27", it:"il soggiorno", en:"stay", type:"noun", gender:"m" },
+  { set:"ch27", it:"il vaporetto", en:"steamboat typical of Venice", type:"noun", gender:"m" },
+  { set:"ch27", it:"il vetro", en:"glass", type:"noun", gender:"m" },
+  { set:"ch27", it:"immaginario / immaginaria", en:"imaginary", type:"adjective" },
+  { set:"ch27", it:"impossIbile", en:"impossible", type:"noun" },
+  { set:"ch27", it:"possIbile", en:"posisble", type:"noun" },
+  { set:"ch27", it:"straordinario / straordinaria", en:"extraordinary", type:"adjective" },
+  { set:"ch27", it:"andare in vacanza", en:"to go on vacation", type:"verb" },
+  { set:"ch27", it:"assicurare", en:"to assure, to insure", type:"verb" },
+  { set:"ch27", it:"dimenticare", en:"to forget", type:"verb" },
+  { set:"ch27", it:"mancare", en:"to miss", type:"verb" },
+  { set:"ch27", it:"organizzare", en:"to organize", type:"verb" },
+  { set:"ch27", it:"prolungare", en:"to prolong", type:"verb" },
+  { set:"ch27", it:"a disposizione", en:"available", type:"noun" },
+  { set:"ch27", it:"almeno", en:"at least", type:"noun" },
+  { set:"ch27", it:"lì / là", en:"there", type:"adjective" },
+  { set:"ch27", it:"perbacco!", en:"gosh!", type:"noun" },
+  { set:"ch28", it:"l’aiuto", en:"help", type:"noun" },
+  { set:"ch28", it:"l’attesa", en:"wait", type:"noun" },
+  { set:"ch28", it:"la busta", en:"envelope", type:"noun", gender:"f" },
+  { set:"ch28", it:"la cassetta postale", en:"mailbox", type:"expression", gender:"f" },
+  { set:"ch28", it:"la conclusione", en:"conclusion", type:"noun", gender:"f" },
+  { set:"ch28", it:"la conoscenza", en:"acquaintance, knowledge", type:"noun", gender:"f" },
+  { set:"ch28", it:"la copia", en:"copy", type:"noun", gender:"f" },
+  { set:"ch28", it:"la corrispondenza", en:"correspondence", type:"noun", gender:"f" },
+  { set:"ch28", it:"il destinatario", en:"addressee", type:"noun", gender:"m" },
+  { set:"ch28", it:"l’errore", en:"mistake", type:"noun" },
+  { set:"ch28", it:"l’espressione", en:"expression", type:"noun" },
+  { set:"ch28", it:"il francobollo", en:"stamp", type:"noun", gender:"m" },
+  { set:"ch28", it:"l’indirizzo", en:"address", type:"noun" },
+  { set:"ch28", it:"la gentilezza", en:"kindness", type:"noun", gender:"f" },
+  { set:"ch28", it:"il mittente", en:"sender", type:"noun", gender:"m" },
+  { set:"ch28", it:"la ragione", en:"reason", type:"noun", gender:"f" },
+  { set:"ch28", it:"il ringraziamento", en:"giving thanks, thanksgiving", type:"noun", gender:"m" },
+  { set:"ch28", it:"il servizio", en:"service", type:"noun", gender:"m" },
+  { set:"ch28", it:"la speranza", en:"hope", type:"noun", gender:"f" },
+  { set:"ch28", it:"il successo", en:"success", type:"noun", gender:"m" },
+  { set:"ch28", it:"il tItolo", en:"title", type:"noun", gender:"m" },
+  { set:"ch28", it:"commerciale", en:"commerical", type:"noun" },
+  { set:"ch28", it:"cordiale", en:"cordial", type:"noun" },
+  { set:"ch28", it:"intitolato / intitolata", en:"titled", type:"adjective" },
+  { set:"ch28", it:"occupato / occupata", en:"busy, occupied", type:"adjective" },
+  { set:"ch28", it:"sincero / sincera", en:"sincere", type:"adjective" },
+  { set:"ch28", it:"apprezzare", en:"to appreciate", type:"verb" },
+  { set:"ch28", it:"approfittare di", en:"to take advantage of", type:"verb" },
+  { set:"ch28", it:"contribuire", en:"to contribute", type:"verb" },
+  { set:"ch28", it:"fissare", en:"to fix", type:"verb" },
+  { set:"ch28", it:"informare", en:"to inform", type:"verb" },
+  { set:"ch28", it:"sorprEndere", en:"to surprise", type:"verb" },
+  { set:"ch28", it:"come al sOlito", en:"as usual", type:"expression" },
+  { set:"ch28", it:"con piacere", en:"with pleasure", type:"verb" },
+  { set:"ch28", it:"già", en:"already", type:"noun" },
+  { set:"ch28", it:"nello stesso tempo, allo stesso tempo", en:"at the same time", type:"expression" },
+  { set:"ch29", it:"la familiarità", en:"familiarity", type:"noun", gender:"f" },
+  { set:"ch29", it:"il punto di vista", en:"point of view", type:"expression", gender:"m" },
+  { set:"ch29", it:"lo sbaglio", en:"mistake", type:"noun", gender:"m" },
+  { set:"ch29", it:"Abile", en:"able", type:"noun" },
+  { set:"ch29", it:"dannoso / dannosa", en:"harmful", type:"adjective" },
+  { set:"ch29", it:"entrambi / entrambe", en:"both", type:"adjective" },
+  { set:"ch29", it:"magro / magra", en:"thin", type:"adjective" },
+  { set:"ch29", it:"profittEvole", en:"profitable", type:"noun" },
+  { set:"ch29", it:"riccio / riccia", en:"curly", type:"adjective" },
+  { set:"ch29", it:"rispettoso / rispettosa", en:"respectful", type:"adjective" },
+  { set:"ch29", it:"serio / seria", en:"serious", type:"adjective" },
+  { set:"ch29", it:"sportivo / sportiva", en:"sporty", type:"adjective" },
+  { set:"ch29", it:"congratularsi", en:"to congratulate oneself", type:"verb" },
+  { set:"ch29", it:"crepare", en:"to die", type:"verb" },
+  { set:"ch29", it:"fare la conoscenza", en:"to meet", type:"verb", extra:"for the first time" },
+  { set:"ch29", it:"inviare", en:"to send", type:"verb" },
+  { set:"ch29", it:"mandare", en:"to send", type:"verb" },
+  { set:"ch29", it:"rEndere", en:"to make", type:"verb", extra:"something" },
+  { set:"ch29", it:"riconOscere", en:"to recognize", type:"verb" },
+  { set:"ch29", it:"riuscire", en:"to succeed", type:"verb" },
+  { set:"ch29", it:"tenere", en:"to keep, to hold", type:"verb", irregular:true },
+  { set:"ch29", it:"fortunatamente", en:"fortunately", type:"adverb" },
+  { set:"ch29", it:"interamente", en:"entirely", type:"adverb" },
+  { set:"ch29", it:"poiché", en:"since", type:"noun" },
+  { set:"ch29", it:"soltanto, solamente, solo", en:"only", type:"expression" },
+  { set:"ch30", it:"l’aria condizionata", en:"air conditioning", type:"noun" },
+  { set:"ch30", it:"la cortesIa", en:"courtesy", type:"noun", gender:"f" },
+  { set:"ch30", it:"l’esperienza", en:"experience", type:"noun" },
+  { set:"ch30", it:"la formalità", en:"formality", type:"noun", gender:"f" },
+  { set:"ch30", it:"l’interesse", en:"interest", type:"noun" },
+  { set:"ch30", it:"il mal di testa", en:"headache", type:"expression", gender:"m" },
+  { set:"ch30", it:"l’ospitalità", en:"hospitality", type:"noun" },
+  { set:"ch30", it:"il rispetto", en:"respect", type:"noun", gender:"m" },
+  { set:"ch30", it:"il rumore", en:"noise", type:"noun", gender:"m" },
+  { set:"ch30", it:"il sonnellino, il pisolino", en:"nap", type:"expression", gender:"m" },
+  { set:"ch30", it:"il soffio", en:"breath", type:"noun", gender:"m" },
+  { set:"ch30", it:"il tentativo", en:"attempt", type:"noun", gender:"m" },
+  { set:"ch30", it:"il valore", en:"value", type:"noun", gender:"m" },
+  { set:"ch30", it:"agitato / agitata", en:"agitated", type:"adjective" },
+  { set:"ch30", it:"degno / degna", en:"worthy", type:"adjective" },
+  { set:"ch30", it:"desiderAbile", en:"desirable", type:"noun" },
+  { set:"ch30", it:"innamorato / innamorata", en:"in love", type:"adjective" },
+  { set:"ch30", it:"irritAbile", en:"irritable", type:"noun" },
+  { set:"ch30", it:"nuovo / nuova", en:"new", type:"adjective" },
+  { set:"ch30", it:"ospitale", en:"hospitable", type:"noun" },
+  { set:"ch30", it:"profondo / profonda", en:"deep, profound", type:"adjective" },
+  { set:"ch30", it:"rotto / rotta", en:"broken", type:"adjective" },
+  { set:"ch30", it:"abbracciare", en:"to embrace", type:"verb" },
+  { set:"ch30", it:"abituarsi", en:"to get used to", type:"verb" },
+  { set:"ch30", it:"cogliere", en:"to gather", type:"verb" },
+  { set:"ch30", it:"cOrrere", en:"to run", type:"verb" },
+  { set:"ch30", it:"morire", en:"to die", type:"verb" },
+  { set:"ch30", it:"nascere", en:"to be born", type:"verb" },
+  { set:"ch30", it:"raccomandare", en:"to recommend", type:"verb" },
+  { set:"ch30", it:"ricordare", en:"to remember", type:"verb" },
+  { set:"ch30", it:"rilassarsi", en:"to relax", type:"verb" },
+  { set:"ch30", it:"rinunciare", en:"to give up", type:"verb" },
+  { set:"ch30", it:"sfuggire", en:"to flee", type:"verb" },
+  { set:"ch30", it:"stringersi la mano", en:"to shake hands", type:"verb" },
+  { set:"ch30", it:"del resto", en:"after all", type:"noun" },
+  { set:"ch30", it:"in generale", en:"in general", type:"noun" },
+  { set:"ch30", it:"in quanto a…", en:"as far as…", type:"expression" },
+  { set:"ch30", it:"non vedere l’ora", en:"can’t wait", type:"expression" },
+  { set:"ch31", it:"l’amicizia", en:"friendship", type:"noun" },
+  { set:"ch31", it:"l’assistente", en:"assistant", type:"noun" },
+  { set:"ch31", it:"l’assistente di volo", en:"flight attendant", type:"expression" },
+  { set:"ch31", it:"il bAncomat", en:"ATM machine, ATM card", type:"noun", gender:"m" },
+  { set:"ch31", it:"la carta d’imbarco", en:"boarding pass", type:"expression", gender:"f" },
+  { set:"ch31", it:"il check-in, l’accettazione", en:"check-in counter", type:"expression", gender:"m" },
+  { set:"ch31", it:"la cintura di sicurezza", en:"seatbelt", type:"expression", gender:"f" },
+  { set:"ch31", it:"il controllo", en:"check", type:"noun", gender:"m" },
+  { set:"ch31", it:"il gioco", en:"game", type:"noun", gender:"m" },
+  { set:"ch31", it:"la fila", en:"line", type:"noun", gender:"f" },
+  { set:"ch31", it:"il lusso", en:"luxury", type:"noun", gender:"m" },
+  { set:"ch31", it:"il messaggio", en:"message", type:"noun", gender:"m" },
+  { set:"ch31", it:"la misura", en:"measure", type:"noun", gender:"f" },
+  { set:"ch31", it:"il passaporto", en:"passport", type:"noun", gender:"m" },
+  { set:"ch31", it:"il pensiero", en:"thought", type:"noun", gender:"m" },
+  { set:"ch31", it:"la posta elettrOnica", en:"email", type:"expression", gender:"f" },
+  { set:"ch31", it:"il sedile", en:"seat", type:"noun", gender:"m" },
+  { set:"ch31", it:"il senso", en:"sense", type:"noun", gender:"m" },
+  { set:"ch31", it:"la sicurezza", en:"security, safety", type:"noun", gender:"f" },
+  { set:"ch31", it:"il vuoto", en:"emptiness", type:"noun", gender:"m" },
+  { set:"ch31", it:"assorto / assorta", en:"absorbed", type:"adjective", extra:"in thought, in reading, etc." },
+  { set:"ch31", it:"interessato / interessata", en:"interested", type:"adjective" },
+  { set:"ch31", it:"preciso / precisa", en:"precise", type:"adjective" },
+  { set:"ch31", it:"trAgico / trAgica", en:"tragic", type:"adjective" },
+  { set:"ch31", it:"accomodarsi", en:"to make oneself comfortable", type:"verb" },
+  { set:"ch31", it:"allacciare", en:"to fasten", type:"verb" },
+  { set:"ch31", it:"approfondire", en:"to deepen", type:"verb" },
+  { set:"ch31", it:"imbarcarsi", en:"to board", type:"verb" },
+  { set:"ch31", it:"intrattenere", en:"to entertain", type:"verb" },
+  { set:"ch31", it:"mostrare", en:"to show", type:"verb" },
+  { set:"ch31", it:"ottenere", en:"to obtain", type:"verb" },
+  { set:"ch31", it:"prelevare", en:"to withdraw", type:"verb" },
+  { set:"ch31", it:"promEttere", en:"to promise", type:"verb" },
+  { set:"ch31", it:"volare", en:"to fly", type:"verb" },
+  { set:"ch31", it:"calorosamente", en:"warmly", type:"adverb" },
+  { set:"ch31", it:"particolarmente", en:"particularly", type:"adverb" },
+  { set:"ch31", it:"seriamente", en:"seriously", type:"adverb" },
+  { set:"ch32", it:"l’Angolo", en:"corner", type:"noun" },
+  { set:"ch32", it:"l’ascensore", en:"elevator", type:"noun" },
+  { set:"ch32", it:"la dogana", en:"customs", type:"noun", gender:"f" },
+  { set:"ch32", it:"la velocità", en:"speed", type:"noun", gender:"f" },
+  { set:"ch32", it:"compreso / compresa", en:"included", type:"adjective" },
+  { set:"ch32", it:"orgoglioso / orgogliosa", en:"proud", type:"adjective" },
+  { set:"ch32", it:"prenotato / prenotata", en:"reserved", type:"adjective" },
+  { set:"ch32", it:"salvo / salva", en:"safe", type:"adjective" },
+  { set:"ch32", it:"sano / sana", en:"healthy", type:"adjective" },
+  { set:"ch32", it:"tranquillo / tranquilla", en:"calm", type:"adjective" },
+  { set:"ch32", it:"vertiginoso / vertiginosa", en:"extremely high", type:"adjective" },
+  { set:"ch32", it:"accompagnare", en:"to accompany", type:"verb" },
+  { set:"ch32", it:"avvicinarsi", en:"to approach", type:"verb" },
+  { set:"ch32", it:"dichiarare", en:"to declare", type:"verb" },
+  { set:"ch32", it:"fermarsi", en:"to stop", type:"verb" },
+  { set:"ch32", it:"girare", en:"to turn", type:"verb" },
+  { set:"ch32", it:"guardarsi intorno", en:"to look around", type:"verb" },
+  { set:"ch32", it:"ritirare", en:"to claim", type:"verb" },
+  { set:"ch32", it:"sbagliarsi", en:"to make a mistake", type:"verb" },
+  { set:"ch32", it:"appena", en:"barely", type:"noun" },
+  { set:"ch32", it:"a tutta velocità, a gran velocità", en:"at full speed, very fast", type:"expression" },
+  { set:"ch32", it:"c’è tempo", en:"there is time", type:"noun" },
+  { set:"ch32", it:"con calma", en:"take it easy", type:"noun" },
+  { set:"ch32", it:"sano e salvo", en:"safe and sound", type:"expression" },
+  { set:"ch33", it:"l’antipasto", en:"appetizer", type:"noun" },
+  { set:"ch33", it:"l’avvocato", en:"lawyer", type:"noun" },
+  { set:"ch33", it:"il brodo", en:"broth", type:"noun", gender:"m" },
+  { set:"ch33", it:"la cameriera", en:"maid, waitress", type:"noun", gender:"f" },
+  { set:"ch33", it:"la cerimonia", en:"ceremony", type:"noun", gender:"f" },
+  { set:"ch33", it:"la chitarra", en:"guitar", type:"noun", gender:"f" },
+  { set:"ch33", it:"il cOmpito", en:"homework, task", type:"noun", gender:"m" },
+  { set:"ch33", it:"il contorno", en:"side dish", type:"noun", gender:"m" },
+  { set:"ch33", it:"la coppia", en:"couple", type:"noun", gender:"f" },
+  { set:"ch33", it:"il desiderio", en:"desire", type:"noun", gender:"m" },
+  { set:"ch33", it:"il fidanzato / la fidanzata", en:"fiancé / fiancée", type:"adjective", gender:"both" },
+  { set:"ch33", it:"il giovanotto", en:"youth", type:"noun", gender:"m" },
+  { set:"ch33", it:"l’interrogazione", en:"oral exam", type:"noun" },
+  { set:"ch33", it:"il licEo", en:"high school", type:"noun", gender:"m" },
+  { set:"ch33", it:"il matrimonio", en:"wedding, marriage", type:"noun", gender:"m" },
+  { set:"ch33", it:"la minestra", en:"soup", type:"noun", gender:"f" },
+  { set:"ch33", it:"il mEdico", en:"doctor", type:"noun", gender:"m" },
+  { set:"ch33", it:"il palazzo", en:"building", type:"noun", gender:"m" },
+  { set:"ch33", it:"il parente", en:"relative", type:"noun", gender:"m" },
+  { set:"ch33", it:"il passo", en:"step", type:"noun", gender:"m" },
+  { set:"ch33", it:"il pezzo", en:"piece", type:"noun", gender:"m" },
+  { set:"ch33", it:"il ricevimento", en:"reception", type:"noun", gender:"m" },
+  { set:"ch33", it:"il ricordo", en:"memory", type:"noun", gender:"m" },
+  { set:"ch33", it:"il suOcero / la suOcera", en:"father-in-law / mother-in-law", type:"adjective", gender:"both" },
+  { set:"ch33", it:"affascinato / affascinata", en:"fascinated", type:"adjective" },
+  { set:"ch33", it:"ammobiliato / ammobiliata", en:"furnished", type:"adjective" },
+  { set:"ch33", it:"clAssico / clAssica", en:"classical", type:"adjective" },
+  { set:"ch33", it:"filippino / filippina", en:"Filipino", type:"adjective" },
+  { set:"ch33", it:"grazioso / graziosa", en:"beautiful, cute", type:"adjective" },
+  { set:"ch33", it:"indimenticAbile", en:"unforgettable", type:"noun" },
+  { set:"ch33", it:"minore", en:"lesser, younger", type:"noun" },
+  { set:"ch33", it:"scorso / scorsa", en:"last", type:"adjective", extra:"in the sense of latest" },
+  { set:"ch33", it:"squisito / squisita", en:"delicious", type:"adjective" },
+  { set:"ch33", it:"cantare", en:"to sing", type:"verb" },
+  { set:"ch33", it:"chiamare", en:"to call", type:"verb" },
+  { set:"ch33", it:"sposarsi", en:"to get married", type:"verb" },
+  { set:"ch33", it:"suonare", en:"to play", type:"verb", extra:"an instrument" },
+  { set:"ch33", it:"avanti!", en:"come in!", type:"noun" },
+  { set:"ch33", it:"buon appetito!", en:"happy eating!", type:"noun", extra:"said at table before eating" },
+  { set:"ch33", it:"permesso?", en:"excuse me, may I?", type:"noun" },
+  { set:"ch33", it:"tra due mesi", en:"in two months", type:"expression" },
+  { set:"ch34", it:"il concerto", en:"concert", type:"noun", gender:"m" },
+  { set:"ch34", it:"il cricco", en:"jack", type:"noun", gender:"m", extra:"to lift a car" },
+  { set:"ch34", it:"il destino", en:"destiny", type:"noun", gender:"m" },
+  { set:"ch34", it:"la frenata", en:"brake", type:"noun", gender:"f" },
+  { set:"ch34", it:"la gomma", en:"tire", type:"noun", gender:"f" },
+  { set:"ch34", it:"l’email", en:"email", type:"noun" },
+  { set:"ch34", it:"il portabagagli", en:"trunk of a car", type:"noun", gender:"m" },
+  { set:"ch34", it:"il ragazzo", en:"boyfriend, boy", type:"noun", gender:"m" },
+  { set:"ch34", it:"la ragazza", en:"girlfriend, girl", type:"noun", gender:"f" },
+  { set:"ch34", it:"la ruota di scorta", en:"spare tire", type:"expression", gender:"f" },
+  { set:"ch34", it:"il segnale", en:"road sign", type:"noun", gender:"m" },
+  { set:"ch34", it:"il volante", en:"steering wheel", type:"noun", gender:"m" },
+  { set:"ch34", it:"lo zAino", en:"backpack", type:"noun", gender:"m" },
+  { set:"ch34", it:"disperato / disperata", en:"desperate", type:"adjective" },
+  { set:"ch34", it:"grosso / grossa", en:"big", type:"adjective" },
+  { set:"ch34", it:"rumoroso / rumorosa", en:"noisy", type:"adjective" },
+  { set:"ch34", it:"attEndere, aspettare", en:"to wait", type:"verb" },
+  { set:"ch34", it:"bruciare", en:"to burn", type:"verb" },
+  { set:"ch34", it:"bucare", en:"to puncture, to make a hole", type:"verb" },
+  { set:"ch34", it:"chiacchierare", en:"to chat", type:"verb" },
+  { set:"ch34", it:"dare una mano", en:"to give a hand", type:"verb" },
+  { set:"ch34", it:"guidare", en:"to drive", type:"verb" },
+  { set:"ch34", it:"mEttersi al lavoro", en:"to get to work", type:"verb" },
+  { set:"ch34", it:"rIdere", en:"to laugh", type:"verb" },
+  { set:"ch34", it:"unirsi", en:"to join", type:"verb" },
+  { set:"ch34", it:"volere una mano", en:"to want a hand", type:"verb" },
+  { set:"ch34", it:"a terra, gomma a terra", en:"to the ground, flat tire", type:"expression" },
+  { set:"ch34", it:"meno male", en:"thanks goodness", type:"noun" },
+  { set:"ch34", it:"sfortunatamente", en:"unfortunately", type:"adverb" },
+  { set:"ch34", it:"spericolatamente", en:"dangerously", type:"adverb" },
+  { set:"ch35", it:"l’attore / l’attrice", en:"actore / actress", type:"adjective" },
+  { set:"ch35", it:"la cartina", en:"map", type:"noun", gender:"f" },
+  { set:"ch35", it:"il club", en:"club", type:"noun", gender:"m" },
+  { set:"ch35", it:"il disco, il dischetto", en:"disk", type:"expression", gender:"m" },
+  { set:"ch35", it:"l’elefante", en:"elephant", type:"noun" },
+  { set:"ch35", it:"la fontana", en:"fountain", type:"noun", gender:"f" },
+  { set:"ch35", it:"il giocAttolo", en:"toy", type:"noun", gender:"m" },
+  { set:"ch35", it:"il momento", en:"moment", type:"noun", gender:"m" },
+  { set:"ch35", it:"la moneta", en:"coin", type:"noun", gender:"f" },
+  { set:"ch35", it:"il / la passante", en:"passerby", type:"adjective", gender:"both" },
+  { set:"ch35", it:"la passeggiata", en:"stroll", type:"noun", gender:"f" },
+  { set:"ch35", it:"il ponte", en:"bridge", type:"noun", gender:"m" },
+  { set:"ch35", it:"il portAtile", en:"laptop", type:"noun", gender:"m" },
+  { set:"ch35", it:"la salita", en:"climb, uphill", type:"noun", gender:"f" },
+  { set:"ch35", it:"la scalinata", en:"staircase", type:"noun", gender:"f" },
+  { set:"ch35", it:"lo scalino", en:"stair", type:"noun", gender:"m" },
+  { set:"ch35", it:"la vetrina", en:"window", type:"noun", gender:"f", extra:"of a shop" },
+  { set:"ch35", it:"il venditore ambulante", en:"street vendor", type:"expression", gender:"m" },
+  { set:"ch35", it:"faticoso / faticosa", en:"tiring", type:"adjective" },
+  { set:"ch35", it:"piratato / piratata", en:"pirated, illegally produced", type:"adjective" },
+  { set:"ch35", it:"stancante", en:"tiring", type:"noun" },
+  { set:"ch35", it:"ammirare", en:"to admire", type:"verb" },
+  { set:"ch35", it:"colpire", en:"to strike", type:"verb" },
+  { set:"ch35", it:"continuare", en:"to continue", type:"verb" },
+  { set:"ch35", it:"gettare", en:"to throw", type:"verb" },
+  { set:"ch35", it:"godere", en:"to enjoy", type:"verb" },
+  { set:"ch35", it:"passeggiare", en:"to stroll", type:"verb" },
+  { set:"ch35", it:"riposarsi", en:"to rest", type:"verb" },
+  { set:"ch35", it:"riprEndere fiato", en:"to catch one’s breath", type:"verb" },
+  { set:"ch35", it:"rubare", en:"to steal", type:"verb" },
+  { set:"ch35", it:"seguire", en:"to follow", type:"verb" },
+  { set:"ch35", it:"temere", en:"to fear", type:"verb" },
+  { set:"ch35", it:"tradire", en:"to betray", type:"verb" },
+  { set:"ch35", it:"a lungo", en:"for a long time", type:"noun" },
+  { set:"ch35", it:"a volte", en:"at times", type:"noun" },
+  { set:"ch35", it:"in cima", en:"at the top of", type:"noun" },
+  { set:"ch35", it:"laggiù", en:"down there", type:"noun" },
+  { set:"ch35", it:"lassù", en:"up there", type:"noun" },
+  { set:"ch35", it:"stamattina", en:"this morning", type:"noun" },
+  { set:"ch35", it:"su!", en:"come on", type:"noun" },
+  { set:"ch35", it:"su andiamo", en:"come on, let’s get going", type:"noun" },
+  { set:"ch36", it:"il campo", en:"field", type:"noun", gender:"m" },
+  { set:"ch36", it:"la cartolina", en:"postcard", type:"noun", gender:"f" },
+  { set:"ch36", it:"il cipresso", en:"cypress", type:"noun", gender:"m" },
+  { set:"ch36", it:"il contadino / la contadina", en:"farmer", type:"adjective", gender:"both" },
+  { set:"ch36", it:"il cuoco / la cuoca", en:"cook", type:"adjective", gender:"both" },
+  { set:"ch36", it:"la fermata", en:"stop", type:"noun", gender:"f" },
+  { set:"ch36", it:"il finestrino", en:"car window", type:"noun", gender:"m" },
+  { set:"ch36", it:"il grano", en:"wheat", type:"noun", gender:"m" },
+  { set:"ch36", it:"il gruppo", en:"group", type:"noun", gender:"m" },
+  { set:"ch36", it:"il lupo", en:"wolf", type:"noun", gender:"m" },
+  { set:"ch36", it:"la memoria", en:"memory", type:"noun", gender:"f" },
+  { set:"ch36", it:"il negozietto", en:"small shop", type:"noun", gender:"m" },
+  { set:"ch36", it:"l’oggettino", en:"small object", type:"noun" },
+  { set:"ch36", it:"l’olivo", en:"olive tree", type:"noun" },
+  { set:"ch36", it:"l’oliva", en:"olive", type:"noun" },
+  { set:"ch36", it:"l’osservatorio", en:"observatory", type:"noun" },
+  { set:"ch36", it:"la pietra", en:"stone", type:"noun", gender:"f" },
+  { set:"ch36", it:"la residenza", en:"residence", type:"noun", gender:"f" },
+  { set:"ch36", it:"il ricordino", en:"memento", type:"noun", gender:"m" },
+  { set:"ch36", it:"il riposo", en:"rest", type:"noun", gender:"m" },
+  { set:"ch36", it:"gli spaghetti alla carbonara", en:"spaghetti with eggs and bacon", type:"expression", gender:"m" },
+  { set:"ch36", it:"la trattorIa", en:"small restaurant", type:"noun", gender:"f" },
+  { set:"ch36", it:"la vigna", en:"vineyard", type:"noun", gender:"f" },
+  { set:"ch36", it:"la zona", en:"area", type:"noun", gender:"f" },
+  { set:"ch36", it:"astronOmico / astronOmica", en:"astronomical", type:"adjective" },
+  { set:"ch36", it:"dorato / dorata", en:"golden", type:"adjective" },
+  { set:"ch36", it:"estivo / estiva", en:"summer", type:"adjective" },
+  { set:"ch36", it:"obbligato / obbligata", en:"obliged", type:"adjective" },
+  { set:"ch36", it:"secco / secca", en:"dry", type:"adjective" },
+  { set:"ch36", it:"vecchio / vecchia", en:"old", type:"adjective" },
+  { set:"ch36", it:"considerare", en:"to consider", type:"verb" },
+  { set:"ch36", it:"dare del Lei", en:"to address someone with the Lei form", type:"verb" },
+  { set:"ch36", it:"dare del tu", en:"to address someone with the tu form", type:"verb" },
+  { set:"ch36", it:"esIgere", en:"to demand", type:"verb" },
+  { set:"ch36", it:"fare un brIndisi / brindare", en:"to offer a toast, to toast", type:"verb" },
+  { set:"ch36", it:"produrre", en:"to produce", type:"verb" },
+  { set:"ch36", it:"raccontare", en:"to tell", type:"verb" },
+  { set:"ch36", it:"risalire", en:"to climb back up", type:"verb" },
+  { set:"ch36", it:"al dente", en:"still a tiny bit hard in the middle, said of pasta and rice", type:"noun" },
+  { set:"ch36", it:"alla carbonara", en:"with eggs, cheese and bacon", type:"noun" },
+  { set:"ch36", it:"alla griglia", en:"grilled", type:"noun" },
+  { set:"ch36", it:"allo spiedo", en:"spit-roasted", type:"noun" },
+  { set:"ch37", it:"l’Abito", en:"suit, dress", type:"noun" },
+  { set:"ch37", it:"l’annuncio", en:"announcement", type:"noun" },
+  { set:"ch37", it:"il cartello", en:"sign", type:"noun", gender:"m" },
+  { set:"ch37", it:"il cavallo", en:"horse", type:"noun", gender:"m" },
+  { set:"ch37", it:"la contrada", en:"neighborhood", type:"noun", gender:"f" },
+  { set:"ch37", it:"la corsa", en:"run, race", type:"noun", gender:"f" },
+  { set:"ch37", it:"il cortEo", en:"pageant", type:"noun", gender:"m" },
+  { set:"ch37", it:"il costume", en:"costume, bathing suit", type:"noun", gender:"m" },
+  { set:"ch37", it:"il fantino", en:"jockey", type:"noun", gender:"m" },
+  { set:"ch37", it:"la festa", en:"party", type:"noun", gender:"f" },
+  { set:"ch37", it:"la pena", en:"punishment", type:"noun", gender:"f" },
+  { set:"ch37", it:"la sella", en:"saddle", type:"noun", gender:"f" },
+  { set:"ch37", it:"lo straniero / la straniera", en:"stranger, foreigner", type:"adjective", gender:"both" },
+  { set:"ch37", it:"il veterinario / la veterinaria", en:"veterinarian", type:"adjective", gender:"both" },
+  { set:"ch37", it:"affollato / affollata", en:"crowded", type:"adjective" },
+  { set:"ch37", it:"eccitante", en:"exciting", type:"noun" },
+  { set:"ch37", it:"medievale", en:"medieval", type:"noun" },
+  { set:"ch37", it:"prezioso / preziosa", en:"precious", type:"adjective" },
+  { set:"ch37", it:"puro / pura", en:"pure", type:"adjective" },
+  { set:"ch37", it:"separato / separata", en:"separated", type:"adjective" },
+  { set:"ch37", it:"avere intenzione di", en:"to have the intention of", type:"verb" },
+  { set:"ch37", it:"cavalcare", en:"to ride a horse", type:"verb" },
+  { set:"ch37", it:"partecipare", en:"to participate", type:"verb" },
+  { set:"ch37", it:"scoprire", en:"to discover", type:"verb" },
+  { set:"ch37", it:"svOlgersi", en:"to take place", type:"verb" },
+  { set:"ch37", it:"volere bene a", en:"to love", type:"verb" },
+  { set:"ch37", it:"a prima vista", en:"at first sight", type:"expression" },
+  { set:"ch37", it:"perché no?", en:"why not?", type:"noun" },
+  { set:"ch37", it:"saggiamente", en:"wisely", type:"adverb" },
+  { set:"ch37", it:"siccome", en:"since", type:"noun" },
+  { set:"ch38", it:"l’affermazione", en:"statement", type:"noun" },
+  { set:"ch38", it:"l’anello", en:"ring", type:"noun" },
+  { set:"ch38", it:"l’arcata", en:"archway", type:"noun" },
+  { set:"ch38", it:"l’artigianato", en:"crafts", type:"noun" },
+  { set:"ch38", it:"la borsetta", en:"handbag", type:"noun", gender:"f" },
+  { set:"ch38", it:"il braccialetto", en:"bracelet", type:"noun", gender:"m" },
+  { set:"ch38", it:"il brillante", en:"small diamond", type:"noun", gender:"m" },
+  { set:"ch38", it:"la civilizzazione", en:"civilization", type:"noun", gender:"f" },
+  { set:"ch38", it:"la collana", en:"necklace", type:"noun", gender:"f" },
+  { set:"ch38", it:"il gioiello", en:"jewel", type:"noun", gender:"m" },
+  { set:"ch38", it:"l’orecchino", en:"earring", type:"noun" },
+  { set:"ch38", it:"l’oro", en:"gold", type:"noun" },
+  { set:"ch38", it:"la ricchezza", en:"richness", type:"noun", gender:"f" },
+  { set:"ch38", it:"l’universo", en:"universe", type:"noun" },
+  { set:"ch38", it:"cresciuto / cresciuta", en:"raised, grown", type:"adjective" },
+  { set:"ch38", it:"elegante", en:"elegant", type:"noun" },
+  { set:"ch38", it:"nato / nata", en:"born", type:"adjective" },
+  { set:"ch38", it:"pittoresco / pittoresca", en:"picturesque", type:"adjective" },
+  { set:"ch38", it:"sconosciuto / sconosciuta", en:"unknown", type:"adjective" },
+  { set:"ch38", it:"sufficiente", en:"sufficient", type:"noun" },
+  { set:"ch38", it:"appartenere", en:"to belong", type:"verb" },
+  { set:"ch38", it:"essere senza parole", en:"to be speechless", type:"verb" },
+  { set:"ch38", it:"rrere", en:"to flow", type:"verb" },
+  { set:"ch38", it:"affettuosamente", en:"affectionately", type:"adverb" },
+  { set:"ch38", it:"d’eccezione", en:"exceptional", type:"noun" },
+  { set:"ch38", it:"di nuovo", en:"again", type:"noun" },
+  { set:"ch38", it:"di ritorno", en:"back", type:"noun" },
+  { set:"ch39", it:"il capo di abbigliamento", en:"item of clothing", type:"expression", gender:"m" },
+  { set:"ch39", it:"il compagno / la compagna", en:"mate", type:"adjective", gender:"both" },
+  { set:"ch39", it:"il funerale", en:"funeral", type:"noun", gender:"m" },
+  { set:"ch39", it:"la gelosIa", en:"jealousy", type:"noun", gender:"f" },
+  { set:"ch39", it:"l’incontro", en:"encounter", type:"noun" },
+  { set:"ch39", it:"il lungomare", en:"walkway or street along the sea", type:"verb", gender:"m" },
+  { set:"ch39", it:"il proprietario / la proprietaria", en:"owner", type:"adjective", gender:"both" },
+  { set:"ch39", it:"il sospetto", en:"suspicion", type:"noun", gender:"m" },
+  { set:"ch39", it:"disteso / distesa", en:"lying down, relaxed", type:"adjective" },
+  { set:"ch39", it:"ideale", en:"ideal", type:"noun" },
+  { set:"ch39", it:"presentarsi", en:"to introduce oneself", type:"verb" },
+  { set:"ch39", it:"respIngere", en:"to reject", type:"verb" },
+  { set:"ch39", it:"riaccompagnare", en:"to accompany someone back", type:"verb" },
+  { set:"ch39", it:"scambiare", en:"to exchange", type:"verb" },
+  { set:"ch39", it:"a braccetto", en:"arm in arm", type:"noun" },
+  { set:"ch39", it:"al sole", en:"in the sun", type:"noun" },
+  { set:"ch39", it:"anzi", en:"on the contrary", type:"noun" },
+  { set:"ch39", it:"da solo / da sola", en:"alone", type:"adjective" },
+  { set:"ch40", it:"l’albicocca", en:"apricot", type:"noun" },
+  { set:"ch40", it:"la dignità", en:"dignity", type:"noun", gender:"f" },
+  { set:"ch40", it:"la facilità", en:"ease", type:"noun", gender:"f" },
+  { set:"ch40", it:"la frAgola", en:"strawberry", type:"noun", gender:"f" },
+  { set:"ch40", it:"il gianduia", en:"chocolate-hazelnut", type:"noun", gender:"m" },
+  { set:"ch40", it:"la mela", en:"apple", type:"noun", gender:"f" },
+  { set:"ch40", it:"la nocciola", en:"hazelnut", type:"noun", gender:"f" },
+  { set:"ch40", it:"la pera", en:"pear", type:"noun", gender:"f" },
+  { set:"ch40", it:"la pesca", en:"peach", type:"noun", gender:"f" },
+  { set:"ch40", it:"il remo", en:"oar", type:"noun", gender:"m" },
+  { set:"ch40", it:"la sabbia", en:"sand", type:"noun", gender:"f" },
+  { set:"ch40", it:"la susina", en:"plum", type:"noun", gender:"f" },
+  { set:"ch40", it:"il torroncino", en:"nougat", type:"noun", gender:"m" },
+  { set:"ch40", it:"calmo / calma", en:"calm", type:"adjective" },
+  { set:"ch40", it:"geloso / gelosa", en:"jealous", type:"adjective" },
+  { set:"ch40", it:"informato / informata", en:"informed", type:"adjective" },
+  { set:"ch40", it:"abbronzarsi", en:"to tan", type:"verb" },
+  { set:"ch40", it:"andare in barca a vela", en:"to sail", type:"expression" },
+  { set:"ch40", it:"nuotare", en:"to swim", type:"verb" },
+  { set:"ch40", it:"prEndere il sole", en:"to sunbathe", type:"verb" },
+  { set:"ch40", it:"remare", en:"to row", type:"verb" },
+  { set:"ch40", it:"decentemente", en:"decently", type:"adverb" },
+  { set:"ch40", it:"l’uno per l’altra", en:"one for the other", type:"expression" },
+  { set:"ch40", it:"per caso", en:"by chance", type:"noun" },
+  { set:"ch40", it:"perfino", en:"even", type:"noun" },
+];
+
+/* ============================================================
+   SPACED REPETITION (simple SM-2-ish)
+   ============================================================ */
+const STORE_KEY = "imsFlashcards_all_v2";
+let state = loadState();
+
+function loadState() {
+  try {
+    const raw = localStorage.getItem(STORE_KEY);
+    if (raw) return JSON.parse(raw);
+  } catch (e) {}
+  return { progress: {}, seen: {} };
+}
+function saveState() {
+  try { localStorage.setItem(STORE_KEY, JSON.stringify(state)); } catch (e) {}
+}
+
+function getProg(id) {
+  if (!state.progress[id]) state.progress[id] = { reps: 0, interval: 0, ease: 2.5, due: 0 };
+  return state.progress[id];
+}
+function markSeen(id) {
+  state.seen[id] = (state.seen[id] || 0) + 1;
+}
+
+const CHAPTER_ORDER = { ch0: 0, ch1: 1, ch2: 2, ch3: 3, ch4: 4, ch5: 5, ch7: 6, ch8: 7, ch9: 8, ch10: 9, ch11: 10, ch13: 11, ch14: 12, ch15: 13, ch16: 14, ch17: 15, ch19: 16, ch20: 17, ch21: 18, ch22: 19, ch23: 20, ch24: 21, ch25: 22, ch26: 23, ch27: 24, ch28: 25, ch29: 26, ch30: 27, ch31: 28, ch32: 29, ch33: 30, ch34: 31, ch35: 32, ch36: 33, ch37: 34, ch38: 35, ch39: 36, ch40: 37 };
+const STUDY_THROUGH = { through0: 0, through1: 1, through2: 2, through3: 3, through4: 4, through5: 5, through7: 6, through8: 7, through9: 8, through10: 9, through11: 10, through13: 11, through14: 12, through15: 13, through16: 14, through17: 15, through19: 16, through20: 17, through21: 18, through22: 19, through23: 20, through24: 21, through25: 22, through26: 23, through27: 24, through28: 25, through29: 26, through30: 27, through31: 28, through32: 29, through33: 30, through34: 31, through35: 32, through36: 33, through37: 34, through38: 35, through39: 36, through40: 37 };
+
+function onlySelectedChapter() {
+  return $("onlyChapter").checked;
+}
+
+function includeIntroCards() {
+  return $("includeIntro").checked;
+}
+
+function cardsForSet(setFilter) {
+  const lastChapter = STUDY_THROUGH[setFilter] ?? 37;
+  // If the user explicitly picked the Introduction range, always show those cards —
+  // otherwise the "Include numbers & days" box could hide the very set they selected.
+  const introRange = lastChapter === 0;
+  return CARDS.filter(c => (c.set !== "ch0" || includeIntroCards() || introRange)
+    && (onlySelectedChapter()
+      ? CHAPTER_ORDER[c.set] === lastChapter
+      : CHAPTER_ORDER[c.set] <= lastChapter));
+}
+
+function shuffle(cards) {
+  const result = [...cards];
+  for (let i = result.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [result[i], result[j]] = [result[j], result[i]];
+  }
+  return result;
+}
+
+function buildDeck(setFilter) {
+  const now = Date.now();
+  const due = cardsForSet(setFilter).filter(c => {
+    const p = state.progress[cardId(c)];
+    return !p || p.due <= now;
+  });
+  return shuffle(due);
+}
+function cardId(c) { return c.it.replace(/\W+/g, "_"); }
+function getDue(c) {
+  const p = state.progress[cardId(c)];
+  return p ? p.due : 0;
+}
+
+function grade(id, g) {
+  const p = getProg(id);
+  const now = Date.now();
+  if (g === "again") {
+    p.reps = 0;
+    p.interval = 1;
+    p.ease = Math.max(1.3, p.ease - 0.2);
+  } else {
+    p.reps += 1;
+    if (g === "hard") {
+      p.interval = Math.max(1, Math.round(p.interval * 1.2));
+      p.ease = Math.max(1.3, p.ease - 0.15);
+    } else if (g === "good") {
+      p.interval = p.reps === 1 ? 10 : p.reps === 2 ? 60 : Math.round(p.interval * p.ease);
+    } else {
+      p.interval = p.reps === 1 ? 30 : p.reps === 2 ? 240 : Math.round(p.interval * p.ease * 1.3);
+      p.ease = Math.min(3.0, p.ease + 0.1);
+    }
+    p.due = now + p.interval * 60000;
+  }
+  saveState();
+}
+
+/* ============================================================
+   UI
+   ============================================================ */
+const $ = id => document.getElementById(id);
+let queue = [];
+let idx = 0;
+let flipped = false;
+let dir = "it-en";
+
+function currentSet() { return $("setSelect").value; }
+
+/* ============================================================
+   Pronunciation — streamed live from Google Translate TTS (option 4)
+   Nothing is downloaded or stored: the browser streams the MP3
+   directly via an <audio> element. If the browser's media loader
+   rejects the source, falls back to a one-off download through a
+   CORS proxy and plays it from memory (still nothing persisted).
+   ============================================================ */
+let pronAudio = null;
+let pronToken = 0;
+let currentItalian = null;
+
+function ttsUrl(text, bust) {
+  let u = "https://translate.google.com/translate_tts?ie=UTF-8&client=tw-ob&q=" + encodeURIComponent(text) + "&tl=it&tt=en";
+  if (bust) u += "&_cb=" + bust;
+  return u;
+}
+
+function fetchWithTimeout(url, ms) {
+  const ctrl = new AbortController();
+  const t = setTimeout(() => ctrl.abort(), ms);
+  return fetch(url, {cache: "no-store", signal: ctrl.signal}).finally(() => clearTimeout(t));
+}
+
+async function fetchTtsBytes(word) {
+  // attempt 1: direct (fails fast when CORS-blocked)
+  try {
+    const res = await fetchWithTimeout(ttsUrl(word), 5000);
+    if (res.ok) {
+      const blob = await res.blob();
+      if (blob.type.includes("audio")) return blob;
+    }
+  } catch (e) { /* blocked or timed out — try proxy */ }
+  // attempt 2: public CORS proxy (returns JSON: {"contents":"data:audio/mpeg;base64,..."})
+  const proxied = "https://api.allorigins.win/get?url=" + encodeURIComponent(ttsUrl(word));
+  let res;
+  try {
+    res = await fetchWithTimeout(proxied, 15000);
+  } catch (e) {
+    throw new Error("proxy timed out after 15s — click 🔊 again");
+  }
+  if (!res.ok) throw new Error("proxy error (" + res.status + ") — click 🔊 again");
+  const data = await res.json();
+  const m = (data.contents || "").match(/^data:audio\/[^;]+;base64,(.+)$/s);
+  if (!m) throw new Error("proxy returned no audio — click 🔊 again");
+  const bytes = Uint8Array.from(atob(m[1]), c => c.charCodeAt(0));
+  return new Blob([bytes], {type: "audio/mpeg"});
+}
+
+function stopPron() {
+  pronToken++;
+  if (pronAudio) {
+    pronAudio.pause();
+    pronAudio.removeAttribute("src");
+    pronAudio.load();
+    pronAudio = null;
+  }
+}
+
+function updateSpeakButton(italian) {
+  currentItalian = italian;
+  const btn = $("speakBtn");
+  if (!italian) {
+    btn.style.display = "none";
+    $("pronStatus").textContent = "";
+    stopPron();
+    return;
+  }
+  btn.style.display = "";
+  stopPron();
+}
+
+async function playPron(token, word, t0, viaFallback) {
+  const status = $("pronStatus");
+  if (viaFallback) {
+    status.textContent = "Streaming blocked — downloading… (≤15s)";
+    try {
+      const blob = await fetchTtsBytes(word);
+      const url = URL.createObjectURL(blob);
+      const a = new Audio(url);
+      a.onended = () => { URL.revokeObjectURL(url); if (token === pronToken) status.textContent = ""; };
+      a.onerror = () => { URL.revokeObjectURL(url); if (token === pronToken) status.textContent = "Downloaded but playback failed — click 🔊 again."; };
+      status.textContent = "Playing (in memory, nothing stored)…";
+      await a.play();
+    } catch(e) {
+      if (token === pronToken) status.textContent = e.message;
+    }
+    return;
+  }
+  const a = document.createElement("audio");
+  a.preload = "auto";
+  pronAudio = a;
+  a.src = ttsUrl(word, Date.now());
+  status.textContent = "Loading pronunciation…";
+  a.onplaying = () => { if (token === pronToken) status.textContent = "Playing…"; };
+  a.onended = () => { if (token === pronToken) { status.textContent = ""; pronAudio = null; } };
+  a.onerror = async () => {
+    if (token !== pronToken || !a.error) return;
+    if (a.error.code === 4) {
+      await playPron(token, word, t0, true);
+    } else {
+      status.textContent = "Playback error — check internet, then click 🔊 again.";
+    }
+  };
+  try { await a.play(); } catch(e) {
+    if (token === pronToken) status.textContent = "Click 🔊 again to start playback.";
+  }
+}
+
+$("speakBtn").addEventListener("click", (e) => {
+  e.stopPropagation(); // don't flip the card
+  if (!currentItalian) return;
+  const token = ++pronToken;
+  playPron(token, currentItalian, performance.now(), false);
+});
+
+function render() {
+  const total = cardsForSet(currentSet()).length;
+  const shown = queue.length;
+
+  const c = queue[idx];
+  if (!c) { showDone(); return; }
+
+  const frontIsIt = dir === "it-en";
+  const front = frontIsIt ? c.it : c.en;
+  const back  = frontIsIt ? c.en : c.it;
+
+  $("frontWord").textContent = front;
+  $("backWord").textContent = back;
+  $("pronStatus").textContent = "";
+  updateSpeakButton(frontIsIt ? c.it : null);
+  
+  // Build tag: type + irregular marker
+  let tagText = c.type;
+  if (c.irregular) tagText += " · irregular";
+  $("frontTag").textContent = tagText + (c.gender && frontIsIt ? " · " + c.gender : "");
+  $("backTag").textContent = frontIsIt ? "English" : "Italian";
+  $("frontGender").textContent = frontIsIt && c.gender ? (c.gender === "both" ? "masc. or fem." : c.gender === "m" ? "masculine" : c.gender === "f" ? "feminine" : c.gender) : "";
+  $("backExtra").textContent = c.extra || "";
+
+  const doneCount = Math.max(0, idx);
+  $("progText").textContent = shown ? `Card ${idx + 1} of ${shown}` : "No cards due";
+  $("pctText").textContent = total ? Math.round(doneCount / total * 100) + "%" : "0%";
+  $("progFill").style.width = total ? (doneCount / total * 100) + "%" : "0%";
+
+  $("grades").classList.toggle("hidden", !flipped);
+}
+
+function setCardFace(showBack) {
+  const front = document.querySelector(".face.front");
+  const back = document.querySelector(".face.back");
+  front.style.display = showBack ? "none" : "flex";
+  front.style.opacity = showBack ? "0" : "1";
+  back.style.display = showBack ? "flex" : "none";
+  back.style.opacity = showBack ? "1" : "0";
+}
+
+function flip() {
+  if (!queue.length) return;
+  flipped = !flipped;
+  $("card").classList.toggle("flipped", flipped);
+  setCardFace(flipped);
+  if (flipped) {
+    markSeen(cardId(queue[idx]));
+    saveState();
+    updateStats();
+  }
+  $("grades").classList.toggle("hidden", !flipped);
+}
+
+function advance(g) {
+  if (!flipped) return;
+  const c = queue[idx];
+  grade(cardId(c), g);
+  idx++;
+  flipped = false;
+  $("card").classList.remove("flipped");
+  setCardFace(false);
+  updateStats();
+  render();
+}
+
+function updateStats() {
+  const total = CARDS.length;
+  const now = Date.now();
+  const learned = Object.values(state.progress).filter(p => p.reps >= 2 && p.interval >= 60).length;
+  const dueNow = cardsForSet(currentSet()).filter(c => {
+    const p = state.progress[cardId(c)];
+    return !p || p.due <= now;
+  }).length;
+  const seen = Object.keys(state.seen).length;
+  $("statDone").textContent = learned;
+  $("statDue").textContent = dueNow;
+  $("statSeen").textContent = seen;
+}
+
+function showDone() {
+  $("deck").style.display = "none";
+  $("grades").style.display = "none";
+  $("done").style.display = "block";
+  const total = cardsForSet(currentSet()).length;
+  $("doneText").innerHTML =
+    `You reviewed all <b>${queue.length}</b> due card${queue.length !== 1 ? "s" : ""}.<br>` +
+    `The rest of the set will come back later via spaced repetition.<br>` +
+    `<span style="font-size:.85em;color:var(--muted)">Tip: press "Study again" to re-drill the same batch immediately.</span>`;
+  updateStats();
+}
+
+function startDeck() {
+  $("done").style.display = "none";
+  $("deck").style.display = "";
+  $("grades").style.display = "";
+  queue = buildDeck(currentSet());
+  idx = 0;
+  flipped = false;
+  $("card").classList.remove("flipped");
+  setCardFace(false);
+  if (!queue.length) {
+    showDone();
+    $("doneText").innerHTML = `Nothing is due right now for this set. 🎉<br>Cards you marked Again/Hard will return within minutes.`;
+  } else {
+    render();
+  }
+}
+
+/* events */
+$("card").addEventListener("click", () => { if (queue.length) flip(); });
+document.querySelectorAll(".grade").forEach(btn => {
+  btn.addEventListener("click", e => { e.stopPropagation(); advance(btn.dataset.grade); });
+});
+$("setSelect").addEventListener("change", startDeck);
+$("onlyChapter").addEventListener("change", startDeck);
+$("includeIntro").addEventListener("change", startDeck);
+$("dirSelect").addEventListener("change", e => { dir = e.target.value; render(); });
+$("resetBtn").addEventListener("click", () => {
+  if (confirm("Reset all flashcard progress? This clears your spaced-repetition schedule.")) {
+    state = { progress: {}, seen: {} };
+    saveState();
+    startDeck();
+  }
+});
+$("restartBtn").addEventListener("click", startDeck);
+
+/* keyboard shortcuts */
+document.addEventListener("keydown", e => {
+  if (!queue.length) return;
+  if (e.key === " " || e.key === "Enter") { e.preventDefault(); flip(); }
+  else if (flipped) {
+    if (e.key === "1") advance("again");
+    if (e.key === "2") advance("hard");
+    if (e.key === "3") advance("good");
+    if (e.key === "4") advance("easy");
+  }
+});
+
+/* init */
+startDeck();
+updateStats();
+</script>
+</body>
+</html>

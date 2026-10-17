@@ -4,3 +4,5 @@
 *
 !.gitignore
 !ims-flashcards-enriched-tts.html
+!ims-flashcards-enriched-tts-ch11-pilot.html
+!test_ch11_pilot.py
