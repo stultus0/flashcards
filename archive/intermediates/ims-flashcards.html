@@ -1,0 +1,576 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Italian Made Simple — Flashcards (Intro + Ch. 1–2)</title>
+<style>
+  :root {
+    --bg: #f4f1ea;
+    --card-bg: #ffffff;
+    --ink: #2b2620;
+    --muted: #7a7168;
+    --accent: #b3502e;      /* terracotta */
+    --accent-soft: #e9d9cf;
+    --good: #3e7c4f;
+    --warn: #b07d2a;
+    --bad: #a33b2e;
+    --radius: 14px;
+    --shadow: 0 6px 24px rgba(43,38,32,.12);
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: Georgia, 'Times New Roman', serif;
+    background: var(--bg);
+    color: var(--ink);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 24px 16px 48px;
+  }
+  header { text-align: center; margin-bottom: 18px; max-width: 640px; }
+  h1 { font-size: 1.5rem; letter-spacing: .02em; }
+  .subtitle { color: var(--muted); font-size: .9rem; margin-top: 4px; font-style: italic; }
+
+  /* controls */
+  .controls {
+    display: flex; gap: 10px; flex-wrap: wrap; justify-content: center;
+    margin-bottom: 14px; width: 100%; max-width: 520px;
+  }
+  .control-label { display: flex; flex-direction: column; gap: 4px; color: var(--muted); font-size: .78rem; text-align: left; }
+  .checkbox-label { display: flex; align-items: center; gap: 7px; min-height: 44px; align-self: end; padding: 0 5px; color: var(--ink); font-size: .9rem; cursor: pointer; user-select: none; }
+  .checkbox-label input { width: 19px; height: 19px; accent-color: var(--accent); }
+  select, button.btn {
+    font-family: inherit; font-size: 1rem;
+    min-height: 44px; padding: 9px 12px; border-radius: 8px;
+    border: 1px solid #d8cfc2; background: var(--card-bg); color: var(--ink);
+    cursor: pointer;
+  }
+  button.btn { align-self: end; }
+  button.btn:hover { border-color: var(--accent); color: var(--accent); }
+
+  /* progress */
+  .progress-wrap { width: 100%; max-width: 520px; margin-bottom: 14px; }
+  .progress-label { display: flex; justify-content: space-between; font-size: .8rem; color: var(--muted); margin-bottom: 4px; }
+  .progress-bar { height: 8px; background: var(--accent-soft); border-radius: 99px; overflow: hidden; }
+  .progress-fill { height: 100%; background: var(--accent); width: 0%; transition: width .3s ease; }
+
+  /* card — no 3D transform: Firefox has a long-standing bug with
+     backface-visibility + nested preserve-3d that makes the flip
+     silently fail. We toggle visibility directly instead. */
+  .deck { width: 100%; max-width: 520px; }
+  .card {
+    position: relative; width: 100%; min-height: 300px;
+    cursor: pointer; touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .face {
+    position: absolute; inset: 0;
+    background: var(--card-bg); border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    padding: 32px 28px; text-align: center;
+    transition: opacity .25s ease;
+  }
+  .face.front { z-index: 2; }
+  .face.back { z-index: 1; opacity: 0; pointer-events: none; }
+  .card.flipped .face.front { opacity: 0; pointer-events: none; }
+  .card.flipped .face.back { opacity: 1; pointer-events: auto; }
+  .tag {
+    font-size: .68rem; letter-spacing: .12em; text-transform: uppercase;
+    color: var(--accent); background: var(--accent-soft);
+    padding: 3px 10px; border-radius: 99px; margin-bottom: 18px;
+  }
+  .front-word { font-size: 2.2rem; line-height: 1.25; }
+  .front-gender { font-size: 1rem; color: var(--muted); margin-top: 6px; }
+  .hint { position: absolute; bottom: 14px; left: 0; right: 0; font-size: .75rem; color: var(--muted); font-style: italic; }
+  .back-word { font-size: 1.9rem; line-height: 1.25; }
+  .back-extra { font-size: 1.05rem; color: var(--muted); margin-top: 10px; line-height: 1.5; }
+
+  /* grade buttons */
+  .grades { display: flex; gap: 10px; margin-top: 18px; width: 100%; max-width: 520px; }
+  .grade {
+    flex: 1; padding: 12px 6px; border-radius: 10px; border: none;
+    font-family: inherit; font-size: .95rem; font-weight: bold; cursor: pointer;
+    color: #fff; transition: transform .1s, filter .1s;
+  }
+  .grade:hover { filter: brightness(1.08); transform: translateY(-1px); }
+  .grade.again { background: var(--bad); }
+  .grade.hard   { background: var(--warn); }
+  .grade.good   { background: var(--good); }
+  .grade.easy   { background: #4a6fa5; }
+  .grades.hidden { visibility: hidden; }
+
+  /* stats footer */
+  .stats { margin-top: 22px; display: flex; gap: 18px; flex-wrap: wrap; justify-content: center; font-size: .85rem; color: var(--muted); }
+  .stats b { color: var(--ink); }
+  .save-note { margin-top: 9px; max-width: 520px; color: var(--muted); text-align: center; font-size: .76rem; }
+
+  /* done screen */
+  .done {
+    display: none; width: 100%; max-width: 520px;
+    background: var(--card-bg); border-radius: var(--radius); box-shadow: var(--shadow);
+    padding: 40px 30px; text-align: center;
+  }
+  .done h2 { color: var(--accent); margin-bottom: 10px; }
+  .done p { color: var(--muted); margin-bottom: 20px; line-height: 1.6; }
+
+  @media (max-width: 600px) {
+    body { padding: max(16px, env(safe-area-inset-top)) 14px calc(28px + env(safe-area-inset-bottom)); }
+    header { margin-bottom: 14px; }
+    h1 { font-size: 1.28rem; }
+    .subtitle { font-size: .82rem; }
+    .controls { display: grid; grid-template-columns: 1fr 1fr; gap: 9px; }
+    .control-label { min-width: 0; }
+    .control-label select { width: 100%; min-width: 0; }
+    .controls .btn { grid-column: 1 / -1; width: 100%; }
+    .card { min-height: 285px; }
+    .face { padding: 26px 20px; }
+    .front-word { font-size: 1.72rem; }
+    .back-word { font-size: 1.48rem; }
+    .back-extra { font-size: .98rem; }
+    .grades { gap: 7px; margin-top: 14px; }
+    .grade { min-height: 48px; padding: 10px 3px; font-size: .9rem; }
+    .stats { gap: 10px; font-size: .78rem; }
+  }
+  @media (max-width: 360px) {
+    .controls { grid-template-columns: 1fr; }
+    .front-word { font-size: 1.5rem; }
+    .grade { font-size: .8rem; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>Italiano Semplice · Flashcards</h1>
+  <div class="subtitle">Vocabulary from Italian Made Simple (Mazzoni) — Introduction, Chapters 1 &amp; 2</div>
+</header>
+
+<div class="controls" aria-label="Study settings">
+  <label class="control-label" for="setSelect">Study through
+    <select id="setSelect">
+      <option value="intro">Introduction — 14 cards</option>
+      <option value="through1">Chapter 1 — 62 cards total</option>
+      <option value="through2" selected>Chapter 2 — 95 cards total</option>
+    </select>
+  </label>
+  <label class="checkbox-label" for="onlyChapter">
+    <input type="checkbox" id="onlyChapter">
+    <span>Only this chapter</span>
+  </label>
+  <label class="control-label" for="dirSelect">Direction
+    <select id="dirSelect">
+      <option value="it-en">Italian → English</option>
+      <option value="en-it">English → Italian</option>
+    </select>
+  </label>
+  <button class="btn" id="resetBtn">Reset progress</button>
+</div>
+
+<div class="progress-wrap">
+  <div class="progress-label"><span id="progText">Card 1 of 79</span><span id="pctText">0%</span></div>
+  <div class="progress-bar"><div class="progress-fill" id="progFill"></div></div>
+</div>
+
+<div class="deck" id="deck">
+  <div class="card" id="card">
+    <div class="face front">
+      <div class="tag" id="frontTag">Noun</div>
+      <div class="front-word" id="frontWord">il bagno</div>
+      <div class="front-gender" id="frontGender">masculine</div>
+      <div class="hint">Click the card to reveal</div>
+    </div>
+    <div class="face back">
+      <div class="tag" id="backTag">English</div>
+      <div class="back-word" id="backWord">bathroom</div>
+      <div class="back-extra" id="backExtra"></div>
+    </div>
+  </div>
+</div>
+
+<div class="grades hidden" id="grades">
+  <button class="grade again" data-grade="again">Again</button>
+  <button class="grade hard" data-grade="hard">Hard</button>
+  <button class="grade good" data-grade="good">Good</button>
+  <button class="grade easy" data-grade="easy">Easy</button>
+</div>
+
+<div class="done" id="done">
+  <h2>Complimenti! 🎉</h2>
+  <p id="doneText"></p>
+  <button class="btn" id="restartBtn">Study again</button>
+</div>
+
+<div class="stats">
+  <span>Learned: <b id="statDone">0</b></span>
+  <span>Due now: <b id="statDue">0</b></span>
+  <span>Total seen: <b id="statSeen">0</b></span>
+</div>
+<div class="save-note" aria-live="polite">Progress is saved automatically in this browser on this device.</div>
+
+<script>
+"use strict";
+/* ============================================================
+   CARD DATA — Vocabulary from Cristina Mazzoni,
+   "Italian Made Simple" (Revised & Updated):
+   - Introduction (Presentazione / greetings)
+   - Chapter 1: Piacere! Le presentazioni
+   - Chapter 2: Il rappresentante e l'insegnante a lezione
+   Fields: it (word), en (translation), type, gender, extra note.
+   ============================================================ */
+const CARDS = [
+  // ---------- INTRODUCTION (greetings & basics) ----------
+  { set:"intro", it:"buongiorno", en:"good morning / good day", type:"greeting", extra:"Formal greeting, used during the day." },
+  { set:"intro", it:"buonasera", en:"good evening", type:"greeting", extra:"Used to greet and to say goodbye in the evening." },
+  { set:"intro", it:"buonanotte", en:"good night", type:"greeting", extra:"Said before going to sleep or when parting at night." },
+  { set:"intro", it:"ciao", en:"hi / bye", type:"greeting", extra:"Informal — only with friends, family, people you use tu with." },
+  { set:"intro", it:"arrivederci", en:"goodbye (until we meet again)", type:"greeting", extra:"Formal farewell." },
+  { set:"intro", it:"piacere!", en:"nice to meet you!", type:"expression", extra:"Literally: \"pleasure!\" Said when meeting someone." },
+  { set:"intro", it:"mi chiamo…", en:"my name is…", type:"expression", extra:"Literally: \"I call myself…\"" },
+  { set:"intro", it:"come stai?", en:"how are you? (informal)", type:"question", extra:"With tu. Formal: come sta?" },
+  { set:"intro", it:"come va?", en:"how's it going?", type:"question", extra:"Neutral — works formal and informal." },
+  { set:"intro", it:"stò bene, grazie", en:"I'm fine, thanks", type:"expression", extra:"Note the accent on stò." },
+  { set:"intro", it:"grazie", en:"thank you", type:"expression", extra:"" },
+  { set:"intro", it:"prego", en:"you're welcome / please", type:"expression", extra:"Also used to offer something: \"after you\"." },
+  { set:"intro", it:"scusa / scusi", en:"excuse me / sorry (informal / formal)", type:"expression", extra:"scusa with tu, scusi with Lei." },
+  { set:"intro", it:"benvenuto / benvenuta", en:"welcome (masc. / fem.)", type:"adjective", extra:"Agrees with the person welcomed." },
+
+  // ---------- CHAPTER 1: LE PRESENTAZIONI ----------
+  // nouns
+  { set:"ch1", it:"l'anno", en:"year", type:"noun", gender:"m", extra:"" },
+  { set:"ch1", it:"il bagno", en:"bathroom", type:"noun", gender:"m", extra:"" },
+  { set:"ch1", it:"il bambino", en:"little boy / young child", type:"noun", gender:"m", extra:"Feminine: la bambina" },
+  { set:"ch1", it:"la bambina", en:"little girl", type:"noun", gender:"f", extra:"Masculine: il bambino" },
+  { set:"ch1", it:"la camera (da letto)", en:"bedroom", type:"noun", gender:"f", extra:"Stress on the A: cAmera" },
+  { set:"ch1", it:"il capitolo", en:"chapter", type:"noun", gender:"m", extra:"" },
+  { set:"ch1", it:"la casa", en:"house, home", type:"noun", gender:"f", extra:"" },
+  { set:"ch1", it:"la cucina", en:"kitchen", type:"noun", gender:"f", extra:"" },
+  { set:"ch1", it:"la donna", en:"woman", type:"noun", gender:"f", extra:"" },
+  { set:"ch1", it:"il dottore", en:"doctor", type:"noun", gender:"m", extra:"Feminine: la dottoressa" },
+  { set:"ch1", it:"la famiglia", en:"family", type:"noun", gender:"f", extra:"" },
+  { set:"ch1", it:"il figlio", en:"son / child", type:"noun", gender:"m", extra:"Plural: i figli (sons, children)" },
+  { set:"ch1", it:"l'insegnante", en:"teacher", type:"noun", gender:"both", extra:"Can be masculine or feminine" },
+  { set:"ch1", it:"l'italiano", en:"the Italian language / the Italian man", type:"noun", gender:"m", extra:"" },
+  { set:"ch1", it:"la madre", en:"mother", type:"noun", gender:"f", extra:"" },
+  { set:"ch1", it:"il padre", en:"father", type:"noun", gender:"m", extra:"" },
+  { set:"ch1", it:"la sala da pranzo", en:"dining room", type:"noun", gender:"f", extra:"" },
+  { set:"ch1", it:"il salotto", en:"living room", type:"noun", gender:"m", extra:"" },
+  { set:"ch1", it:"il signor(e)", en:"Mr., sir", type:"noun", gender:"m", extra:"Written without the final -e in most uses" },
+  { set:"ch1", it:"la signora", en:"Mrs., Ms., madam", type:"noun", gender:"f", extra:"More common than la signorina" },
+  { set:"ch1", it:"la signorina", en:"Miss, young lady", type:"noun", gender:"f", extra:"More old-fashioned" },
+  { set:"ch1", it:"la sorella", en:"sister", type:"noun", gender:"f", extra:"Brother: il fratello" },
+  { set:"ch1", it:"la stanza", en:"room", type:"noun", gender:"f", extra:"" },
+  { set:"ch1", it:"l'uomo", en:"man", type:"noun", gender:"m", extra:"" },
+  // adjectives
+  { set:"ch1", it:"americano / americana", en:"American", type:"adjective", gender:"m/f", extra:"Plural: americani / americane" },
+  { set:"ch1", it:"felice", en:"happy", type:"adjective", extra:"No gender change; plural: felici" },
+  { set:"ch1", it:"grande", en:"big", type:"adjective", extra:"No gender change; plural: grandi" },
+  { set:"ch1", it:"italiano / italiana", en:"Italian", type:"adjective", gender:"m/f", extra:"" },
+  { set:"ch1", it:"mio / mia", en:"my", type:"possessive", extra:"Plural: miei / mie" },
+  { set:"ch1", it:"suo / sua", en:"his, her, your (formal)", type:"possessive", extra:"Plural: suoi / sue" },
+  // verbs
+  { set:"ch1", it:"abitare", en:"to live (reside)", type:"verb", extra:"io abito, tu abiti, lui abita…" },
+  { set:"ch1", it:"avere", en:"to have", type:"verb", irregular:true, extra:"ho, hai, ha, abbiamo, avete, hanno" },
+  { set:"ch1", it:"chiamarsi", en:"to be named / to call oneself", type:"verb", extra:"Mi chiamo Mario." },
+  { set:"ch1", it:"essere", en:"to be", type:"verb", irregular:true, extra:"sono, sei, è, siamo, siete, sono" },
+  { set:"ch1", it:"insegnare", en:"to teach", type:"verb", extra:"io insegno, tu insegni, lei insegna…" },
+  { set:"ch1", it:"lavorare", en:"to work", type:"verb", extra:"io lavoro, tu lavori, lui lavora…" },
+  // adverbs & other
+  { set:"ch1", it:"anche", en:"also, too", type:"adverb", extra:"" },
+  { set:"ch1", it:"con", en:"with", type:"preposition", extra:"" },
+  { set:"ch1", it:"di", en:"of", type:"preposition", extra:"" },
+  { set:"ch1", it:"e", en:"and", type:"conjunction", extra:"" },
+  { set:"ch1", it:"ecco", en:"here is / here are", type:"expression", extra:"Ecco Maria! = Here's Maria!" },
+  { set:"ch1", it:"in centro", en:"downtown", type:"expression", extra:"" },
+  { set:"ch1", it:"loro", en:"they / them", type:"pronoun", extra:"" },
+  { set:"ch1", it:"ma", en:"but", type:"conjunction", extra:"" },
+  { set:"ch1", it:"per", en:"for", type:"preposition", extra:"" },
+  { set:"ch1", it:"perché", en:"because / why", type:"adverb", extra:"Because = cause; why = question" },
+  { set:"ch1", it:"quando", en:"when", type:"adverb", extra:"" },
+  { set:"ch1", it:"tutto il giorno", en:"all day long", type:"expression", extra:"" },
+
+  // ---------- CHAPTER 2: IL RAPPRESENTANTE E L'INSEGNANTE A LEZIONE ----------
+  // nouns
+  { set:"ch2", it:"la cosa", en:"thing", type:"noun", gender:"f", extra:"" },
+  { set:"ch2", it:"la ditta / l'azienda", en:"firm, company", type:"noun", gender:"f", extra:"Two synonyms" },
+  { set:"ch2", it:"la lezione", en:"lesson", type:"noun", gender:"f", extra:"" },
+  { set:"ch2", it:"la lingua", en:"language", type:"noun", gender:"f", extra:"" },
+  { set:"ch2", it:"il nome", en:"name", type:"noun", gender:"m", extra:"" },
+  { set:"ch2", it:"l'origine", en:"origin", type:"noun", gender:"f", extra:"L'origine del signor Campi è italiana." },
+  { set:"ch2", it:"il posto", en:"place", type:"noun", gender:"m", extra:"Plural: i posti" },
+  { set:"ch2", it:"la primavera", en:"spring (season)", type:"noun", gender:"f", extra:"The season of rebirth" },
+  { set:"ch2", it:"il rappresentante", en:"salesman", type:"noun", gender:"m", extra:"Mario Campi's job" },
+  { set:"ch2", it:"il rivenditore", en:"vendor / reseller", type:"noun", gender:"m", extra:"Buys from Mario's company, sells onward" },
+  { set:"ch2", it:"la scuola", en:"school", type:"noun", gender:"f", extra:"" },
+  { set:"ch2", it:"il software", en:"software", type:"noun", gender:"m", extra:"Borrowed word" },
+  { set:"ch2", it:"l'ufficio", en:"office", type:"noun", gender:"m", extra:"" },
+  { set:"ch2", it:"il viaggio", en:"trip / journey", type:"noun", gender:"m", extra:"Fare un viaggio = to take a trip" },
+  // adjectives
+  { set:"ch2", it:"bello / bella", en:"beautiful", type:"adjective", gender:"m/f", extra:"" },
+  { set:"ch2", it:"bravo / brava", en:"good (at something)", type:"adjective", gender:"m/f", extra:"Un ragazzo bravo = a good boy" },
+  { set:"ch2", it:"intelligente", en:"intelligent", type:"adjective", extra:"No gender change; plural: intelligenti" },
+  { set:"ch2", it:"interessante", en:"interesting", type:"adjective", extra:"No gender change; plural: interessanti" },
+  { set:"ch2", it:"molto / molta", en:"much / very", type:"adjective", extra:"" },
+  { set:"ch2", it:"simpatico / simpatica", en:"nice, fun (person)", type:"adjective", gender:"m/f", extra:"Describes personality" },
+  // verbs
+  { set:"ch2", it:"desiderare", en:"to desire, to want", type:"verb", extra:"Politer than volere" },
+  { set:"ch2", it:"fare", en:"to make, to do", type:"verb", irregular:true, extra:"faccio, fai, fa, facciamo, fate, fanno" },
+  { set:"ch2", it:"importare", en:"to import", type:"verb", extra:"Il rivenditore importa software dall'America." },
+  { set:"ch2", it:"imparare", en:"to learn", type:"verb", extra:"" },
+  { set:"ch2", it:"parlare", en:"to speak", type:"verb", extra:"io parlo, tu parli, lui parla…" },
+  { set:"ch2", it:"studiare", en:"to study", type:"verb", extra:"" },
+  { set:"ch2", it:"visitare", en:"to visit", type:"verb", extra:"" },
+  // adverbs & other
+  { set:"ch2", it:"a dopo / a più tardi", en:"see you later", type:"expression", extra:"" },
+  { set:"ch2", it:"a domani", en:"see you tomorrow", type:"expression", extra:"" },
+  { set:"ch2", it:"eccetera (ecc.)", en:"etcetera (etc.)", type:"expression", extra:"" },
+  { set:"ch2", it:"là / lì", en:"there", type:"adverb", extra:"" },
+  { set:"ch2", it:"rapidamente", en:"quickly", type:"adverb", extra:"From rapido + -mente" },
+  { set:"ch2", it:"qua / qui", en:"here", type:"adverb", extra:"" },
+];
+
+/* ============================================================
+   SPACED REPETITION (simple SM-2-ish)
+   Each card has: interval (minutes), due (timestamp), reps, ease
+   Grades: again(0) hard(1) good(2) easy(3)
+   ============================================================ */
+const STORE_KEY = "imsFlashcards_v1";
+let state = loadState();
+
+function loadState() {
+  try {
+    const raw = localStorage.getItem(STORE_KEY);
+    if (raw) return JSON.parse(raw);
+  } catch (e) {}
+  return { progress: {}, seen: {} };
+}
+function saveState() {
+  try { localStorage.setItem(STORE_KEY, JSON.stringify(state)); } catch (e) {}
+}
+
+function getProg(id) {
+  if (!state.progress[id]) state.progress[id] = { reps: 0, interval: 0, ease: 2.5, due: 0 };
+  return state.progress[id];
+}
+function markSeen(id) {
+  state.seen[id] = (state.seen[id] || 0) + 1;
+}
+
+/* Build a randomly ordered due deck for the requested cumulative chapter range. */
+const CHAPTER_ORDER = { intro: 0, ch1: 1, ch2: 2 };
+const STUDY_THROUGH = { intro: 0, through1: 1, through2: 2 };
+
+function onlySelectedChapter() {
+  return $("onlyChapter").checked;
+}
+
+function cardsForSet(setFilter) {
+  const lastChapter = STUDY_THROUGH[setFilter] ?? 2;
+  return CARDS.filter(c => onlySelectedChapter()
+    ? CHAPTER_ORDER[c.set] === lastChapter
+    : CHAPTER_ORDER[c.set] <= lastChapter);
+}
+
+function shuffle(cards) {
+  const result = [...cards];
+  for (let i = result.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [result[i], result[j]] = [result[j], result[i]];
+  }
+  return result;
+}
+
+function buildDeck(setFilter) {
+  const now = Date.now();
+  const due = cardsForSet(setFilter).filter(c => {
+    const p = state.progress[cardId(c)];
+    return !p || p.due <= now;
+  });
+  return shuffle(due);
+}
+function cardId(c) { return c.it.replace(/\W+/g, "_"); }
+function getDue(c) {
+  const p = state.progress[cardId(c)];
+  return p ? p.due : 0;
+}
+
+function grade(id, g) {
+  const p = getProg(id);
+  const now = Date.now();
+  if (g === "again") {
+    p.reps = 0;
+    p.interval = 1;            // 1 minute
+    p.ease = Math.max(1.3, p.ease - 0.2);
+  } else {
+    p.reps += 1;
+    if (g === "hard") {
+      p.interval = Math.max(1, Math.round(p.interval * 1.2));
+      p.ease = Math.max(1.3, p.ease - 0.15);
+    } else if (g === "good") {
+      p.interval = p.reps === 1 ? 10 : p.reps === 2 ? 60 : Math.round(p.interval * p.ease);
+    } else { // easy
+      p.interval = p.reps === 1 ? 30 : p.reps === 2 ? 240 : Math.round(p.interval * p.ease * 1.3);
+      p.ease = Math.min(3.0, p.ease + 0.1);
+    }
+    p.due = now + p.interval * 60000;
+  }
+  saveState();
+}
+
+/* ============================================================
+   UI
+   ============================================================ */
+const $ = id => document.getElementById(id);
+let queue = [];
+let idx = 0;
+let flipped = false;
+let dir = "it-en";
+
+function currentSet() { return $("setSelect").value; }
+
+function render() {
+  const total = cardsForSet(currentSet()).length;
+  const shown = queue.length;
+
+  // update which face shows what based on direction
+  const c = queue[idx];
+  if (!c) { showDone(); return; }
+
+  const frontIsIt = dir === "it-en";
+  const front = frontIsIt ? c.it : c.en;
+  const back  = frontIsIt ? c.en : c.it;
+
+  $("frontWord").textContent = front;
+  $("backWord").textContent = back;
+  $("frontTag").textContent = c.type + (c.gender && frontIsIt ? " · " + c.gender : "");
+  $("backTag").textContent = frontIsIt ? "English" : "Italian";
+  $("frontGender").textContent = frontIsIt && c.gender ? (c.gender === "both" ? "masc. or fem." : c.gender === "m" ? "masculine" : c.gender === "f" ? "feminine" : c.gender) : "";
+  $("backExtra").textContent = c.extra || "";
+
+  // progress
+  const doneCount = Math.max(0, idx);
+  $("progText").textContent = shown ? `Card ${idx + 1} of ${shown}` : "No cards due";
+  $("pctText").textContent = total ? Math.round(doneCount / total * 100) + "%" : "0%";
+  $("progFill").style.width = total ? (doneCount / total * 100) + "%" : "0%";
+
+  // grades visible only when flipped
+  $("grades").classList.toggle("hidden", !flipped);
+}
+
+function setCardFace(showBack) {
+  // Set inline display/opacity as the source of truth. This deliberately avoids
+  // relying on dynamic CSS selector repainting, which failed in both Firefox
+  // and Edge for this local-file app.
+  const front = document.querySelector(".face.front");
+  const back = document.querySelector(".face.back");
+  front.style.display = showBack ? "none" : "flex";
+  front.style.opacity = showBack ? "0" : "1";
+  back.style.display = showBack ? "flex" : "none";
+  back.style.opacity = showBack ? "1" : "0";
+}
+
+function flip() {
+  if (!queue.length) return;
+  flipped = !flipped;
+  $("card").classList.toggle("flipped", flipped);
+  setCardFace(flipped);
+  if (flipped) {
+    markSeen(cardId(queue[idx]));
+    saveState();
+    updateStats();
+  }
+  $("grades").classList.toggle("hidden", !flipped);
+}
+
+function advance(g) {
+  if (!flipped) return;
+  const c = queue[idx];
+  grade(cardId(c), g);
+  idx++;
+  flipped = false;
+  $("card").classList.remove("flipped");
+  setCardFace(false);
+  updateStats();
+  render();
+}
+
+function updateStats() {
+  const total = CARDS.length;
+  const now = Date.now();
+  const learned = Object.values(state.progress).filter(p => p.reps >= 2 && p.interval >= 60).length;
+  const dueNow = CARDS.filter(c => {
+    const p = state.progress[cardId(c)];
+    return !p || p.due <= now;
+  }).length;
+  const seen = Object.keys(state.seen).length;
+  $("statDone").textContent = learned;
+  $("statDue").textContent = dueNow;
+  $("statSeen").textContent = seen;
+}
+
+function showDone() {
+  $("deck").style.display = "none";
+  $("grades").style.display = "none";
+  $("done").style.display = "block";
+  const total = cardsForSet(currentSet()).length;
+  $("doneText").innerHTML =
+    `You reviewed all <b>${queue.length}</b> due card${queue.length !== 1 ? "s" : ""}.<br>` +
+    `The rest of the set will come back later via spaced repetition.<br>` +
+    `<span style="font-size:.85em;color:var(--muted)">Tip: press “Study again” to re-drill the same batch immediately.</span>`;
+  updateStats();
+}
+
+function startDeck() {
+  $("done").style.display = "none";
+  $("deck").style.display = "";
+  $("grades").style.display = "";
+  queue = buildDeck(currentSet());
+  idx = 0;
+  flipped = false;
+  $("card").classList.remove("flipped");
+  setCardFace(false);
+  if (!queue.length) {
+    showDone();
+    $("doneText").innerHTML = `Nothing is due right now for this set. 🎉<br>Cards you marked Again/Hard will return within minutes.`;
+  } else {
+    render();
+  }
+}
+
+/* events */
+$("card").addEventListener("click", () => { if (queue.length) flip(); });
+document.querySelectorAll(".grade").forEach(btn => {
+  btn.addEventListener("click", e => { e.stopPropagation(); advance(btn.dataset.grade); });
+});
+$("setSelect").addEventListener("change", startDeck);
+$("onlyChapter").addEventListener("change", startDeck);
+$("dirSelect").addEventListener("change", e => { dir = e.target.value; render(); });
+$("resetBtn").addEventListener("click", () => {
+  if (confirm("Reset all flashcard progress? This clears your spaced-repetition schedule.")) {
+    state = { progress: {}, seen: {} };
+    saveState();
+    startDeck();
+  }
+});
+$("restartBtn").addEventListener("click", startDeck);
+
+/* keyboard shortcuts */
+document.addEventListener("keydown", e => {
+  if (!queue.length) return;
+  if (e.key === " " || e.key === "Enter") { e.preventDefault(); flip(); }
+  else if (flipped) {
+    if (e.key === "1") advance("again");
+    if (e.key === "2") advance("hard");
+    if (e.key === "3") advance("good");
+    if (e.key === "4") advance("easy");
+  }
+});
+
+/* init */
+startDeck();
+updateStats();
+</script>
+</body>
+</html>

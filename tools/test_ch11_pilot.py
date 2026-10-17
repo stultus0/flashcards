@@ -5,7 +5,7 @@ import unittest
 from pathlib import Path
 
 
-OUTPUT = Path("ims-flashcards-enriched-tts-ch11-pilot.html")
+OUTPUT = Path(__file__).resolve().parent.parent / "archive" / "ai-delivery" / "ims-flashcards-enriched-tts-ch11-pilot.html"
 
 
 class Chapter11PilotTests(unittest.TestCase):

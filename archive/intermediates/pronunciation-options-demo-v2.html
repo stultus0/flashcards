@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Pronunciation Options v2 — Demo</title>
+<style>
+  :root { --bg:#f4f1ea; --card-bg:#fff; --ink:#2b2620; --muted:#7a7168; --accent:#b3502e; --accent-soft:#e9d9cf; --radius:14px; --shadow:0 6px 24px rgba(43,38,32,.12); }
+  * { box-sizing:border-box; margin:0; padding:0; }
+  body { font-family:Georgia,'Times New Roman',serif; background:var(--bg); color:var(--ink); min-height:100vh; display:flex; flex-direction:column; align-items:center; padding:24px 16px 48px; }
+  header { text-align:center; margin-bottom:18px; max-width:640px; }
+  h1 { font-size:1.5rem; } .subtitle { color:var(--muted); font-size:.9rem; margin-top:4px; font-style:italic; }
+  .demo-controls { display:flex; gap:10px; align-items:center; justify-content:center; width:100%; max-width:520px; margin-bottom:18px; }
+  .demo-controls select { font-family:inherit; font-size:1rem; min-height:44px; padding:9px 12px; border-radius:8px; border:1px solid #d8cfc2; background:var(--card-bg); color:var(--ink); }
+  .demo-controls button { font-family:inherit; font-size:1rem; min-height:44px; padding:9px 14px; border-radius:8px; border:1px solid #d8cfc2; background:var(--card-bg); color:var(--ink); cursor:pointer; }
+  .demo-controls button:hover { border-color:var(--accent); color:var(--accent); }
+  .options-wrap { width:100%; max-width:560px; display:flex; flex-direction:column; gap:20px; }
+  .option { background:var(--card-bg); border-radius:var(--radius); box-shadow:var(--shadow); padding:22px 24px; }
+  .option-head { display:flex; align-items:baseline; gap:10px; margin-bottom:6px; }
+  .opt-num { font-size:.7rem; letter-spacing:.12em; text-transform:uppercase; color:#fff; background:var(--accent); padding:3px 10px; border-radius:99px; }
+  .opt-title { font-size:1.1rem; font-weight:bold; }
+  .opt-desc { font-size:.85rem; color:var(--muted); line-height:1.5; margin-bottom:14px; }
+  .word-row { display:flex; align-items:center; justify-content:space-between; gap:12px; border:1px dashed #d8cfc2; border-radius:10px; padding:12px 16px; background:#faf8f4; }
+  .demo-word { font-size:1.5rem; }
+  .speak-btn { font-family:inherit; font-size:1rem; min-height:44px; padding:8px 14px; border-radius:8px; border:1px solid #d8cfc2; background:var(--card-bg); color:var(--ink); cursor:pointer; white-space:nowrap; }
+  .speak-btn:hover { border-color:var(--accent); color:var(--accent); }
+  .status { font-size:.78rem; color:var(--muted); margin-top:10px; font-style:italic; min-height:1.2em; line-height:1.5; }
+  audio.audio-el { width:100%; margin-top:10px; }
+  audio.hidden-audio { display:none; }
+  .voice-info { font-size:.8rem; color:var(--muted); margin-top:10px; line-height:1.5; }
+  .voice-info b { color:var(--ink); }
+  .rate-row { display:flex; align-items:center; gap:8px; margin-top:8px; font-size:.85rem; color:var(--muted); }
+  .rate-row select { font-family:inherit; font-size:.85rem; min-height:36px; padding:4px 8px; border-radius:6px; border:1px solid #d8cfc2; background:var(--card-bg); color:var(--ink); }
+  .footnote { max-width:560px; margin-top:22px; font-size:.78rem; color:var(--muted); line-height:1.6; text-align:center; }
+</style>
+</head>
+<body>
+<header>
+  <h1>Pronunciation Options — Demo v2</h1>
+  <div class="subtitle">Options 1, 3 and 4 only. Nothing is pre-generated or cached at page load.</div>
+</header>
+
+<div class="demo-controls">
+  <select id="wordSelect"></select>
+  <button id="randomBtn">Random word</button>
+</div>
+
+<div class="options-wrap">
+
+  <!-- OPTION 1 -->
+  <div class="option">
+    <div class="option-head"><span class="opt-num">Option 1</span><span class="opt-title">Built-in browser voice (Web Speech API)</span></div>
+    <div class="opt-desc">Uses a voice installed on your device. No files, no internet. The voice your browser actually picked is shown below so you can see why it may sound English.</div>
+    <div class="word-row">
+      <span class="demo-word" data-slot="word">il bagno</span>
+      <button class="speak-btn" id="btnSpeech">🔊 Speak</button>
+    </div>
+    <div class="voice-info" id="voiceInfo">Checking available voices…</div>
+    <div class="rate-row"><label>Speed:</label><select id="rateSelect"><option value="0.7">slow (0.7×)</option><option value="0.9" selected>normal-ish (0.9×)</option><option value="1">normal (1×)</option></select></div>
+    <div class="status" id="speechStatus"></div>
+  </div>
+
+  <!-- OPTION 3 -->
+  <div class="option">
+    <div class="option-head"><span class="opt-num">Option 3</span><span class="opt-title">Audio file saved locally (one-time download)</span></div>
+    <div class="opt-desc">On first use for a word, the clip is downloaded once and kept in memory (like an audio/&lt;word&gt;.mp3 bundled with the app). Subsequent plays are instant and offline. Reload the page to reset the cache.</div>
+    <div class="word-row" style="flex-direction:column;align-items:stretch;">
+      <span class="demo-word" data-slot="word">il bagno</span>
+      <audio id="fileAudio" class="audio-el" controls preload="none"></audio>
+    </div>
+    <div style="margin-top:10px;"><button class="speak-btn" id="btnSaveFile">💾 Save clip for this word</button></div>
+    <div class="status" id="fileStatus">Click “Save clip” to download it once, then replay from the local copy.</div>
+  </div>
+
+  <!-- OPTION 4 -->
+  <div class="option">
+    <div class="option-head"><span class="opt-num">Option 4</span><span class="opt-title">Streamed live, nothing stored</span></div>
+    <div class="opt-desc">The browser streams the MP3 straight from Google's TTS endpoint the way a video site streams video — no download step, no CORS tricks, nothing saved. Needs internet each time; this is the design that keeps the app tiny.</div>
+    <div class="word-row">
+      <span class="demo-word" data-slot="word">il bagno</span>
+      <button class="speak-btn" id="btnLive">🎧 Play now</button>
+    </div>
+    <audio id="liveAudio" class="hidden-audio" preload="none"></audio>
+    <div class="status" id="liveStatus"></div>
+  </div>
+
+</div>
+
+<div class="footnote">
+  Options 3 and 4 use the same TTS source but behave differently: option 3 keeps a copy after the first download, option 4 never does.<br>
+  Your existing flashcard files are untouched.
+</div>
+
+<script>
+const WORDS = [
+  { it:"il bagno", en:"bathroom" }, { it:"la cucina", en:"kitchen" },
+  { it:"parlare", en:"to speak" }, { it:"imparare", en:"to learn" },
+  { it:"il caffè", en:"coffee" }, { it:"la biblioteca", en:"library" },
+  { it:"il ristorante", en:"restaurant" }, { it:"viaggiare", en:"to travel" },
+];
+const $ = id => document.getElementById(id);
+let currentWord = WORDS[0].it;
+
+const sel = $("wordSelect");
+WORDS.forEach((w,i) => { const o=document.createElement("option"); o.value=i; o.textContent=w.it+" — "+w.en; sel.appendChild(o); });
+sel.addEventListener("change", () => setWord(WORDS[+sel.value].it));
+$("randomBtn").addEventListener("click", () => {
+  let w; do { w = WORDS[Math.floor(Math.random()*WORDS.length)]; } while (w.it===currentWord && WORDS.length>1);
+  sel.value = WORDS.indexOf(w); setWord(w.it);
+});
+
+function setWord(word) {
+  currentWord = word;
+  document.querySelectorAll("[data-slot=word]").forEach(el => el.textContent = word);
+  $("fileStatus").textContent = "Click \u201CSave clip\u201D to download it once, then replay from the local copy.";
+  $("liveStatus").textContent = "";
+}
+
+// ---- TTS URL (Google Translate endpoint) ----
+function ttsUrl(text, bust) {
+  let u = "https://translate.google.com/translate_tts?ie=UTF-8&client=tw-ob&q=" + encodeURIComponent(text) + "&tl=it&tt=en";
+  if (bust) u += "&_cb=" + bust;
+  return u;
+}
+
+// ---- Option 1: Web Speech API, with visible voice diagnostics ----
+let itVoice = null, allVoices = [];
+function scanVoices() {
+  allVoices = speechSynthesis.getVoices();
+  itVoice = allVoices.find(v => /^it(-|_)/i.test(v.lang || ""))
+         || allVoices.find(v => /italian/i.test(v.name || ""))
+         || null;
+  const itCount = allVoices.filter(v => /^it(-|_)/i.test(v.lang || "")).length;
+  const total = allVoices.length;
+  let msg;
+  if (total === 0) msg = "No voices reported yet — browsers often load them asynchronously; try clicking Speak anyway.";
+  else if (itVoice) msg = "Found <b>" + itVoice.name + "</b> (" + itVoice.lang + ") — one of " + itCount + " Italian voice(s) out of " + total + " installed.";
+  else msg = "<b>No Italian voice found.</b> Browser has " + total + " voice(s), none tagged Italian — it will fall back to its default (often English). That explains the English you heard.";
+  $("voiceInfo").innerHTML = msg + ' <span style="opacity:.7">(installed: ' + allVoices.slice(0,12).map(v=>v.lang||v.name).join(", ") + (allVoices.length>12?", …":"") + ')</span>';
+}
+if ("speechSynthesis" in window) {
+  scanVoices();
+  speechSynthesis.onvoiceschanged = scanVoices;
+  setTimeout(scanVoices, 1500);
+} else {
+  $("voiceInfo").innerHTML = "This browser doesn't support the Web Speech API.";
+}
+$("btnSpeech").addEventListener("click", () => {
+  if (!("speechSynthesis" in window)) { $("speechStatus").textContent = "Not supported here."; return; }
+  scanVoices();
+  speechSynthesis.cancel();
+  const u = new SpeechSynthesisUtterance(currentWord);
+  u.lang = "it-IT";
+  if (itVoice) u.voice = itVoice;
+  u.rate = parseFloat($("rateSelect").value);
+  $("speechStatus").textContent = "Speaking \u201C" + currentWord + "\u201D with " + (itVoice ? itVoice.name + " (" + itVoice.lang + ")" : "forced lang it-IT, no named Italian voice") + " at " + u.rate + "\u00D7…";
+  u.onend = () => $("speechStatus").textContent += " Done.";
+  u.onerror = e => $("speechStatus").textContent += " Error: " + e.error;
+  speechSynthesis.speak(u);
+});
+
+// ---- Option 3: fetch bytes once (direct, then CORS-proxy fallback), keep in memory ----
+const fileCache = {}; // word -> {url, size}
+function fetchWithTimeout(url, ms) {
+  const ctrl = new AbortController();
+  const t = setTimeout(() => ctrl.abort(), ms);
+  return fetch(url, {cache: "no-store", signal: ctrl.signal}).finally(() => clearTimeout(t));
+}
+async function fetchTtsBytes(word) {
+  // attempt 1: direct (fails fast when CORS-blocked)
+  try {
+    const res = await fetchWithTimeout(ttsUrl(word), 5000);
+    if (res.ok) {
+      const blob = await res.blob();
+      if (blob.type.includes("audio")) return blob;
+    }
+  } catch (e) { /* blocked or timed out — try proxy */ }
+  // attempt 2: public CORS proxy (returns JSON: {"contents":"data:audio/mpeg;base64,..."})
+  const proxied = "https://api.allorigins.win/get?url=" + encodeURIComponent(ttsUrl(word));
+  let res;
+  try {
+    res = await fetchWithTimeout(proxied, 15000);
+  } catch (e) {
+    throw new Error("proxy timed out after 15s (free proxy is sometimes slow) — click again to retry");
+  }
+  if (!res.ok) throw new Error("proxy HTTP " + res.status + " — click again to retry");
+  const data = await res.json();
+  const m = (data.contents || "").match(/^data:audio\/[^;]+;base64,(.+)$/s);
+  if (!m) throw new Error("proxy returned no audio payload — click again to retry");
+  const bytes = Uint8Array.from(atob(m[1]), c => c.charCodeAt(0));
+  return new Blob([bytes], {type: "audio/mpeg"});
+}
+$("btnSaveFile").addEventListener("click", async () => {
+  const word = currentWord;
+  const wasCached = !!fileCache[word];
+  const t0 = performance.now();
+  let iv = null;
+  if (!wasCached) {
+    $("fileStatus").textContent = "Downloading… (0s)";
+    iv = setInterval(() => {
+      $("fileStatus").textContent = "Downloading… (" + Math.round((performance.now()-t0)/1000) + "s)";
+    }, 500);
+  }
+  try {
+    let entry = fileCache[word];
+    if (!entry) {
+      const blob = await fetchTtsBytes(word);
+      entry = {url: URL.createObjectURL(blob), size: blob.size};
+      fileCache[word] = entry;
+    }
+    if (iv) clearInterval(iv);
+    const a = $("fileAudio");
+    a.src = entry.url;
+    a.play().catch(() => {});
+    $("fileStatus").textContent = wasCached
+      ? "Playing from the local copy (" + Math.round(entry.size/1024) + " KB) — no network needed."
+      : "Saved locally in " + Math.round(performance.now()-t0) + " ms (" + Math.round(entry.size/1024) + " KB). Now plays instantly & offline.";
+  } catch(e) {
+    if (iv) clearInterval(iv);
+    $("fileStatus").textContent = "Download failed: " + e.message;
+  }
+});
+$("fileAudio").addEventListener("play", () => {
+  if (fileCache[currentWord]) $("fileStatus").textContent = "Playing from local copy (cached).";
+});
+
+// ---- Option 4: stream live, nothing stored ----
+// Primary: plain <audio src> streaming (no fetch/CORS/proxy — like a video site).
+// Fallback: if the browser's media loader rejects the source, download via the same
+// proxy path option 3 uses and play from memory (still nothing persisted).
+let liveToken = 0;
+async function playLive(token, word, t0, viaFallback) {
+  const status = $("liveStatus");
+  if (viaFallback) {
+    status.textContent = "Streaming blocked by this browser — downloading instead… (\u226415s)";
+    try {
+      const blob = await fetchTtsBytes(word);
+      const url = URL.createObjectURL(blob);
+      const a = new Audio(url);
+      a.onended = () => { URL.revokeObjectURL(url); if (token === liveToken) status.textContent = "Done (" + Math.round((performance.now()-t0)/1000) + "s, downloaded & played in memory — nothing stored)."; };
+      a.onerror = () => { URL.revokeObjectURL(url); if (token === liveToken) status.textContent = "Download succeeded but playback failed — click Play now again."; };
+      status.textContent = "Playing (downloaded in memory, nothing stored)…";
+      await a.play();
+    } catch(e) {
+      if (token === liveToken) status.textContent = "Failed: " + e.message;
+    }
+    return;
+  }
+  const a = $("liveAudio");
+  a.pause();
+  a.removeAttribute("src");
+  a.src = ttsUrl(word, Date.now()); // cache-buster so every play is truly fresh
+  status.textContent = "Streaming \u201C" + word + "\u201D…";
+  a.onplaying = () => { if (token === liveToken) status.textContent = "Playing (streamed live, nothing stored)…"; };
+  a.onended = () => { if (token === liveToken) status.textContent = "Done — streamed in " + Math.round((performance.now()-t0)/1000) + "s total. Nothing was stored."; };
+  a.onerror = async () => {
+    if (token !== liveToken || !a.error) return;
+    if (a.error.code === 4) {
+      // MEDIA_ERR_SRC_NOT_SUPPORTED — retry once via the download path
+      await playLive(token, word, t0, true);
+    } else {
+      status.textContent = "Playback error (" + (a.error.message || a.error.code) + ") — check internet, then click Play now again.";
+    }
+  };
+  a.play().catch(() => { if (token === liveToken) status.textContent = "Browser paused playback (autoplay policy) — click Play now again."; });
+}
+$("btnLive").addEventListener("click", () => {
+  const token = ++liveToken;
+  playLive(token, currentWord, performance.now(), false);
+});
+
+setWord(currentWord);
+</script>
+</body>
+</html>

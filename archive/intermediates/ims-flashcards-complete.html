@@ -1,0 +1,3098 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Italian Made Simple — Complete Flashcards</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #f5f5f5; min-height: 100vh; display: flex; justify-content: center; align-items: center; padding: 20px; }
+  .container { max-width: 600px; width: 100%; }
+  h1 { text-align: center; color: #333; margin-bottom: 20px; font-size: 1.5em; }
+  .controls { display: flex; gap: 10px; margin-bottom: 20px; flex-wrap: wrap; }
+  select, button { padding: 10px 15px; border: 1px solid #ddd; border-radius: 8px; font-size: 14px; cursor: pointer; background: white; }
+  select:focus, button:focus { outline: none; border-color: #4a90d9; }
+  button.primary { background: #4a90d9; color: white; border-color: #4a90d9; }
+  button.primary:hover { background: #357abd; }
+  .card-container { perspective: 1000px; margin-bottom: 20px; }
+  .card { position: relative; width: 100%; height: 300px; cursor: pointer; }
+  .card-inner { position: absolute; width: 100%; height: 100%; transition: transform 0.6s; transform-style: preserve-3d; }
+  .card.flipped .card-inner { transform: rotateY(180deg); }
+  .card-face { position: absolute; width: 100%; height: 100%; backface-visibility: hidden; display: flex; flex-direction: column; justify-content: center; align-items: center; padding: 30px; border-radius: 16px; box-shadow: 0 4px 20px rgba(0,0,0,0.1); }
+  .card-front { background: white; }
+  .card-back { background: #4a90d9; color: white; transform: rotateY(180deg); }
+  .card-text { font-size: 2em; text-align: center; word-wrap: break-word; }
+  .card-hint { position: absolute; bottom: 15px; font-size: 0.8em; opacity: 0.6; }
+  .stats { text-align: center; color: #666; font-size: 0.9em; margin-bottom: 10px; }
+  .progress-bar { width: 100%; height: 8px; background: #e0e0e0; border-radius: 4px; overflow: hidden; margin-bottom: 10px; }
+  .progress-fill { height: 100%; background: #4a90d9; transition: width 0.3s; }
+</style>
+</head>
+<body>
+<div class="container">
+  <h1>🇮🇹 Italian Made Simple — Complete Flashcards</h1>
+  
+  <div class="controls">
+    <select id="chapterSelect">
+      <option value="all">All Chapters (1-40)</option>
+      <option value="1">Chapter 1 (7 cards)</option>
+      <option value="2">Chapter 2 (7 cards)</option>
+      <option value="3">Chapter 3 (7 cards)</option>
+      <option value="4">Chapter 4 (5 cards)</option>
+      <option value="5">Chapter 5 (8 cards)</option>
+      <option value="7">Chapter 7 (8 cards)</option>
+      <option value="8">Chapter 8 (4 cards)</option>
+      <option value="9">Chapter 9 (11 cards)</option>
+      <option value="10">Chapter 10 (8 cards)</option>
+      <option value="11">Chapter 11 (16 cards)</option>
+      <option value="13">Chapter 13 (21 cards)</option>
+      <option value="14">Chapter 14 (20 cards)</option>
+      <option value="15">Chapter 15 (9 cards)</option>
+      <option value="16">Chapter 16 (11 cards)</option>
+      <option value="17">Chapter 17 (12 cards)</option>
+      <option value="19">Chapter 19 (12 cards)</option>
+      <option value="20">Chapter 20 (18 cards)</option>
+      <option value="21">Chapter 21 (7 cards)</option>
+      <option value="22">Chapter 22 (8 cards)</option>
+      <option value="23">Chapter 23 (13 cards)</option>
+      <option value="24">Chapter 24 (13 cards)</option>
+      <option value="25">Chapter 25 (12 cards)</option>
+      <option value="26">Chapter 26 (14 cards)</option>
+      <option value="27">Chapter 27 (15 cards)</option>
+      <option value="28">Chapter 28 (16 cards)</option>
+      <option value="29">Chapter 29 (10 cards)</option>
+      <option value="30">Chapter 30 (13 cards)</option>
+      <option value="31">Chapter 31 (15 cards)</option>
+      <option value="32">Chapter 32 (10 cards)</option>
+      <option value="33">Chapter 33 (11 cards)</option>
+      <option value="34">Chapter 34 (10 cards)</option>
+      <option value="35">Chapter 35 (16 cards)</option>
+      <option value="36">Chapter 36 (11 cards)</option>
+      <option value="37">Chapter 37 (9 cards)</option>
+      <option value="38">Chapter 38 (16 cards)</option>
+      <option value="39">Chapter 39 (7 cards)</option>
+      <option value="40">Chapter 40 (6 cards)</option>
+    </select>
+    <button class="primary" onclick="nextCard()">Next Card →</button>
+    <button onclick="shuffleCards()">🔀 Shuffle</button>
+  </div>
+  
+  <div class="stats" id="stats">Loading...</div>
+  <div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
+  
+  <div class="card-container" onclick="flipCard()">
+    <div class="card" id="flashcard">
+      <div class="card-inner">
+        <div class="card-face card-front">
+          <div class="card-text" id="frontText">Click to load</div>
+          <div class="card-hint">Click to reveal</div>
+        </div>
+        <div class="card-face card-back">
+          <div class="card-text" id="backText"></div>
+          <div class="card-hint">Click to flip back</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+const CARDS = [
+  {
+    "set": "ch1",
+    "ch": 1,
+    "cat": "verbi",
+    "it": "liveabitare",
+    "en": "to liveha he/she/it"
+  },
+  {
+    "set": "ch1",
+    "ch": 1,
+    "cat": "verbi",
+    "it": "hasavere",
+    "en": "to havemi chiamo my name ischiamarsi to be namedsono I amè he/she/it issono they areEssere to be\ninsegno I teachinsegna he/she/it"
+  },
+  {
+    "set": "ch1",
+    "ch": 1,
+    "cat": "verbi",
+    "it": "teachesinsegnare",
+    "en": "to teachlavoro I"
+  },
+  {
+    "set": "ch1",
+    "ch": 1,
+    "cat": "verbi",
+    "it": "worklavorare",
+    "en": "to work avverbi e altro — adverbs and morea at, inanche alsobuongiorno good morning, good day ciao hello, bye byecon withdi ofe andecco"
+  },
+  {
+    "set": "ch1",
+    "ch": 1,
+    "cat": "verbi",
+    "it": "here",
+    "en": "is,"
+  },
+  {
+    "set": "ch1",
+    "ch": 1,
+    "cat": "verbi",
+    "it": "here",
+    "en": "arein centro downtownloro they, themma butper forperché because,"
+  },
+  {
+    "set": "ch1",
+    "ch": 1,
+    "cat": "verbi",
+    "it": "whypiacere!",
+    "en": "nice to meet you!quando whentutto il giorno all day long"
+  },
+  {
+    "set": "ch2",
+    "ch": 2,
+    "cat": "verbi",
+    "it": "desiderare",
+    "en": "to"
+  },
+  {
+    "set": "ch2",
+    "ch": 2,
+    "cat": "verbi",
+    "it": "desire,",
+    "en": "to"
+  },
+  {
+    "set": "ch2",
+    "ch": 2,
+    "cat": "verbi",
+    "it": "wantfare",
+    "en": "to make, to"
+  },
+  {
+    "set": "ch2",
+    "ch": 2,
+    "cat": "verbi",
+    "it": "doimparare",
+    "en": "to"
+  },
+  {
+    "set": "ch2",
+    "ch": 2,
+    "cat": "verbi",
+    "it": "learnimportare",
+    "en": "to"
+  },
+  {
+    "set": "ch2",
+    "ch": 2,
+    "cat": "verbi",
+    "it": "importparlare",
+    "en": "to"
+  },
+  {
+    "set": "ch2",
+    "ch": 2,
+    "cat": "verbi",
+    "it": "studyvisitare",
+    "en": "to visit avverbi e altro — adverbs and morea domani see you tomorrowa dopo / a più tardi see you latera lunedì (martedì, mercoledì, ecc.) see you Monday (Tuesday, Wednesday,etc.)anche also, tooeccEtera etcetera (abbreviated as ecc.)là, lì therequa, qui hererapidamente quickly"
+  },
+  {
+    "set": "ch3",
+    "ch": 3,
+    "cat": "verbi",
+    "it": "saysdire",
+    "en": "to"
+  },
+  {
+    "set": "ch3",
+    "ch": 3,
+    "cat": "verbi",
+    "it": "saydomandare",
+    "en": "to ask fa domande he/she asks questions"
+  },
+  {
+    "set": "ch3",
+    "ch": 3,
+    "cat": "verbi",
+    "it": "fare",
+    "en": "domande to ask questions"
+  },
+  {
+    "set": "ch3",
+    "ch": 3,
+    "cat": "verbi",
+    "it": "indicare",
+    "en": "to point torisponde he/she/it answersrispOndere to answerio ho I have"
+  },
+  {
+    "set": "ch3",
+    "ch": 3,
+    "cat": "verbi",
+    "it": "avere",
+    "en": "to have Lei ha you have (formal)io vedo I seevede Lei? do you see? (formal) avverbi e altro — adverbs and moreallora thena memoria by heartbisogna it is necessary, one must così in this way, socome howecco"
+  },
+  {
+    "set": "ch3",
+    "ch": 3,
+    "cat": "verbi",
+    "it": "here",
+    "en": "is/"
+  },
+  {
+    "set": "ch3",
+    "ch": 3,
+    "cat": "verbi",
+    "it": "here",
+    "en": "aree così via and so ono or"
+  },
+  {
+    "set": "ch4",
+    "ch": 4,
+    "cat": "verbi",
+    "it": "conoscere",
+    "en": "to know, to be acquainted"
+  },
+  {
+    "set": "ch4",
+    "ch": 4,
+    "cat": "verbi",
+    "it": "withsapere",
+    "en": "to know, to know how avverbi e altro — adverbs and moreal, allo, all’, alla, ai, agli, alle at the\nbasta enoughbene wellc’è"
+  },
+  {
+    "set": "ch4",
+    "ch": 4,
+    "cat": "verbi",
+    "it": "there",
+    "en": "isci sono"
+  },
+  {
+    "set": "ch4",
+    "ch": 4,
+    "cat": "verbi",
+    "it": "there",
+    "en": "areda from, since, fordavanti in front offra betweenintorno aroundmolto very nel, nello, nell’, nella, nei, negli, nelle in theoggi todayper favore, per"
+  },
+  {
+    "set": "ch4",
+    "ch": 4,
+    "cat": "verbi",
+    "it": "piacere",
+    "en": "pleasesopra oversotto undersu on sul, sullo, sull’, sulla, sui, sugli, sulle on thetra betweenvicino near"
+  },
+  {
+    "set": "ch5",
+    "ch": 5,
+    "cat": "verbi",
+    "it": "ascoltare",
+    "en": "to listenchiEdere to"
+  },
+  {
+    "set": "ch5",
+    "ch": 5,
+    "cat": "verbi",
+    "it": "askcominciare",
+    "en": "to"
+  },
+  {
+    "set": "ch5",
+    "ch": 5,
+    "cat": "verbi",
+    "it": "begincontare",
+    "en": "to plan, to"
+  },
+  {
+    "set": "ch5",
+    "ch": 5,
+    "cat": "verbi",
+    "it": "countconversare",
+    "en": "to"
+  },
+  {
+    "set": "ch5",
+    "ch": 5,
+    "cat": "verbi",
+    "it": "conversecostare",
+    "en": "to"
+  },
+  {
+    "set": "ch5",
+    "ch": 5,
+    "cat": "verbi",
+    "it": "costlasciare",
+    "en": "to"
+  },
+  {
+    "set": "ch5",
+    "ch": 5,
+    "cat": "verbi",
+    "it": "leaveprenotare",
+    "en": "to"
+  },
+  {
+    "set": "ch5",
+    "ch": 5,
+    "cat": "verbi",
+    "it": "reserveviaggiare",
+    "en": "to travel avverbi e altro — adverbs and moreattentamente attentivelydi niente you’re welcomedomani tomorrowforse maybe\nmille grazie! a thousand thanks!naturalmente of coursesenza withoutsoltanto, solo, solamente only"
+  },
+  {
+    "set": "ch7",
+    "ch": 7,
+    "cat": "verbi",
+    "it": "waitavere",
+    "en": "10, 20, 40 anni"
+  },
+  {
+    "set": "ch7",
+    "ch": 7,
+    "cat": "verbi",
+    "it": "avere",
+    "en": "fame tobe hungry to be 10, 20, 40 years"
+  },
+  {
+    "set": "ch7",
+    "ch": 7,
+    "cat": "verbi",
+    "it": "oldavere",
+    "en": "fame to be"
+  },
+  {
+    "set": "ch7",
+    "ch": 7,
+    "cat": "verbi",
+    "it": "hungryavere",
+    "en": "sete to be"
+  },
+  {
+    "set": "ch7",
+    "ch": 7,
+    "cat": "verbi",
+    "it": "thirstyavere",
+    "en": "sonno to be"
+  },
+  {
+    "set": "ch7",
+    "ch": 7,
+    "cat": "verbi",
+    "it": "invitesalutare",
+    "en": "greet"
+  },
+  {
+    "set": "ch7",
+    "ch": 7,
+    "cat": "verbi",
+    "it": "sbagliare",
+    "en": "to make a"
+  },
+  {
+    "set": "ch7",
+    "ch": 7,
+    "cat": "verbi",
+    "it": "mistakevisitare",
+    "en": "visit avverbi e altro — adverbs and moreallegramente cheerfullyamichevolmente in a friendly wayeccetto exceptimmediatamente immediatelyimprovvisamente suddenlylontano farprego you’re welcome, help yourself, go aheadpuntualmente punctually ifsempre alwayssicuramente surelyvolentieri happily, willingly"
+  },
+  {
+    "set": "ch8",
+    "ch": 8,
+    "cat": "verbi",
+    "it": "arrivare",
+    "en": "to"
+  },
+  {
+    "set": "ch8",
+    "ch": 8,
+    "cat": "verbi",
+    "it": "arriveesagerare",
+    "en": "to"
+  },
+  {
+    "set": "ch8",
+    "ch": 8,
+    "cat": "verbi",
+    "it": "exaggeraterivedere",
+    "en": "to see again, to"
+  },
+  {
+    "set": "ch8",
+    "ch": 8,
+    "cat": "verbi",
+    "it": "reviewsperare",
+    "en": "to hope avverbi e altro — adverbs and moreancora again, stilla propOsito by the waymagari I wish!male badlyné…né… neither … nor…specialmente especiallyun po’ di some, a little bit ofvelocemente quickly, fast"
+  },
+  {
+    "set": "ch9",
+    "ch": 9,
+    "cat": "verbi",
+    "it": "augurare",
+    "en": "to"
+  },
+  {
+    "set": "ch9",
+    "ch": 9,
+    "cat": "verbi",
+    "it": "wishcambiare",
+    "en": "to"
+  },
+  {
+    "set": "ch9",
+    "ch": 9,
+    "cat": "verbi",
+    "it": "changecapire",
+    "en": "to"
+  },
+  {
+    "set": "ch9",
+    "ch": 9,
+    "cat": "verbi",
+    "it": "understandcredere",
+    "en": "to"
+  },
+  {
+    "set": "ch9",
+    "ch": 9,
+    "cat": "verbi",
+    "it": "believefrequentare",
+    "en": "to attend a school lEggere to"
+  },
+  {
+    "set": "ch9",
+    "ch": 9,
+    "cat": "verbi",
+    "it": "readpermettere",
+    "en": "to"
+  },
+  {
+    "set": "ch9",
+    "ch": 9,
+    "cat": "verbi",
+    "it": "allowpiacere",
+    "en": "to"
+  },
+  {
+    "set": "ch9",
+    "ch": 9,
+    "cat": "verbi",
+    "it": "likericevere",
+    "en": "to receivescrIvere to"
+  },
+  {
+    "set": "ch9",
+    "ch": 9,
+    "cat": "verbi",
+    "it": "writesembrare",
+    "en": "to seemsuccedEre to happen"
+  },
+  {
+    "set": "ch9",
+    "ch": 9,
+    "cat": "verbi",
+    "it": "trovare",
+    "en": "to find (remember the site il trovatore the finder?) avverbi ed espression — adverbs and expressionsa"
+  },
+  {
+    "set": "ch9",
+    "ch": 9,
+    "cat": "verbi",
+    "it": "dire",
+    "en": "il vero to tell the truthal più presto possibile as soon as possiblea meraviglia wonderfullyassiduamente assiduouslydi sOlito usuallyd’oro goldenmeglio betterperciò thereforequalcosa somethingspesso often"
+  },
+  {
+    "set": "ch10",
+    "ch": 10,
+    "cat": "verbi",
+    "it": "comandare",
+    "en": "to order, to"
+  },
+  {
+    "set": "ch10",
+    "ch": 10,
+    "cat": "verbi",
+    "it": "commandcontrollare",
+    "en": "to"
+  },
+  {
+    "set": "ch10",
+    "ch": 10,
+    "cat": "verbi",
+    "it": "controlfare",
+    "en": "merenda to have a"
+  },
+  {
+    "set": "ch10",
+    "ch": 10,
+    "cat": "verbi",
+    "it": "snackrestare",
+    "en": "to stay, to"
+  },
+  {
+    "set": "ch10",
+    "ch": 10,
+    "cat": "verbi",
+    "it": "remainrimanere",
+    "en": "to stay, to"
+  },
+  {
+    "set": "ch10",
+    "ch": 10,
+    "cat": "verbi",
+    "it": "remaintornare",
+    "en": "/"
+  },
+  {
+    "set": "ch10",
+    "ch": 10,
+    "cat": "verbi",
+    "it": "ritornare",
+    "en": "to return, to go back\nrivEndere to"
+  },
+  {
+    "set": "ch10",
+    "ch": 10,
+    "cat": "verbi",
+    "it": "resellvenire",
+    "en": "to come avverbi e altro — adverbs and moreadesso nowcertamente certainlyche bello! how nice, how beautiful!neanche / nemmeno / neppure not evenper esempio for exampleperfettamente perfectlyper fortuna! luckilysoprattutto most of all"
+  },
+  {
+    "set": "ch11",
+    "ch": 11,
+    "cat": "nomi",
+    "it": "affare",
+    "en": "business"
+  },
+  {
+    "set": "ch11",
+    "ch": 11,
+    "cat": "nomi",
+    "it": "tà",
+    "en": "civ"
+  },
+  {
+    "set": "ch11",
+    "ch": 11,
+    "cat": "nomi",
+    "it": "izationla",
+    "en": "data date"
+  },
+  {
+    "set": "ch11",
+    "ch": 11,
+    "cat": "nomi",
+    "it": "occasione",
+    "en": "opportunity, occasion"
+  },
+  {
+    "set": "ch11",
+    "ch": 11,
+    "cat": "nomi",
+    "it": "ora",
+    "en": "hour"
+  },
+  {
+    "set": "ch11",
+    "ch": 11,
+    "cat": "nomi",
+    "it": "phonela",
+    "en": "te"
+  },
+  {
+    "set": "ch11",
+    "ch": 11,
+    "cat": "nomi",
+    "it": "visione",
+    "en": "te"
+  },
+  {
+    "set": "ch11",
+    "ch": 11,
+    "cat": "verbi",
+    "it": "dire",
+    "en": "sul serio to be serious (about something one says)esprImere to"
+  },
+  {
+    "set": "ch11",
+    "ch": 11,
+    "cat": "verbi",
+    "it": "expressimmaginare",
+    "en": "to"
+  },
+  {
+    "set": "ch11",
+    "ch": 11,
+    "cat": "verbi",
+    "it": "imagineindovinare",
+    "en": "to"
+  },
+  {
+    "set": "ch11",
+    "ch": 11,
+    "cat": "verbi",
+    "it": "guesspensare",
+    "en": "to"
+  },
+  {
+    "set": "ch11",
+    "ch": 11,
+    "cat": "verbi",
+    "it": "thinkprestare",
+    "en": "to"
+  },
+  {
+    "set": "ch11",
+    "ch": 11,
+    "cat": "verbi",
+    "it": "lendprovare",
+    "en": "to try, to"
+  },
+  {
+    "set": "ch11",
+    "ch": 11,
+    "cat": "verbi",
+    "it": "feelrisparmiare",
+    "en": "to savespEndere to"
+  },
+  {
+    "set": "ch11",
+    "ch": 11,
+    "cat": "verbi",
+    "it": "spendtelefonare",
+    "en": "to"
+  },
+  {
+    "set": "ch11",
+    "ch": 11,
+    "cat": "verbi",
+    "it": "telephoneusare",
+    "en": "to use avverbi e altro — adverbs and morecorrettamente correctlydavvero reallynel frattempo in the meantimetutto il possIbile everything possible"
+  },
+  {
+    "set": "ch13",
+    "ch": 13,
+    "cat": "nomi",
+    "it": "etterIa",
+    "en": "ticket counter"
+  },
+  {
+    "set": "ch13",
+    "ch": 13,
+    "cat": "nomi",
+    "it": "etto",
+    "en": "ticket"
+  },
+  {
+    "set": "ch13",
+    "ch": 13,
+    "cat": "nomi",
+    "it": "ga",
+    "en": "col"
+  },
+  {
+    "set": "ch13",
+    "ch": 13,
+    "cat": "nomi",
+    "it": "agueil",
+    "en": "conto b"
+  },
+  {
+    "set": "ch13",
+    "ch": 13,
+    "cat": "nomi",
+    "it": "ro",
+    "en": "dol"
+  },
+  {
+    "set": "ch13",
+    "ch": 13,
+    "cat": "nomi",
+    "it": "impiegato",
+    "en": "/"
+  },
+  {
+    "set": "ch13",
+    "ch": 13,
+    "cat": "nomi",
+    "it": "impiegata",
+    "en": "c"
+  },
+  {
+    "set": "ch13",
+    "ch": 13,
+    "cat": "nomi",
+    "it": "ma",
+    "en": "prob"
+  },
+  {
+    "set": "ch13",
+    "ch": 13,
+    "cat": "nomi",
+    "it": "mil",
+    "en": "programma program"
+  },
+  {
+    "set": "ch13",
+    "ch": 13,
+    "cat": "verbi",
+    "it": "calcolare",
+    "en": "to"
+  },
+  {
+    "set": "ch13",
+    "ch": 13,
+    "cat": "verbi",
+    "it": "calculatecomprare",
+    "en": "to"
+  },
+  {
+    "set": "ch13",
+    "ch": 13,
+    "cat": "verbi",
+    "it": "buyfare",
+    "en": "le cOmpere /"
+  },
+  {
+    "set": "ch13",
+    "ch": 13,
+    "cat": "verbi",
+    "it": "fare",
+    "en": "cOmpere to go shopping (usually not for food)"
+  },
+  {
+    "set": "ch13",
+    "ch": 13,
+    "cat": "verbi",
+    "it": "fare",
+    "en": "le spese /"
+  },
+  {
+    "set": "ch13",
+    "ch": 13,
+    "cat": "verbi",
+    "it": "fare",
+    "en": "spese to go shopping (usually not for food)"
+  },
+  {
+    "set": "ch13",
+    "ch": 13,
+    "cat": "verbi",
+    "it": "fare",
+    "en": "la spesa to go grocery"
+  },
+  {
+    "set": "ch13",
+    "ch": 13,
+    "cat": "verbi",
+    "it": "shoppingincontrare",
+    "en": "to"
+  },
+  {
+    "set": "ch13",
+    "ch": 13,
+    "cat": "verbi",
+    "it": "meetpagare",
+    "en": "to"
+  },
+  {
+    "set": "ch13",
+    "ch": 13,
+    "cat": "verbi",
+    "it": "paypesare",
+    "en": "to"
+  },
+  {
+    "set": "ch13",
+    "ch": 13,
+    "cat": "verbi",
+    "it": "weighusare",
+    "en": "to"
+  },
+  {
+    "set": "ch13",
+    "ch": 13,
+    "cat": "verbi",
+    "it": "usevalere",
+    "en": "to be worth avverbi e altro — adverbs and morecirca aboutmeno less, minuspiù more, plusproprio really\nugualmente all the same, equally"
+  },
+  {
+    "set": "ch14",
+    "ch": 14,
+    "cat": "nomi",
+    "it": "aeroporto",
+    "en": "airport"
+  },
+  {
+    "set": "ch14",
+    "ch": 14,
+    "cat": "nomi",
+    "it": "argomento",
+    "en": "topic"
+  },
+  {
+    "set": "ch14",
+    "ch": 14,
+    "cat": "nomi",
+    "it": "tion",
+    "en": "il ch"
+  },
+  {
+    "set": "ch14",
+    "ch": 14,
+    "cat": "nomi",
+    "it": "ogrammo",
+    "en": "k"
+  },
+  {
+    "set": "ch14",
+    "ch": 14,
+    "cat": "nomi",
+    "it": "o",
+    "en": "il ch"
+  },
+  {
+    "set": "ch14",
+    "ch": 14,
+    "cat": "nomi",
+    "it": "ometro",
+    "en": "k"
+  },
+  {
+    "set": "ch14",
+    "ch": 14,
+    "cat": "nomi",
+    "it": "ometerla",
+    "en": "cintura belt"
+  },
+  {
+    "set": "ch14",
+    "ch": 14,
+    "cat": "nomi",
+    "it": "zione",
+    "en": "breakfast"
+  },
+  {
+    "set": "ch14",
+    "ch": 14,
+    "cat": "nomi",
+    "it": "spersonil",
+    "en": "giorno day"
+  },
+  {
+    "set": "ch14",
+    "ch": 14,
+    "cat": "nomi",
+    "it": "ve",
+    "en": "la libbra pound (weighing measure)"
+  },
+  {
+    "set": "ch14",
+    "ch": 14,
+    "cat": "nomi",
+    "it": "o",
+    "en": "("
+  },
+  {
+    "set": "ch14",
+    "ch": 14,
+    "cat": "nomi",
+    "it": "eil",
+    "en": "negozio shop"
+  },
+  {
+    "set": "ch14",
+    "ch": 14,
+    "cat": "nomi",
+    "it": "amento",
+    "en": "c"
+  },
+  {
+    "set": "ch14",
+    "ch": 14,
+    "cat": "nomi",
+    "it": "thing",
+    "en": "shop"
+  },
+  {
+    "set": "ch14",
+    "ch": 14,
+    "cat": "nomi",
+    "it": "uso",
+    "en": "use"
+  },
+  {
+    "set": "ch14",
+    "ch": 14,
+    "cat": "verbi",
+    "it": "convertire",
+    "en": "to"
+  },
+  {
+    "set": "ch14",
+    "ch": 14,
+    "cat": "verbi",
+    "it": "convertdividere",
+    "en": "to dividefarcela to make"
+  },
+  {
+    "set": "ch14",
+    "ch": 14,
+    "cat": "verbi",
+    "it": "itmoltiplicare",
+    "en": "to"
+  },
+  {
+    "set": "ch14",
+    "ch": 14,
+    "cat": "verbi",
+    "it": "multiplyportare",
+    "en": "to bring, to"
+  },
+  {
+    "set": "ch14",
+    "ch": 14,
+    "cat": "verbi",
+    "it": "carryregalare",
+    "en": "to give as a gift avverbi e altro — adverbs and moreancora un po’ a little moreben detto! well said!in ritardo lateognuno each onelo stesso all the sametardi late"
+  },
+  {
+    "set": "ch15",
+    "ch": 15,
+    "cat": "nomi",
+    "it": "andata",
+    "en": "one-way"
+  },
+  {
+    "set": "ch15",
+    "ch": 15,
+    "cat": "nomi",
+    "it": "sse",
+    "en": "c"
+  },
+  {
+    "set": "ch15",
+    "ch": 15,
+    "cat": "nomi",
+    "it": "ssil",
+    "en": "latin"
+  },
+  {
+    "set": "ch15",
+    "ch": 15,
+    "cat": "nomi",
+    "it": "ver",
+    "en": "latin"
+  },
+  {
+    "set": "ch15",
+    "ch": 15,
+    "cat": "nomi",
+    "it": "ora",
+    "en": "di cena dinnertime"
+  },
+  {
+    "set": "ch15",
+    "ch": 15,
+    "cat": "nomi",
+    "it": "ora",
+    "en": "di pranzo lunchtime"
+  },
+  {
+    "set": "ch15",
+    "ch": 15,
+    "cat": "verbi",
+    "it": "fare",
+    "en": "la parte to play the"
+  },
+  {
+    "set": "ch15",
+    "ch": 15,
+    "cat": "verbi",
+    "it": "partfunzionare",
+    "en": "to"
+  },
+  {
+    "set": "ch15",
+    "ch": 15,
+    "cat": "verbi",
+    "it": "workpartire",
+    "en": "to leave avverbi e altro — adverbs and moreche peccato! peccato! too bad!insieme togethermi dispiace I’m sorrypurtroppo unfortunately"
+  },
+  {
+    "set": "ch16",
+    "ch": 16,
+    "cat": "nomi",
+    "it": "ve",
+    "en": "moviesi f"
+  },
+  {
+    "set": "ch16",
+    "ch": 16,
+    "cat": "nomi",
+    "it": "m",
+    "en": "di fantascienza science-fiction moviesi f"
+  },
+  {
+    "set": "ch16",
+    "ch": 16,
+    "cat": "nomi",
+    "it": "m",
+    "en": "di guerra war moviesi f"
+  },
+  {
+    "set": "ch16",
+    "ch": 16,
+    "cat": "nomi",
+    "it": "r",
+    "en": "verbs, adjectives, artic"
+  },
+  {
+    "set": "ch16",
+    "ch": 16,
+    "cat": "verbi",
+    "it": "annoiare",
+    "en": "to"
+  },
+  {
+    "set": "ch16",
+    "ch": 16,
+    "cat": "verbi",
+    "it": "boredare",
+    "en": "to"
+  },
+  {
+    "set": "ch16",
+    "ch": 16,
+    "cat": "verbi",
+    "it": "givefare",
+    "en": "rIdere to make (someone)"
+  },
+  {
+    "set": "ch16",
+    "ch": 16,
+    "cat": "verbi",
+    "it": "laughguardare",
+    "en": "to watch, to"
+  },
+  {
+    "set": "ch16",
+    "ch": 16,
+    "cat": "verbi",
+    "it": "looknoleggiare",
+    "en": "/"
+  },
+  {
+    "set": "ch16",
+    "ch": 16,
+    "cat": "verbi",
+    "it": "affittare",
+    "en": "to"
+  },
+  {
+    "set": "ch16",
+    "ch": 16,
+    "cat": "verbi",
+    "it": "rentriparlare",
+    "en": "to talk again avverbi e altro — adverbs and moredi sOlito usuallygrazie a thanks toin generale in generalqualche volta sometimespoco little, seldom\nsenza dubbio without doubtun po’ / un poco a little"
+  },
+  {
+    "set": "ch17",
+    "ch": 17,
+    "cat": "nomi",
+    "it": "alleato",
+    "en": "ally"
+  },
+  {
+    "set": "ch17",
+    "ch": 17,
+    "cat": "nomi",
+    "it": "anno",
+    "en": "birthday"
+  },
+  {
+    "set": "ch17",
+    "ch": 17,
+    "cat": "nomi",
+    "it": "enciclopedIa",
+    "en": "encyc"
+  },
+  {
+    "set": "ch17",
+    "ch": 17,
+    "cat": "nomi",
+    "it": "impressione",
+    "en": "impression"
+  },
+  {
+    "set": "ch17",
+    "ch": 17,
+    "cat": "nomi",
+    "it": "inizio",
+    "en": "beginning"
+  },
+  {
+    "set": "ch17",
+    "ch": 17,
+    "cat": "nomi",
+    "it": "Internet",
+    "en": "internet"
+  },
+  {
+    "set": "ch17",
+    "ch": 17,
+    "cat": "nomi",
+    "it": "ggenda",
+    "en": "legend"
+  },
+  {
+    "set": "ch17",
+    "ch": 17,
+    "cat": "verbi",
+    "it": "cliccare",
+    "en": "to"
+  },
+  {
+    "set": "ch17",
+    "ch": 17,
+    "cat": "verbi",
+    "it": "clickconfessare",
+    "en": "to confesscrEdere to"
+  },
+  {
+    "set": "ch17",
+    "ch": 17,
+    "cat": "verbi",
+    "it": "believefare",
+    "en": "bella figura to make a good impression, to look"
+  },
+  {
+    "set": "ch17",
+    "ch": 17,
+    "cat": "verbi",
+    "it": "goodfare",
+    "en": "brutta figura to make a bad impression, to look"
+  },
+  {
+    "set": "ch17",
+    "ch": 17,
+    "cat": "verbi",
+    "it": "badinteressare",
+    "en": "to interest avverbi e altro — adverbs and moreaffatto at allaltrettanto as muchavanti before, come inora nowpresto soonsotto forma di as, in the shape of"
+  },
+  {
+    "set": "ch19",
+    "ch": 19,
+    "cat": "nomi",
+    "it": "abitante",
+    "en": "inhabitant"
+  },
+  {
+    "set": "ch19",
+    "ch": 19,
+    "cat": "nomi",
+    "it": "altezza",
+    "en": "height"
+  },
+  {
+    "set": "ch19",
+    "ch": 19,
+    "cat": "nomi",
+    "it": "zioni",
+    "en": "congratu"
+  },
+  {
+    "set": "ch19",
+    "ch": 19,
+    "cat": "nomi",
+    "it": "tionsil",
+    "en": "dubbio doubt"
+  },
+  {
+    "set": "ch19",
+    "ch": 19,
+    "cat": "nomi",
+    "it": "il",
+    "en": "porto harbor"
+  },
+  {
+    "set": "ch19",
+    "ch": 19,
+    "cat": "verbi",
+    "it": "dire",
+    "en": "una bugia,"
+  },
+  {
+    "set": "ch19",
+    "ch": 19,
+    "cat": "verbi",
+    "it": "dire",
+    "en": "le bugie to tell a lie, to tell"
+  },
+  {
+    "set": "ch19",
+    "ch": 19,
+    "cat": "verbi",
+    "it": "liesdire",
+    "en": "la verità to tell the"
+  },
+  {
+    "set": "ch19",
+    "ch": 19,
+    "cat": "verbi",
+    "it": "truthessere",
+    "en": "d’accordo to"
+  },
+  {
+    "set": "ch19",
+    "ch": 19,
+    "cat": "verbi",
+    "it": "agreeessere",
+    "en": "d’accordo to"
+  },
+  {
+    "set": "ch19",
+    "ch": 19,
+    "cat": "verbi",
+    "it": "agreeoffrire",
+    "en": "to"
+  },
+  {
+    "set": "ch19",
+    "ch": 19,
+    "cat": "verbi",
+    "it": "offersuperare",
+    "en": "to overcome avverbi e altro — adverbs and morea nord di North ofal nord in/to the northa sud di South ofal sud in/to the southa est di East ofall’est in/to the easta ovest di West ofall’ovest in/to the westbe’ wellcertamente certainly\ncomunque anywayonestamente honestlyveramente truly"
+  },
+  {
+    "set": "ch20",
+    "ch": 20,
+    "cat": "nomi",
+    "it": "sterolo",
+    "en": "cho"
+  },
+  {
+    "set": "ch20",
+    "ch": 20,
+    "cat": "nomi",
+    "it": "sterolla",
+    "en": "contraddizione contradiction"
+  },
+  {
+    "set": "ch20",
+    "ch": 20,
+    "cat": "nomi",
+    "it": "one",
+    "en": "/ dormi"
+  },
+  {
+    "set": "ch20",
+    "ch": 20,
+    "cat": "nomi",
+    "it": "ona",
+    "en": "person who likes to s"
+  },
+  {
+    "set": "ch20",
+    "ch": 20,
+    "cat": "nomi",
+    "it": "ep",
+    "en": "a"
+  },
+  {
+    "set": "ch20",
+    "ch": 20,
+    "cat": "nomi",
+    "it": "t",
+    "en": "la natura nature"
+  },
+  {
+    "set": "ch20",
+    "ch": 20,
+    "cat": "nomi",
+    "it": "ora",
+    "en": "di punta rush hour"
+  },
+  {
+    "set": "ch20",
+    "ch": 20,
+    "cat": "nomi",
+    "it": "a",
+    "en": "a"
+  },
+  {
+    "set": "ch20",
+    "ch": 20,
+    "cat": "nomi",
+    "it": "rm",
+    "en": "c"
+  },
+  {
+    "set": "ch20",
+    "ch": 20,
+    "cat": "nomi",
+    "it": "phoneil",
+    "en": "tempo time, weather"
+  },
+  {
+    "set": "ch20",
+    "ch": 20,
+    "cat": "verbi",
+    "it": "americanizedcamminare",
+    "en": "to"
+  },
+  {
+    "set": "ch20",
+    "ch": 20,
+    "cat": "verbi",
+    "it": "walkcenare",
+    "en": "to have"
+  },
+  {
+    "set": "ch20",
+    "ch": 20,
+    "cat": "verbi",
+    "it": "dinnerdedicare",
+    "en": "to dedicateEssere in orario to be on"
+  },
+  {
+    "set": "ch20",
+    "ch": 20,
+    "cat": "verbi",
+    "it": "timefare",
+    "en": "colazione to have"
+  },
+  {
+    "set": "ch20",
+    "ch": 20,
+    "cat": "verbi",
+    "it": "piacere",
+    "en": "to pleasefarsi la doccia to showerlavarsi to wash"
+  },
+  {
+    "set": "ch20",
+    "ch": 20,
+    "cat": "verbi",
+    "it": "oneselfmangiare",
+    "en": "to"
+  },
+  {
+    "set": "ch20",
+    "ch": 20,
+    "cat": "verbi",
+    "it": "eatpassare",
+    "en": "to pass, to"
+  },
+  {
+    "set": "ch20",
+    "ch": 20,
+    "cat": "verbi",
+    "it": "spendpranzare",
+    "en": "to have lunchpreoccuparsi to worryscEndere to climb down, to get off\nsedersi to sitsentirsi to feelvestirsi to get dressed avverbi e altro — adverbs and morealla fine finally, at the enddi buon’ora early in the morningdi tanto in tanto from time to timeinfine finallyin gEnere generallyin punto on the dotpoi thenprima at firstun’oretta about an hourverso around"
+  },
+  {
+    "set": "ch21",
+    "ch": 21,
+    "cat": "nomi",
+    "it": "cale",
+    "en": "bar, restaurant, pub"
+  },
+  {
+    "set": "ch21",
+    "ch": 21,
+    "cat": "nomi",
+    "it": "ni",
+    "en": "pants"
+  },
+  {
+    "set": "ch21",
+    "ch": 21,
+    "cat": "nomi",
+    "it": "uccello",
+    "en": "bird"
+  },
+  {
+    "set": "ch21",
+    "ch": 21,
+    "cat": "verbi",
+    "it": "bere",
+    "en": "to"
+  },
+  {
+    "set": "ch21",
+    "ch": 21,
+    "cat": "verbi",
+    "it": "drinkdiventare",
+    "en": "to becomepermEttersi to afford, to allow"
+  },
+  {
+    "set": "ch21",
+    "ch": 21,
+    "cat": "verbi",
+    "it": "oneselfuscire",
+    "en": "to leave, to go"
+  },
+  {
+    "set": "ch21",
+    "ch": 21,
+    "cat": "verbi",
+    "it": "dire",
+    "en": "to mean avverbi e altro — adverbs and morecomodamente comfortablyin assoluto of allin periferIa on the outskirts, in the suburbspiuttosto rathertemporaneamente temporarily"
+  },
+  {
+    "set": "ch22",
+    "ch": 22,
+    "cat": "nomi",
+    "it": "Albero",
+    "en": "tree"
+  },
+  {
+    "set": "ch22",
+    "ch": 22,
+    "cat": "nomi",
+    "it": "aria",
+    "en": "air"
+  },
+  {
+    "set": "ch22",
+    "ch": 22,
+    "cat": "nomi",
+    "it": "influenza",
+    "en": "influence"
+  },
+  {
+    "set": "ch22",
+    "ch": 22,
+    "cat": "nomi",
+    "it": "Isola",
+    "en": "is"
+  },
+  {
+    "set": "ch22",
+    "ch": 22,
+    "cat": "nomi",
+    "it": "ndil",
+    "en": "mezzo, i mezzi means"
+  },
+  {
+    "set": "ch22",
+    "ch": 22,
+    "cat": "nomi",
+    "it": "udla",
+    "en": "presenza presence"
+  },
+  {
+    "set": "ch22",
+    "ch": 22,
+    "cat": "verbi",
+    "it": "decidenevicare",
+    "en": "to"
+  },
+  {
+    "set": "ch22",
+    "ch": 22,
+    "cat": "verbi",
+    "it": "snowscherzare",
+    "en": "to jokesplEndere to shine avverbi e altro — adverbs and morea causa di because ofaltrove elsewherea poco a poco little by littlefuori outsideinfatti in fact, indeedinoltre furthermorequi / qua heretutto d’un tratto suddenly"
+  },
+  {
+    "set": "ch23",
+    "ch": 23,
+    "cat": "nomi",
+    "it": "o",
+    "en": "advice"
+  },
+  {
+    "set": "ch23",
+    "ch": 23,
+    "cat": "nomi",
+    "it": "esame",
+    "en": "exam"
+  },
+  {
+    "set": "ch23",
+    "ch": 23,
+    "cat": "nomi",
+    "it": "a",
+    "en": "leaf"
+  },
+  {
+    "set": "ch23",
+    "ch": 23,
+    "cat": "nomi",
+    "it": "ceil",
+    "en": "mare sea"
+  },
+  {
+    "set": "ch23",
+    "ch": 23,
+    "cat": "nomi",
+    "it": "wnil",
+    "en": "profumo scent, perfume"
+  },
+  {
+    "set": "ch23",
+    "ch": 23,
+    "cat": "verbi",
+    "it": "somigliare",
+    "en": "to"
+  },
+  {
+    "set": "ch23",
+    "ch": 23,
+    "cat": "verbi",
+    "it": "resemblebrillare",
+    "en": "to"
+  },
+  {
+    "set": "ch23",
+    "ch": 23,
+    "cat": "verbi",
+    "it": "shinedistare",
+    "en": "to be far"
+  },
+  {
+    "set": "ch23",
+    "ch": 23,
+    "cat": "verbi",
+    "it": "fromdovere",
+    "en": "to have to, must, may, to"
+  },
+  {
+    "set": "ch23",
+    "ch": 23,
+    "cat": "verbi",
+    "it": "oweesistere",
+    "en": "to"
+  },
+  {
+    "set": "ch23",
+    "ch": 23,
+    "cat": "verbi",
+    "it": "existinteressare",
+    "en": "to"
+  },
+  {
+    "set": "ch23",
+    "ch": 23,
+    "cat": "verbi",
+    "it": "dire",
+    "en": "to hear"
+  },
+  {
+    "set": "ch23",
+    "ch": 23,
+    "cat": "verbi",
+    "it": "sayspiegare",
+    "en": "to explain avverbi e altro — adverbs and moredel nord Northerndel sud SouthernqualsIasi anyqualunque anyquindi therefore"
+  },
+  {
+    "set": "ch24",
+    "ch": 24,
+    "cat": "nomi",
+    "it": "abitUdine",
+    "en": "habit"
+  },
+  {
+    "set": "ch24",
+    "ch": 24,
+    "cat": "nomi",
+    "it": "arte",
+    "en": "art"
+  },
+  {
+    "set": "ch24",
+    "ch": 24,
+    "cat": "nomi",
+    "it": "il",
+    "en": "cibo food"
+  },
+  {
+    "set": "ch24",
+    "ch": 24,
+    "cat": "nomi",
+    "it": "insalata",
+    "en": "sa"
+  },
+  {
+    "set": "ch24",
+    "ch": 24,
+    "cat": "nomi",
+    "it": "la",
+    "en": "partenza departure"
+  },
+  {
+    "set": "ch24",
+    "ch": 24,
+    "cat": "nomi",
+    "it": "asureil",
+    "en": "pol"
+  },
+  {
+    "set": "ch24",
+    "ch": 24,
+    "cat": "nomi",
+    "it": "afil",
+    "en": "sapore f"
+  },
+  {
+    "set": "ch24",
+    "ch": 24,
+    "cat": "nomi",
+    "it": "voril",
+    "en": "segreto secret"
+  },
+  {
+    "set": "ch24",
+    "ch": 24,
+    "cat": "verbi",
+    "it": "upassaggiare",
+    "en": "to"
+  },
+  {
+    "set": "ch24",
+    "ch": 24,
+    "cat": "verbi",
+    "it": "tasteavere",
+    "en": "l’acquolina in bocca to have one’s mouth"
+  },
+  {
+    "set": "ch24",
+    "ch": 24,
+    "cat": "verbi",
+    "it": "waterconservare",
+    "en": "to keep, to"
+  },
+  {
+    "set": "ch24",
+    "ch": 24,
+    "cat": "verbi",
+    "it": "preservecucinare",
+    "en": "to"
+  },
+  {
+    "set": "ch24",
+    "ch": 24,
+    "cat": "verbi",
+    "it": "cookvariare",
+    "en": "to vary avverbi e altro — adverbs and morea seconda di depending onaccidenti! wow! shucks!altro che! of course!come no! of course!\ndi stagione in seasonfacilmente easily"
+  },
+  {
+    "set": "ch25",
+    "ch": 25,
+    "cat": "nomi",
+    "it": "appuntamento",
+    "en": "appointment, date"
+  },
+  {
+    "set": "ch25",
+    "ch": 25,
+    "cat": "nomi",
+    "it": "artista",
+    "en": "artist"
+  },
+  {
+    "set": "ch25",
+    "ch": 25,
+    "cat": "nomi",
+    "it": "attrazione",
+    "en": "attraction"
+  },
+  {
+    "set": "ch25",
+    "ch": 25,
+    "cat": "nomi",
+    "it": "zza",
+    "en": "beauty"
+  },
+  {
+    "set": "ch25",
+    "ch": 25,
+    "cat": "nomi",
+    "it": "Epoca",
+    "en": "time period"
+  },
+  {
+    "set": "ch25",
+    "ch": 25,
+    "cat": "nomi",
+    "it": "tteratura",
+    "en": "literature"
+  },
+  {
+    "set": "ch25",
+    "ch": 25,
+    "cat": "nomi",
+    "it": "cationil",
+    "en": "tema theme"
+  },
+  {
+    "set": "ch25",
+    "ch": 25,
+    "cat": "verbi",
+    "it": "abbandonare",
+    "en": "to abandoncEdere to"
+  },
+  {
+    "set": "ch25",
+    "ch": 25,
+    "cat": "verbi",
+    "it": "yieldcircondare",
+    "en": "to surrounddescrIvere to"
+  },
+  {
+    "set": "ch25",
+    "ch": 25,
+    "cat": "verbi",
+    "it": "describedispiacere",
+    "en": "to be sorry, to displeaseinnamorarsi di to fall in love withinteressarsi to be interested"
+  },
+  {
+    "set": "ch25",
+    "ch": 25,
+    "cat": "verbi",
+    "it": "innominare",
+    "en": "to name avverbi e altro — adverbs and morea quanto"
+  },
+  {
+    "set": "ch25",
+    "ch": 25,
+    "cat": "verbi",
+    "it": "pare",
+    "en": "from what it seemscAspita! wow!dappertutto everywheredi persona in personpiù…più… the more … the more…\nsicuramente surely"
+  },
+  {
+    "set": "ch26",
+    "ch": 26,
+    "cat": "nomi",
+    "it": "ambiente",
+    "en": "environment"
+  },
+  {
+    "set": "ch26",
+    "ch": 26,
+    "cat": "nomi",
+    "it": "amore",
+    "en": "love"
+  },
+  {
+    "set": "ch26",
+    "ch": 26,
+    "cat": "nomi",
+    "it": "re",
+    "en": "pain"
+  },
+  {
+    "set": "ch26",
+    "ch": 26,
+    "cat": "nomi",
+    "it": "eccezione",
+    "en": "exception"
+  },
+  {
+    "set": "ch26",
+    "ch": 26,
+    "cat": "nomi",
+    "it": "effetto",
+    "en": "effect"
+  },
+  {
+    "set": "ch26",
+    "ch": 26,
+    "cat": "nomi",
+    "it": "emozione",
+    "en": "emotion"
+  },
+  {
+    "set": "ch26",
+    "ch": 26,
+    "cat": "nomi",
+    "it": "industria",
+    "en": "industry"
+  },
+  {
+    "set": "ch26",
+    "ch": 26,
+    "cat": "nomi",
+    "it": "odio",
+    "en": "hatred"
+  },
+  {
+    "set": "ch26",
+    "ch": 26,
+    "cat": "nomi",
+    "it": "la",
+    "en": "questione issue"
+  },
+  {
+    "set": "ch26",
+    "ch": 26,
+    "cat": "nomi",
+    "it": "dyfingers",
+    "en": "and mascarpone cheese"
+  },
+  {
+    "set": "ch26",
+    "ch": 26,
+    "cat": "verbi",
+    "it": "cadere",
+    "en": "to"
+  },
+  {
+    "set": "ch26",
+    "ch": 26,
+    "cat": "verbi",
+    "it": "fallcercare",
+    "en": "to look fordiscUtere to"
+  },
+  {
+    "set": "ch26",
+    "ch": 26,
+    "cat": "verbi",
+    "it": "discussordinare",
+    "en": "to"
+  },
+  {
+    "set": "ch26",
+    "ch": 26,
+    "cat": "verbi",
+    "it": "orderosservare",
+    "en": "to observeripEtere to repeat avverbi e altro — adverbs and morechissà who knowschissà perché I wonder why\ndurante duringfinalmente finallyin comune in commonin media on averagein pieno fullymah I don’t know, who knows?malgrado despiteprevalentemente mostlyprima di tutto first of allsecondo me, secondo te, ecc. in my opinion, in your opinion, etc."
+  },
+  {
+    "set": "ch27",
+    "ch": 27,
+    "cat": "nomi",
+    "it": "agenzia",
+    "en": "di viaggi travel agency"
+  },
+  {
+    "set": "ch27",
+    "ch": 27,
+    "cat": "nomi",
+    "it": "artigiano",
+    "en": "craftsman"
+  },
+  {
+    "set": "ch27",
+    "ch": 27,
+    "cat": "nomi",
+    "it": "o",
+    "en": "/ i baga"
+  },
+  {
+    "set": "ch27",
+    "ch": 27,
+    "cat": "nomi",
+    "it": "icala",
+    "en": "col"
+  },
+  {
+    "set": "ch27",
+    "ch": 27,
+    "cat": "nomi",
+    "it": "zione",
+    "en": "col"
+  },
+  {
+    "set": "ch27",
+    "ch": 27,
+    "cat": "nomi",
+    "it": "ctioni",
+    "en": "dintorni surroundings"
+  },
+  {
+    "set": "ch27",
+    "ch": 27,
+    "cat": "nomi",
+    "it": "go",
+    "en": "lake"
+  },
+  {
+    "set": "ch27",
+    "ch": 27,
+    "cat": "nomi",
+    "it": "oggetto",
+    "en": "object"
+  },
+  {
+    "set": "ch27",
+    "ch": 27,
+    "cat": "nomi",
+    "it": "Opera",
+    "en": "work, opera"
+  },
+  {
+    "set": "ch27",
+    "ch": 27,
+    "cat": "verbi",
+    "it": "andare",
+    "en": "in vacanza to go on"
+  },
+  {
+    "set": "ch27",
+    "ch": 27,
+    "cat": "verbi",
+    "it": "vacationassicurare",
+    "en": "to assure, to"
+  },
+  {
+    "set": "ch27",
+    "ch": 27,
+    "cat": "verbi",
+    "it": "insuredimenticare",
+    "en": "to"
+  },
+  {
+    "set": "ch27",
+    "ch": 27,
+    "cat": "verbi",
+    "it": "forgetmancare",
+    "en": "to"
+  },
+  {
+    "set": "ch27",
+    "ch": 27,
+    "cat": "verbi",
+    "it": "missorganizzare",
+    "en": "to"
+  },
+  {
+    "set": "ch27",
+    "ch": 27,
+    "cat": "verbi",
+    "it": "organizeprolungare",
+    "en": "to prolong avverbi e altro — adverbs and morea disposizione availablealmeno at leastlì / là thereperbacco! gosh!"
+  },
+  {
+    "set": "ch28",
+    "ch": 28,
+    "cat": "nomi",
+    "it": "aiuto",
+    "en": "help"
+  },
+  {
+    "set": "ch28",
+    "ch": 28,
+    "cat": "nomi",
+    "it": "attesa",
+    "en": "wait"
+  },
+  {
+    "set": "ch28",
+    "ch": 28,
+    "cat": "nomi",
+    "it": "pela",
+    "en": "cassetta posta"
+  },
+  {
+    "set": "ch28",
+    "ch": 28,
+    "cat": "nomi",
+    "it": "boxil",
+    "en": "compatriota /"
+  },
+  {
+    "set": "ch28",
+    "ch": 28,
+    "cat": "nomi",
+    "it": "errore",
+    "en": "mistake"
+  },
+  {
+    "set": "ch28",
+    "ch": 28,
+    "cat": "nomi",
+    "it": "espressione",
+    "en": "expression"
+  },
+  {
+    "set": "ch28",
+    "ch": 28,
+    "cat": "nomi",
+    "it": "indirizzo",
+    "en": "address"
+  },
+  {
+    "set": "ch28",
+    "ch": 28,
+    "cat": "nomi",
+    "it": "ezza",
+    "en": "kindness"
+  },
+  {
+    "set": "ch28",
+    "ch": 28,
+    "cat": "nomi",
+    "it": "cela",
+    "en": "ragione reason"
+  },
+  {
+    "set": "ch28",
+    "ch": 28,
+    "cat": "verbi",
+    "it": "apprezzare",
+    "en": "to"
+  },
+  {
+    "set": "ch28",
+    "ch": 28,
+    "cat": "verbi",
+    "it": "appreciateapprofittare",
+    "en": "di to take advantage"
+  },
+  {
+    "set": "ch28",
+    "ch": 28,
+    "cat": "verbi",
+    "it": "ofcontribuire",
+    "en": "to"
+  },
+  {
+    "set": "ch28",
+    "ch": 28,
+    "cat": "verbi",
+    "it": "contributefissare",
+    "en": "to"
+  },
+  {
+    "set": "ch28",
+    "ch": 28,
+    "cat": "verbi",
+    "it": "fixinformare",
+    "en": "to"
+  },
+  {
+    "set": "ch28",
+    "ch": 28,
+    "cat": "verbi",
+    "it": "informrestare",
+    "en": "to stay, to remainsorprEndere to surprise avverbi e altro — adverbs and morecome al sOlito as usualcon"
+  },
+  {
+    "set": "ch28",
+    "ch": 28,
+    "cat": "verbi",
+    "it": "piacere",
+    "en": "with pleasuregià alreadynello stesso tempo, allo stesso tempo at the same time\nEcco delle cassette postali italiane: sono rosse."
+  },
+  {
+    "set": "ch29",
+    "ch": 29,
+    "cat": "nomi",
+    "it": "attesa",
+    "en": "wait"
+  },
+  {
+    "set": "ch29",
+    "ch": 29,
+    "cat": "nomi",
+    "it": "aiuto",
+    "en": "help"
+  },
+  {
+    "set": "ch29",
+    "ch": 29,
+    "cat": "nomi",
+    "it": "iarità",
+    "en": "fam"
+  },
+  {
+    "set": "ch29",
+    "ch": 29,
+    "cat": "nomi",
+    "it": "iarity",
+    "en": "il punto di vista point of view"
+  },
+  {
+    "set": "ch29",
+    "ch": 29,
+    "cat": "verbi",
+    "it": "oneselfcrepare",
+    "en": "to"
+  },
+  {
+    "set": "ch29",
+    "ch": 29,
+    "cat": "verbi",
+    "it": "diefare",
+    "en": "la conoscenza to meet (for the first time)"
+  },
+  {
+    "set": "ch29",
+    "ch": 29,
+    "cat": "verbi",
+    "it": "inviare",
+    "en": "to"
+  },
+  {
+    "set": "ch29",
+    "ch": 29,
+    "cat": "verbi",
+    "it": "sendmandare",
+    "en": "to sendrEndere to make (something) into, to give backriconOscere to"
+  },
+  {
+    "set": "ch29",
+    "ch": 29,
+    "cat": "verbi",
+    "it": "recognizeriuscire",
+    "en": "to"
+  },
+  {
+    "set": "ch29",
+    "ch": 29,
+    "cat": "verbi",
+    "it": "succeedtenere",
+    "en": "to keep, to hold avverbi e altro — adverbs and morefortunatamente fortunatelyinteramente entirelypoiché sincesoltanto, solamente, solo only"
+  },
+  {
+    "set": "ch30",
+    "ch": 30,
+    "cat": "nomi",
+    "it": "aria",
+    "en": "condizionata air conditioning"
+  },
+  {
+    "set": "ch30",
+    "ch": 30,
+    "cat": "nomi",
+    "it": "esperienza",
+    "en": "experience"
+  },
+  {
+    "set": "ch30",
+    "ch": 30,
+    "cat": "nomi",
+    "it": "interesse",
+    "en": "interest"
+  },
+  {
+    "set": "ch30",
+    "ch": 30,
+    "cat": "nomi",
+    "it": "ospitalità",
+    "en": "hospitality"
+  },
+  {
+    "set": "ch30",
+    "ch": 30,
+    "cat": "verbi",
+    "it": "abbracciare",
+    "en": "to embraceabituarsi to get used"
+  },
+  {
+    "set": "ch30",
+    "ch": 30,
+    "cat": "verbi",
+    "it": "tocogliere",
+    "en": "to gathercOrrere to"
+  },
+  {
+    "set": "ch30",
+    "ch": 30,
+    "cat": "verbi",
+    "it": "runmorire",
+    "en": "to"
+  },
+  {
+    "set": "ch30",
+    "ch": 30,
+    "cat": "verbi",
+    "it": "dienascere",
+    "en": "to be"
+  },
+  {
+    "set": "ch30",
+    "ch": 30,
+    "cat": "verbi",
+    "it": "bornraccomandare",
+    "en": "to"
+  },
+  {
+    "set": "ch30",
+    "ch": 30,
+    "cat": "verbi",
+    "it": "recommendricordare",
+    "en": "to rememberrilassarsi to"
+  },
+  {
+    "set": "ch30",
+    "ch": 30,
+    "cat": "verbi",
+    "it": "relaxrinunciare",
+    "en": "to give"
+  },
+  {
+    "set": "ch30",
+    "ch": 30,
+    "cat": "verbi",
+    "it": "upsfuggire",
+    "en": "to fleestringersi la mano to shake hands avverbi e altro — adverbs and moredel resto after allin generale in generalin quanto a… as far as…non"
+  },
+  {
+    "set": "ch30",
+    "ch": 30,
+    "cat": "verbi",
+    "it": "vedere",
+    "en": "l’ora can’t waitprima di tutto first of all"
+  },
+  {
+    "set": "ch31",
+    "ch": 31,
+    "cat": "nomi",
+    "it": "amicizia",
+    "en": "friendship"
+  },
+  {
+    "set": "ch31",
+    "ch": 31,
+    "cat": "nomi",
+    "it": "assistente",
+    "en": "assistant"
+  },
+  {
+    "set": "ch31",
+    "ch": 31,
+    "cat": "nomi",
+    "it": "assistente",
+    "en": "di vo"
+  },
+  {
+    "set": "ch31",
+    "ch": 31,
+    "cat": "nomi",
+    "it": "accettazione",
+    "en": "check-in counter"
+  },
+  {
+    "set": "ch31",
+    "ch": 31,
+    "cat": "nomi",
+    "it": "a",
+    "en": "line"
+  },
+  {
+    "set": "ch31",
+    "ch": 31,
+    "cat": "nomi",
+    "it": "ttrOnica",
+    "en": "ema"
+  },
+  {
+    "set": "ch31",
+    "ch": 31,
+    "cat": "nomi",
+    "it": "il",
+    "en": "sed"
+  },
+  {
+    "set": "ch31",
+    "ch": 31,
+    "cat": "nomi",
+    "it": "e",
+    "en": "seat"
+  },
+  {
+    "set": "ch31",
+    "ch": 31,
+    "cat": "verbi",
+    "it": "comfortableallacciare",
+    "en": "to"
+  },
+  {
+    "set": "ch31",
+    "ch": 31,
+    "cat": "verbi",
+    "it": "fastenapprofondire",
+    "en": "to deepenimbarcarsi to"
+  },
+  {
+    "set": "ch31",
+    "ch": 31,
+    "cat": "verbi",
+    "it": "boardintrattenere",
+    "en": "to"
+  },
+  {
+    "set": "ch31",
+    "ch": 31,
+    "cat": "verbi",
+    "it": "entertainmostrare",
+    "en": "to"
+  },
+  {
+    "set": "ch31",
+    "ch": 31,
+    "cat": "verbi",
+    "it": "showottenere",
+    "en": "to"
+  },
+  {
+    "set": "ch31",
+    "ch": 31,
+    "cat": "verbi",
+    "it": "obtainprelevare",
+    "en": "to withdrawpromEttere to"
+  },
+  {
+    "set": "ch31",
+    "ch": 31,
+    "cat": "verbi",
+    "it": "promisevolare",
+    "en": "to fly avverbi e altro — adverbs and morealmeno at least\ncalorosamente warmlyfinalmente finallyugualmente equally, all the sameparticolarmente particularlyseriamente seriously"
+  },
+  {
+    "set": "ch32",
+    "ch": 32,
+    "cat": "nomi",
+    "it": "Angolo",
+    "en": "corner"
+  },
+  {
+    "set": "ch32",
+    "ch": 32,
+    "cat": "nomi",
+    "it": "ascensore",
+    "en": "e"
+  },
+  {
+    "set": "ch32",
+    "ch": 32,
+    "cat": "nomi",
+    "it": "vatorla",
+    "en": "dogana customs"
+  },
+  {
+    "set": "ch32",
+    "ch": 32,
+    "cat": "verbi",
+    "it": "accompagnare",
+    "en": "to accompanyavvicinarsi to"
+  },
+  {
+    "set": "ch32",
+    "ch": 32,
+    "cat": "verbi",
+    "it": "approachcontrollare",
+    "en": "to"
+  },
+  {
+    "set": "ch32",
+    "ch": 32,
+    "cat": "verbi",
+    "it": "checkdichiarare",
+    "en": "to declare2fermarsi to"
+  },
+  {
+    "set": "ch32",
+    "ch": 32,
+    "cat": "verbi",
+    "it": "stopgirare",
+    "en": "to turn guardarsi intorno to look around"
+  },
+  {
+    "set": "ch32",
+    "ch": 32,
+    "cat": "verbi",
+    "it": "ritirare",
+    "en": "to claim sbagliarsi to make a mistake scEndere to climb"
+  },
+  {
+    "set": "ch32",
+    "ch": 32,
+    "cat": "verbi",
+    "it": "downuscire",
+    "en": "to go out avverbi e altro — adverbs and moreappena barelya tutta velocità, a gran velocità at full speed, very fastc’è tempo"
+  },
+  {
+    "set": "ch32",
+    "ch": 32,
+    "cat": "verbi",
+    "it": "there",
+    "en": "is timecon calma take it easydavanti in front ofsano e salvo safe and sound"
+  },
+  {
+    "set": "ch33",
+    "ch": 33,
+    "cat": "nomi",
+    "it": "antipasto",
+    "en": "appetizer"
+  },
+  {
+    "set": "ch33",
+    "ch": 33,
+    "cat": "nomi",
+    "it": "avvocato",
+    "en": "lawyer"
+  },
+  {
+    "set": "ch33",
+    "ch": 33,
+    "cat": "nomi",
+    "it": "interrogazione",
+    "en": "oral exam"
+  },
+  {
+    "set": "ch33",
+    "ch": 33,
+    "cat": "nomi",
+    "it": "zzo",
+    "en": "bu"
+  },
+  {
+    "set": "ch33",
+    "ch": 33,
+    "cat": "nomi",
+    "it": "dingil",
+    "en": "parente re"
+  },
+  {
+    "set": "ch33",
+    "ch": 33,
+    "cat": "nomi",
+    "it": "tiveil",
+    "en": "passo step"
+  },
+  {
+    "set": "ch33",
+    "ch": 33,
+    "cat": "nomi",
+    "it": "e",
+    "en": "sty"
+  },
+  {
+    "set": "ch33",
+    "ch": 33,
+    "cat": "nomi",
+    "it": "w",
+    "en": "/ mother-in-"
+  },
+  {
+    "set": "ch33",
+    "ch": 33,
+    "cat": "verbi",
+    "it": "cantare",
+    "en": "to"
+  },
+  {
+    "set": "ch33",
+    "ch": 33,
+    "cat": "verbi",
+    "it": "singchiamare",
+    "en": "to callsposarsi to get married"
+  },
+  {
+    "set": "ch33",
+    "ch": 33,
+    "cat": "verbi",
+    "it": "suonare",
+    "en": "to play (an instrument) avverbi e altro — adverbs and more\navanti! come in!buon appetito! happy eating! (said at table before eating)permesso? excuse me, may I?tra due mesi in two months"
+  },
+  {
+    "set": "ch34",
+    "ch": 34,
+    "cat": "nomi",
+    "it": "email",
+    "en": "ema"
+  },
+  {
+    "set": "ch34",
+    "ch": 34,
+    "cat": "nomi",
+    "it": "il",
+    "en": "portabaga"
+  },
+  {
+    "set": "ch34",
+    "ch": 34,
+    "cat": "nomi",
+    "it": "nte",
+    "en": "steering wheel"
+  },
+  {
+    "set": "ch34",
+    "ch": 34,
+    "cat": "verbi",
+    "it": "aspettare",
+    "en": "to"
+  },
+  {
+    "set": "ch34",
+    "ch": 34,
+    "cat": "verbi",
+    "it": "waitbruciare",
+    "en": "to"
+  },
+  {
+    "set": "ch34",
+    "ch": 34,
+    "cat": "verbi",
+    "it": "burnbucare",
+    "en": "to puncture, to make a"
+  },
+  {
+    "set": "ch34",
+    "ch": 34,
+    "cat": "verbi",
+    "it": "holechiacchierare",
+    "en": "to chat"
+  },
+  {
+    "set": "ch34",
+    "ch": 34,
+    "cat": "verbi",
+    "it": "dare",
+    "en": "una mano to give a hand"
+  },
+  {
+    "set": "ch34",
+    "ch": 34,
+    "cat": "verbi",
+    "it": "guidare",
+    "en": "to drive mEttersi al lavoro to get to work rIdere to laughunirsi to"
+  },
+  {
+    "set": "ch34",
+    "ch": 34,
+    "cat": "verbi",
+    "it": "joinvolere",
+    "en": "una mano to want a hand avverbi e altro — adverbs and morea terra, gomma a terra to the ground, flat tiredi tanto in tanto every once in a whilemeno male thanks goodnesssfortunatamente unfortunatelyspericolatamente dangerously"
+  },
+  {
+    "set": "ch35",
+    "ch": 35,
+    "cat": "nomi",
+    "it": "attore",
+    "en": "/"
+  },
+  {
+    "set": "ch35",
+    "ch": 35,
+    "cat": "nomi",
+    "it": "attrice",
+    "en": "actore / actress"
+  },
+  {
+    "set": "ch35",
+    "ch": 35,
+    "cat": "nomi",
+    "it": "elefante",
+    "en": "e"
+  },
+  {
+    "set": "ch35",
+    "ch": 35,
+    "cat": "nomi",
+    "it": "phantla",
+    "en": "fontana fountain"
+  },
+  {
+    "set": "ch35",
+    "ch": 35,
+    "cat": "nomi",
+    "it": "e",
+    "en": "laptop"
+  },
+  {
+    "set": "ch35",
+    "ch": 35,
+    "cat": "nomi",
+    "it": "lla",
+    "en": "scalinata staircase"
+  },
+  {
+    "set": "ch35",
+    "ch": 35,
+    "cat": "verbi",
+    "it": "ammirare",
+    "en": "to"
+  },
+  {
+    "set": "ch35",
+    "ch": 35,
+    "cat": "verbi",
+    "it": "admirecolpire",
+    "en": "to"
+  },
+  {
+    "set": "ch35",
+    "ch": 35,
+    "cat": "verbi",
+    "it": "strikecontinuare",
+    "en": "to"
+  },
+  {
+    "set": "ch35",
+    "ch": 35,
+    "cat": "verbi",
+    "it": "continuegettare",
+    "en": "to"
+  },
+  {
+    "set": "ch35",
+    "ch": 35,
+    "cat": "verbi",
+    "it": "throwgodere",
+    "en": "to"
+  },
+  {
+    "set": "ch35",
+    "ch": 35,
+    "cat": "verbi",
+    "it": "enjoypasseggiare",
+    "en": "to strollriposarsi to rest riprEndere fiato to catch one’s"
+  },
+  {
+    "set": "ch35",
+    "ch": 35,
+    "cat": "verbi",
+    "it": "breathrubare",
+    "en": "to"
+  },
+  {
+    "set": "ch35",
+    "ch": 35,
+    "cat": "verbi",
+    "it": "stealseguire",
+    "en": "to"
+  },
+  {
+    "set": "ch35",
+    "ch": 35,
+    "cat": "verbi",
+    "it": "followtemere",
+    "en": "to"
+  },
+  {
+    "set": "ch35",
+    "ch": 35,
+    "cat": "verbi",
+    "it": "feartradire",
+    "en": "to betray avverbi e altro — adverbs and morea lungo for a long timea volte at timescosì sodappertutto everywheredi tanto in tanto every once in a whilein cima at the top oflaggiù down therelassù up theresopra over\nstamattina this morningsu! come onsu andiamo come on, let’s get going"
+  },
+  {
+    "set": "ch36",
+    "ch": 36,
+    "cat": "nomi",
+    "it": "oggettino",
+    "en": "small object"
+  },
+  {
+    "set": "ch36",
+    "ch": 36,
+    "cat": "nomi",
+    "it": "olivo",
+    "en": "olive tree"
+  },
+  {
+    "set": "ch36",
+    "ch": 36,
+    "cat": "nomi",
+    "it": "oliva",
+    "en": "olive"
+  },
+  {
+    "set": "ch36",
+    "ch": 36,
+    "cat": "nomi",
+    "it": "osservatorio",
+    "en": "observatory"
+  },
+  {
+    "set": "ch36",
+    "ch": 36,
+    "cat": "verbi",
+    "it": "considerare",
+    "en": "to"
+  },
+  {
+    "set": "ch36",
+    "ch": 36,
+    "cat": "verbi",
+    "it": "considerdare",
+    "en": "del Lei to address someone with the Lei"
+  },
+  {
+    "set": "ch36",
+    "ch": 36,
+    "cat": "verbi",
+    "it": "formdare",
+    "en": "del tu to address someone with the tu formesIgere to"
+  },
+  {
+    "set": "ch36",
+    "ch": 36,
+    "cat": "verbi",
+    "it": "demandfare",
+    "en": "un brIndisi /"
+  },
+  {
+    "set": "ch36",
+    "ch": 36,
+    "cat": "verbi",
+    "it": "brindare",
+    "en": "to offer a toast, to toastprodurre to"
+  },
+  {
+    "set": "ch36",
+    "ch": 36,
+    "cat": "verbi",
+    "it": "produceraccontare",
+    "en": "to"
+  },
+  {
+    "set": "ch36",
+    "ch": 36,
+    "cat": "verbi",
+    "it": "tellrisalire",
+    "en": "to climb back up avverbi e altro — adverbs and more\nal dente still a tiny bit hard in the middle, said of pasta and ricealla carbonara with eggs, cheese and baconalla griglia grilledallo spiedo spit-roasted"
+  },
+  {
+    "set": "ch37",
+    "ch": 37,
+    "cat": "nomi",
+    "it": "Abito",
+    "en": "suit, dress"
+  },
+  {
+    "set": "ch37",
+    "ch": 37,
+    "cat": "nomi",
+    "it": "annuncio",
+    "en": "announcement"
+  },
+  {
+    "set": "ch37",
+    "ch": 37,
+    "cat": "nomi",
+    "it": "lo",
+    "en": "straniero /"
+  },
+  {
+    "set": "ch37",
+    "ch": 37,
+    "cat": "verbi",
+    "it": "avere",
+    "en": "intenzione di to have the intention"
+  },
+  {
+    "set": "ch37",
+    "ch": 37,
+    "cat": "verbi",
+    "it": "ofcavalcare",
+    "en": "to ride a"
+  },
+  {
+    "set": "ch37",
+    "ch": 37,
+    "cat": "verbi",
+    "it": "horsepartecipare",
+    "en": "to"
+  },
+  {
+    "set": "ch37",
+    "ch": 37,
+    "cat": "verbi",
+    "it": "participateriuscire",
+    "en": "to"
+  },
+  {
+    "set": "ch37",
+    "ch": 37,
+    "cat": "verbi",
+    "it": "succeedscoprire",
+    "en": "to discoversvOlgersi to take"
+  },
+  {
+    "set": "ch37",
+    "ch": 37,
+    "cat": "verbi",
+    "it": "placevolere",
+    "en": "bene a to love avverbi e altro — adverbs and morea prima vista at first sightperché no? why not?saggiamente wiselysiccome since"
+  },
+  {
+    "set": "ch38",
+    "ch": 38,
+    "cat": "nomi",
+    "it": "affermazione",
+    "en": "statement"
+  },
+  {
+    "set": "ch38",
+    "ch": 38,
+    "cat": "nomi",
+    "it": "anello",
+    "en": "ring"
+  },
+  {
+    "set": "ch38",
+    "ch": 38,
+    "cat": "nomi",
+    "it": "arcata",
+    "en": "archway"
+  },
+  {
+    "set": "ch38",
+    "ch": 38,
+    "cat": "nomi",
+    "it": "artigiano",
+    "en": "craftsman"
+  },
+  {
+    "set": "ch38",
+    "ch": 38,
+    "cat": "nomi",
+    "it": "artigianato",
+    "en": "crafts"
+  },
+  {
+    "set": "ch38",
+    "ch": 38,
+    "cat": "nomi",
+    "it": "tto",
+    "en": "brace"
+  },
+  {
+    "set": "ch38",
+    "ch": 38,
+    "cat": "nomi",
+    "it": "til",
+    "en": "br"
+  },
+  {
+    "set": "ch38",
+    "ch": 38,
+    "cat": "nomi",
+    "it": "lante",
+    "en": "small diamond"
+  },
+  {
+    "set": "ch38",
+    "ch": 38,
+    "cat": "nomi",
+    "it": "izzazione",
+    "en": "civ"
+  },
+  {
+    "set": "ch38",
+    "ch": 38,
+    "cat": "nomi",
+    "it": "ization",
+    "en": "la col"
+  },
+  {
+    "set": "ch38",
+    "ch": 38,
+    "cat": "nomi",
+    "it": "na",
+    "en": "neck"
+  },
+  {
+    "set": "ch38",
+    "ch": 38,
+    "cat": "nomi",
+    "it": "esperienza",
+    "en": "experience"
+  },
+  {
+    "set": "ch38",
+    "ch": 38,
+    "cat": "nomi",
+    "it": "orecchino",
+    "en": "earring"
+  },
+  {
+    "set": "ch38",
+    "ch": 38,
+    "cat": "nomi",
+    "it": "oro",
+    "en": "gold"
+  },
+  {
+    "set": "ch38",
+    "ch": 38,
+    "cat": "verbi",
+    "it": "appartenere",
+    "en": "to"
+  },
+  {
+    "set": "ch38",
+    "ch": 38,
+    "cat": "verbi",
+    "it": "belongessere",
+    "en": "senza parole to be speechlessscOrrere to flow avverbi e altro — adverbs and moreaffettuosamente affectionatelyd’eccezione exceptionaldi nuovo again di ritorno back"
+  },
+  {
+    "set": "ch39",
+    "ch": 39,
+    "cat": "nomi",
+    "it": "amento",
+    "en": "item of c"
+  },
+  {
+    "set": "ch39",
+    "ch": 39,
+    "cat": "nomi",
+    "it": "thingil",
+    "en": "compagno /"
+  },
+  {
+    "set": "ch39",
+    "ch": 39,
+    "cat": "nomi",
+    "it": "sIa",
+    "en": "jea"
+  },
+  {
+    "set": "ch39",
+    "ch": 39,
+    "cat": "nomi",
+    "it": "incontro",
+    "en": "encounter"
+  },
+  {
+    "set": "ch39",
+    "ch": 39,
+    "cat": "nomi",
+    "it": "ng",
+    "en": "the sea"
+  },
+  {
+    "set": "ch39",
+    "ch": 39,
+    "cat": "verbi",
+    "it": "rejectriaccompagnare",
+    "en": "to accompany someone"
+  },
+  {
+    "set": "ch39",
+    "ch": 39,
+    "cat": "verbi",
+    "it": "backscambiare",
+    "en": "to exchange avverbi e altro — adverbs and morea braccetto arm in armal sole in the sunanzi on the contraryda solo / da sola alonedurante during"
+  },
+  {
+    "set": "ch40",
+    "ch": 40,
+    "cat": "nomi",
+    "it": "albicocca",
+    "en": "apricot"
+  },
+  {
+    "set": "ch40",
+    "ch": 40,
+    "cat": "nomi",
+    "it": "ità",
+    "en": "ease"
+  },
+  {
+    "set": "ch40",
+    "ch": 40,
+    "cat": "nomi",
+    "it": "la",
+    "en": "noccio"
+  },
+  {
+    "set": "ch40",
+    "ch": 40,
+    "cat": "verbi",
+    "it": "tanandare",
+    "en": "in barca a vela to"
+  },
+  {
+    "set": "ch40",
+    "ch": 40,
+    "cat": "verbi",
+    "it": "sailnuotare",
+    "en": "to swimprEndere il sole to"
+  },
+  {
+    "set": "ch40",
+    "ch": 40,
+    "cat": "verbi",
+    "it": "sunbatheremare",
+    "en": "to row avverbi e altro — adverbs and moreanzi or better yetdecentemente decentlyl’uno per l’altra one for the otherper caso by chanceperfino even"
+  }
+];
+
+let currentIndex = 0;
+let currentFilter = 'all';
+let filteredCards = [];
+let flipped = false;
+
+function init() {
+  applyFilter();
+  showCard();
+}
+
+function applyFilter() {
+  if (currentFilter === 'all') {
+    filteredCards = [...CARDS];
+  } else {
+    const ch = parseInt(currentFilter);
+    filteredCards = CARDS.filter(c => c.ch === ch);
+  }
+  currentIndex = 0;
+}
+
+function showCard() {
+  const statsEl = document.getElementById('stats');
+  const progressFill = document.getElementById('progressFill');
+  
+  if (filteredCards.length === 0) {
+    statsEl.textContent = 'No cards found';
+    document.getElementById('frontText').textContent = 'No cards';
+    document.getElementById('backText').textContent = '';
+    progressFill.style.width = '0%';
+    return;
+  }
+  
+  const card = filteredCards[currentIndex];
+  statsEl.textContent = `Card ${currentIndex + 1} of ${filteredCards.length} — Chapter ${card.ch}`;
+  progressFill.style.width = `${((currentIndex + 1) / filteredCards.length) * 100}%`;
+  
+  document.getElementById('frontText').textContent = card.it;
+  document.getElementById('backText').textContent = card.en;
+  
+  // Reset flip state
+  flipped = false;
+  document.getElementById('flashcard').classList.remove('flipped');
+}
+
+function flipCard() {
+  flipped = !flipped;
+  document.getElementById('flashcard').classList.toggle('flipped', flipped);
+}
+
+function nextCard() {
+  if (filteredCards.length === 0) return;
+  currentIndex = (currentIndex + 1) % filteredCards.length;
+  showCard();
+}
+
+function shuffleCards() {
+  for (let i = filteredCards.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [filteredCards[i], filteredCards[j]] = [filteredCards[j], filteredCards[i]];
+  }
+  currentIndex = 0;
+  showCard();
+}
+
+document.getElementById('chapterSelect').addEventListener('change', function(e) {
+  currentFilter = e.target.value;
+  applyFilter();
+  showCard();
+});
+
+// Keyboard shortcuts
+document.addEventListener('keydown', function(e) {
+  if (e.code === 'Space' || e.code === 'Enter') {
+    e.preventDefault();
+    flipCard();
+  } else if (e.code === 'ArrowRight') {
+    nextCard();
+  }
+});
+
+init();
+</script>
+</body>
+</html>

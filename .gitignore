@@ -1,18 +1,12 @@
-# This repository begins with the current attached flashcard app only.
-# Legacy HTML variants, raw vocabulary extracts, and local build helpers remain
-# available in the working directory but are intentionally outside this history.
+# Repo root holds shared docs; per-language decks live in <language>/ subfolders.
+# Legacy HTML variants, raw extracts, and local build helpers stay untracked
+# under archive/ and tools/.
 *
 !.gitignore
-!ims-flashcards-enriched-tts.html
-!ims-flashcards-enriched-tts-ch11-pilot.html
-!italian-flashcards-v1.0.html
-!index.html
-!ims-ch13-20-enrichment.json
-!ims-ch21-28-enrichment.json
-!ims-ch29-34-enrichment.json
-!ims-ch35-40-enrichment.json
-!test_ch11_pilot.py
-!test_all_chapters_enriched.py
-!manifest.json
-!audio/
-!audio/**
+!MOBILE_PHONE_SETUP.md
+!italian/
+!italian/**
+!tools/
+!tools/**
+!archive/
+!archive/**

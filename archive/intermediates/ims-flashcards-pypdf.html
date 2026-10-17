@@ -1,0 +1,6021 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Italian Made Simple — Complete Flashcards</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #f5f5f5; min-height: 100vh; display: flex; justify-content: center; align-items: center; padding: 20px; }
+  .container { max-width: 600px; width: 100%; }
+  h1 { text-align: center; color: #333; margin-bottom: 20px; font-size: 1.5em; }
+  .controls { display: flex; gap: 10px; margin-bottom: 20px; flex-wrap: wrap; }
+  select, button { padding: 10px 15px; border: 1px solid #ddd; border-radius: 8px; font-size: 14px; cursor: pointer; background: white; }
+  select:focus, button:focus { outline: none; border-color: #4a90d9; }
+  button.primary { background: #4a90d9; color: white; border-color: #4a90d9; }
+  button.primary:hover { background: #357abd; }
+  .card-container { perspective: 1000px; margin-bottom: 20px; }
+  .card { position: relative; width: 100%; height: 300px; cursor: pointer; }
+  .card-inner { position: absolute; width: 100%; height: 100%; transition: transform 0.6s; transform-style: preserve-3d; }
+  .card.flipped .card-inner { transform: rotateY(180deg); }
+  .card-face { position: absolute; width: 100%; height: 100%; backface-visibility: hidden; display: flex; flex-direction: column; justify-content: center; align-items: center; padding: 30px; border-radius: 16px; box-shadow: 0 4px 20px rgba(0,0,0,0.1); }
+  .card-front { background: white; }
+  .card-back { background: #4a90d9; color: white; transform: rotateY(180deg); }
+  .card-text { font-size: 2em; text-align: center; word-wrap: break-word; }
+  .card-hint { position: absolute; bottom: 15px; font-size: 0.8em; opacity: 0.6; }
+  .stats { text-align: center; color: #666; font-size: 0.9em; margin-bottom: 10px; }
+  .progress-bar { width: 100%; height: 8px; background: #e0e0e0; border-radius: 4px; overflow: hidden; margin-bottom: 10px; }
+  .progress-fill { height: 100%; background: #4a90d9; transition: width 0.3s; }
+</style>
+</head>
+<body>
+<div class="container">
+  <h1>🇮🇹 Italian Made Simple — Complete Flashcards</h1>
+  
+  <div class="controls">
+    <button class="primary" onclick="nextCard()">Next Card →</button>
+    <button onclick="shuffleCards()">🔀 Shuffle</button>
+    <button onclick="prevCard()">← Previous</button>
+  </div>
+  
+  <div class="stats" id="stats">Loading...</div>
+  <div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
+  
+  <div class="card-container" onclick="flipCard()">
+    <div class="card" id="flashcard">
+      <div class="card-inner">
+        <div class="card-face card-front">
+          <div class="card-text" id="frontText">Click to load</div>
+          <div class="card-hint">Click to reveal</div>
+        </div>
+        <div class="card-face card-back">
+          <div class="card-text" id="backText"></div>
+          <div class="card-hint">Click to flip back</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+const CARDS = [
+  {
+    "it": "l’anno",
+    "en": "year",
+    "page": 32
+  },
+  {
+    "it": "il bagno",
+    "en": "bathroom",
+    "page": 32
+  },
+  {
+    "it": "la cAmera / la cAmera da letto",
+    "en": "bedroom",
+    "page": 32
+  },
+  {
+    "it": "il capItolo",
+    "en": "chapter",
+    "page": 32
+  },
+  {
+    "it": "la cucina",
+    "en": "kitchen",
+    "page": 32
+  },
+  {
+    "it": "la donna",
+    "en": "woman",
+    "page": 32
+  },
+  {
+    "it": "il dottore",
+    "en": "doctor",
+    "page": 33
+  },
+  {
+    "it": "la famiglia",
+    "en": "family",
+    "page": 33
+  },
+  {
+    "it": "l’insegnante",
+    "en": "teacher",
+    "page": 33
+  },
+  {
+    "it": "la madre",
+    "en": "mother",
+    "page": 33
+  },
+  {
+    "it": "il padre",
+    "en": "father",
+    "page": 33
+  },
+  {
+    "it": "la sorella",
+    "en": "sister",
+    "page": 33
+  },
+  {
+    "it": "la stanza",
+    "en": "room",
+    "page": 33
+  },
+  {
+    "it": "l’uomo",
+    "en": "man",
+    "page": 33
+  },
+  {
+    "it": "felice",
+    "en": "happy",
+    "page": 33
+  },
+  {
+    "it": "grande",
+    "en": "big",
+    "page": 33
+  },
+  {
+    "it": "mio / mia",
+    "en": "my",
+    "page": 33
+  },
+  {
+    "it": "anche",
+    "en": "also",
+    "page": 34
+  },
+  {
+    "it": "con",
+    "en": "with",
+    "page": 34
+  },
+  {
+    "it": "in centro",
+    "en": "downtown",
+    "page": 34
+  },
+  {
+    "it": "per",
+    "en": "for",
+    "page": 34
+  },
+  {
+    "it": "quando",
+    "en": "when",
+    "page": 34
+  },
+  {
+    "it": "figlio",
+    "en": "son",
+    "page": 38
+  },
+  {
+    "it": "figlia",
+    "en": "daughter",
+    "page": 38
+  },
+  {
+    "it": "zio",
+    "en": "uncle,",
+    "page": 38
+  },
+  {
+    "it": "zia",
+    "en": "aunt",
+    "page": 38
+  },
+  {
+    "it": "padre",
+    "en": "father",
+    "page": 39
+  },
+  {
+    "it": "madre",
+    "en": "mother",
+    "page": 39
+  },
+  {
+    "it": "sorella",
+    "en": "sister",
+    "page": 39
+  },
+  {
+    "it": "fratello",
+    "en": "brother",
+    "page": 39
+  },
+  {
+    "it": "sedia",
+    "en": "chair",
+    "page": 39
+  },
+  {
+    "it": "casa",
+    "en": "house",
+    "page": 39
+  },
+  {
+    "it": "bagno",
+    "en": "bathroom",
+    "page": 39
+  },
+  {
+    "it": "anno",
+    "en": "year",
+    "page": 39
+  },
+  {
+    "it": "sole",
+    "en": "sun",
+    "page": 39
+  },
+  {
+    "it": "arte",
+    "en": "art",
+    "page": 39
+  },
+  {
+    "it": "the boy",
+    "en": "studente",
+    "page": 40
+  },
+  {
+    "it": "ragazzi",
+    "en": "the",
+    "page": 40
+  },
+  {
+    "it": "boys",
+    "en": "studenti",
+    "page": 40
+  },
+  {
+    "it": "zii",
+    "en": "the",
+    "page": 40
+  },
+  {
+    "it": "uncles",
+    "en": "amici",
+    "page": 40
+  },
+  {
+    "it": "ragazze",
+    "en": "the",
+    "page": 41
+  },
+  {
+    "it": "studentesse",
+    "en": "the",
+    "page": 41
+  },
+  {
+    "it": "amiche",
+    "en": "the",
+    "page": 41
+  },
+  {
+    "it": "la cosa",
+    "en": "thing",
+    "page": 47
+  },
+  {
+    "it": "la lezione",
+    "en": "lesson",
+    "page": 47
+  },
+  {
+    "it": "la lingua",
+    "en": "language",
+    "page": 47
+  },
+  {
+    "it": "il nome",
+    "en": "name",
+    "page": 47
+  },
+  {
+    "it": "l’orIgine",
+    "en": "origin",
+    "page": 47
+  },
+  {
+    "it": "il posto",
+    "en": "place",
+    "page": 47
+  },
+  {
+    "it": "la primavera",
+    "en": "spring",
+    "page": 47
+  },
+  {
+    "it": "il rappresentante",
+    "en": "salesman",
+    "page": 47
+  },
+  {
+    "it": "il rivenditore",
+    "en": "vendor",
+    "page": 48
+  },
+  {
+    "it": "la scuola",
+    "en": "school",
+    "page": 48
+  },
+  {
+    "it": "il sOftware",
+    "en": "software",
+    "page": 48
+  },
+  {
+    "it": "l’ufficio",
+    "en": "office",
+    "page": 48
+  },
+  {
+    "it": "il viaggio",
+    "en": "trip",
+    "page": 48
+  },
+  {
+    "it": "bello / bella",
+    "en": "beautiful",
+    "page": 48
+  },
+  {
+    "it": "bravo / brava",
+    "en": "good",
+    "page": 48
+  },
+  {
+    "it": "intelligente",
+    "en": "intelligent",
+    "page": 48
+  },
+  {
+    "it": "interessante",
+    "en": "interesting",
+    "page": 48
+  },
+  {
+    "it": "molto / molta",
+    "en": "much",
+    "page": 48
+  },
+  {
+    "it": "studiare",
+    "en": "study",
+    "page": 48
+  },
+  {
+    "it": "eccEtera",
+    "en": "etcetera",
+    "page": 48
+  },
+  {
+    "it": "rapidamente",
+    "en": "quickly",
+    "page": 48
+  },
+  {
+    "it": "Lei",
+    "en": "you",
+    "page": 53
+  },
+  {
+    "it": "noi",
+    "en": "we",
+    "page": 53
+  },
+  {
+    "it": "voi",
+    "en": "you",
+    "page": 53
+  },
+  {
+    "it": "loro",
+    "en": "they",
+    "page": 53
+  },
+  {
+    "it": "Salve",
+    "en": "hello",
+    "page": 56
+  },
+  {
+    "it": "Arrivederci",
+    "en": "goodbye",
+    "page": 57
+  },
+  {
+    "it": "il cestino",
+    "en": "basket",
+    "page": 60
+  },
+  {
+    "it": "il computer",
+    "en": "computer",
+    "page": 60
+  },
+  {
+    "it": "il divano",
+    "en": "couch",
+    "page": 60
+  },
+  {
+    "it": "la domanda",
+    "en": "question",
+    "page": 60
+  },
+  {
+    "it": "la fotografIa",
+    "en": "photograph",
+    "page": 60
+  },
+  {
+    "it": "la lAmpada",
+    "en": "lamp",
+    "page": 60
+  },
+  {
+    "it": "la matita",
+    "en": "pencil",
+    "page": 60
+  },
+  {
+    "it": "l’orologio",
+    "en": "watch",
+    "page": 60
+  },
+  {
+    "it": "la parete",
+    "en": "wall",
+    "page": 60
+  },
+  {
+    "it": "la parola",
+    "en": "word",
+    "page": 60
+  },
+  {
+    "it": "la penna",
+    "en": "pen",
+    "page": 60
+  },
+  {
+    "it": "la porta",
+    "en": "door",
+    "page": 60
+  },
+  {
+    "it": "la risposta",
+    "en": "answer",
+    "page": 60
+  },
+  {
+    "it": "lo scaffale",
+    "en": "shelf",
+    "page": 60
+  },
+  {
+    "it": "la scrivania",
+    "en": "des",
+    "page": 61
+  },
+  {
+    "it": "a sedia",
+    "en": "chair",
+    "page": 61
+  },
+  {
+    "it": "lo specchio",
+    "en": "mirror",
+    "page": 61
+  },
+  {
+    "it": "la tecnologIa",
+    "en": "technology",
+    "page": 61
+  },
+  {
+    "it": "altri / altre",
+    "en": "other",
+    "page": 61
+  },
+  {
+    "it": "aperto / aperta",
+    "en": "open",
+    "page": 61
+  },
+  {
+    "it": "famoso / famosa",
+    "en": "famous",
+    "page": 61
+  },
+  {
+    "it": "importante",
+    "en": "important",
+    "page": 61
+  },
+  {
+    "it": "infelice",
+    "en": "unhappy",
+    "page": 61
+  },
+  {
+    "it": "pigro / pigra",
+    "en": "lazy",
+    "page": 61
+  },
+  {
+    "it": "questo / questa",
+    "en": "this",
+    "page": 61
+  },
+  {
+    "it": "Utile",
+    "en": "useful",
+    "page": 61
+  },
+  {
+    "it": "to ask questions",
+    "en": "indicare",
+    "page": 61
+  },
+  {
+    "it": "I have",
+    "en": "avere",
+    "page": 61
+  },
+  {
+    "it": "allora",
+    "en": "then",
+    "page": 61
+  },
+  {
+    "it": "come",
+    "en": "how",
+    "page": 61
+  },
+  {
+    "it": "la camelia",
+    "en": "camelia",
+    "page": 71
+  },
+  {
+    "it": "la campagna",
+    "en": "country",
+    "page": 71
+  },
+  {
+    "it": "la carta",
+    "en": "paper",
+    "page": 71
+  },
+  {
+    "it": "la finestra",
+    "en": "window",
+    "page": 71
+  },
+  {
+    "it": "la giornata",
+    "en": "day",
+    "page": 71
+  },
+  {
+    "it": "il libro",
+    "en": "book",
+    "page": 71
+  },
+  {
+    "it": "il parco",
+    "en": "park",
+    "page": 71
+  },
+  {
+    "it": "il pomeriggio",
+    "en": "afternoon",
+    "page": 71
+  },
+  {
+    "it": "il poster",
+    "en": "poster",
+    "page": 71
+  },
+  {
+    "it": "il sole",
+    "en": "sun",
+    "page": 71
+  },
+  {
+    "it": "la strada",
+    "en": "street",
+    "page": 71
+  },
+  {
+    "it": "lo studente / la studentessa",
+    "en": "student",
+    "page": 72
+  },
+  {
+    "it": "il vaso",
+    "en": "vase",
+    "page": 72
+  },
+  {
+    "it": "Spanish",
+    "en": "aggettivi",
+    "page": 72
+  },
+  {
+    "it": "eccellente",
+    "en": "excellent",
+    "page": 72
+  },
+  {
+    "it": "fantAstico / fantAstica",
+    "en": "fantastic",
+    "page": 72
+  },
+  {
+    "it": "favoloso / favolosa",
+    "en": "fabulous",
+    "page": 72
+  },
+  {
+    "it": "magnIfico / magnIfica",
+    "en": "magnificent",
+    "page": 72
+  },
+  {
+    "it": "pIccolo / pIccola",
+    "en": "small",
+    "page": 72
+  },
+  {
+    "it": "stupendo / stupenda",
+    "en": "stupendous",
+    "page": 72
+  },
+  {
+    "it": "basta",
+    "en": "enough",
+    "page": 73
+  },
+  {
+    "it": "bene",
+    "en": "well",
+    "page": 73
+  },
+  {
+    "it": "fra",
+    "en": "between",
+    "page": 73
+  },
+  {
+    "it": "intorno",
+    "en": "around",
+    "page": 73
+  },
+  {
+    "it": "molto",
+    "en": "very",
+    "page": 73
+  },
+  {
+    "it": "oggi",
+    "en": "today",
+    "page": 73
+  },
+  {
+    "it": "sopra",
+    "en": "over",
+    "page": 73
+  },
+  {
+    "it": "sotto",
+    "en": "under",
+    "page": 73
+  },
+  {
+    "it": "tra",
+    "en": "between",
+    "page": 73
+  },
+  {
+    "it": "vicino",
+    "en": "near",
+    "page": 73
+  },
+  {
+    "it": "dopo di",
+    "en": "after",
+    "page": 81
+  },
+  {
+    "it": "prima di",
+    "en": "before",
+    "page": 81
+  },
+  {
+    "it": "l’albergo",
+    "en": "hotel",
+    "page": 85
+  },
+  {
+    "it": "l’Autobus",
+    "en": "bus",
+    "page": 85
+  },
+  {
+    "it": "l’informazione",
+    "en": "information",
+    "page": 85
+  },
+  {
+    "it": "la mAcchina",
+    "en": "car",
+    "page": 85
+  },
+  {
+    "it": "la parte",
+    "en": "part",
+    "page": 86
+  },
+  {
+    "it": "il piede",
+    "en": "foot",
+    "page": 86
+  },
+  {
+    "it": "il santo / la santa",
+    "en": "saint",
+    "page": 86
+  },
+  {
+    "it": "la verità",
+    "en": "truth",
+    "page": 86
+  },
+  {
+    "it": "il volo",
+    "en": "flight",
+    "page": 86
+  },
+  {
+    "it": "comune",
+    "en": "common",
+    "page": 86
+  },
+  {
+    "it": "gentile",
+    "en": "kind",
+    "page": 86
+  },
+  {
+    "it": "rApido / rApida",
+    "en": "quick",
+    "page": 86
+  },
+  {
+    "it": "seduto / seduta",
+    "en": "sitting",
+    "page": 86
+  },
+  {
+    "it": "attentamente",
+    "en": "attentively",
+    "page": 86
+  },
+  {
+    "it": "domani",
+    "en": "tomorrow",
+    "page": 86
+  },
+  {
+    "it": "forse",
+    "en": "maybe",
+    "page": 86
+  },
+  {
+    "it": "senza",
+    "en": "without",
+    "page": 87
+  },
+  {
+    "it": "signora Ricci",
+    "en": "lavora",
+    "page": 94
+  },
+  {
+    "it": "ottobre",
+    "en": "novembre",
+    "page": 100
+  },
+  {
+    "it": "la banca",
+    "en": "bank",
+    "page": 107
+  },
+  {
+    "it": "il biscotto",
+    "en": "cookie",
+    "page": 107
+  },
+  {
+    "it": "il bisogno",
+    "en": "need",
+    "page": 107
+  },
+  {
+    "it": "il cognato / la cognata",
+    "en": "brother-in-law",
+    "page": 107
+  },
+  {
+    "it": "la cura",
+    "en": "care",
+    "page": 107
+  },
+  {
+    "it": "la fame",
+    "en": "hunger",
+    "page": 107
+  },
+  {
+    "it": "la farmacIa",
+    "en": "pharmacy",
+    "page": 107
+  },
+  {
+    "it": "la febbre",
+    "en": "fever",
+    "page": 107
+  },
+  {
+    "it": "il fratello",
+    "en": "brother",
+    "page": 107
+  },
+  {
+    "it": "il genitore",
+    "en": "parent",
+    "page": 107
+  },
+  {
+    "it": "l’invito",
+    "en": "invitation",
+    "page": 107
+  },
+  {
+    "it": "la malattIa",
+    "en": "illness",
+    "page": 107
+  },
+  {
+    "it": "il marito",
+    "en": "husband",
+    "page": 108
+  },
+  {
+    "it": "la moglie",
+    "en": "wife",
+    "page": 108
+  },
+  {
+    "it": "la piazza",
+    "en": "square",
+    "page": 108
+  },
+  {
+    "it": "il raffreddore",
+    "en": "cold",
+    "page": 108
+  },
+  {
+    "it": "la sete",
+    "en": "thirst",
+    "page": 108
+  },
+  {
+    "it": "il sonno",
+    "en": "sleep",
+    "page": 108
+  },
+  {
+    "it": "la voglia",
+    "en": "desire",
+    "page": 108
+  },
+  {
+    "it": "aunt / uncle",
+    "en": "aggettivi",
+    "page": 108
+  },
+  {
+    "it": "allegro / allegra",
+    "en": "cheerful",
+    "page": 108
+  },
+  {
+    "it": "altro / altra",
+    "en": "other",
+    "page": 108
+  },
+  {
+    "it": "amichevole",
+    "en": "friendly",
+    "page": 108
+  },
+  {
+    "it": "giovane",
+    "en": "young",
+    "page": 108
+  },
+  {
+    "it": "immediato / immediata",
+    "en": "immediate",
+    "page": 108
+  },
+  {
+    "it": "improvviso / improvvisa",
+    "en": "sudden",
+    "page": 108
+  },
+  {
+    "it": "malata",
+    "en": "sick",
+    "page": 108
+  },
+  {
+    "it": "puntuale",
+    "en": "punctual",
+    "page": 108
+  },
+  {
+    "it": "solo / sola",
+    "en": "alone",
+    "page": 108
+  },
+  {
+    "it": "accettare",
+    "en": "accept",
+    "page": 108
+  },
+  {
+    "it": "aspettare",
+    "en": "wait",
+    "page": 108
+  },
+  {
+    "it": "invitare",
+    "en": "invite",
+    "page": 108
+  },
+  {
+    "it": "salutare",
+    "en": "greet",
+    "page": 108
+  },
+  {
+    "it": "visitare",
+    "en": "visit",
+    "page": 109
+  },
+  {
+    "it": "allegramente",
+    "en": "cheerfully",
+    "page": 109
+  },
+  {
+    "it": "eccetto",
+    "en": "except",
+    "page": 109
+  },
+  {
+    "it": "immediatamente",
+    "en": "immediately",
+    "page": 109
+  },
+  {
+    "it": "improvvisamente",
+    "en": "suddenly",
+    "page": 109
+  },
+  {
+    "it": "lontano",
+    "en": "far",
+    "page": 109
+  },
+  {
+    "it": "puntualmente",
+    "en": "punctually",
+    "page": 109
+  },
+  {
+    "it": "sempre",
+    "en": "always",
+    "page": 109
+  },
+  {
+    "it": "sicuramente",
+    "en": "surely",
+    "page": 109
+  },
+  {
+    "it": "idiomatic expression with",
+    "en": "avere",
+    "page": 116
+  },
+  {
+    "it": "la carta geogrAfica",
+    "en": "map",
+    "page": 119
+  },
+  {
+    "it": "il catAlogo",
+    "en": "catalogue",
+    "page": 119
+  },
+  {
+    "it": "la chiesa",
+    "en": "church",
+    "page": 119
+  },
+  {
+    "it": "il cielo",
+    "en": "sky",
+    "page": 119
+  },
+  {
+    "it": "la collina",
+    "en": "hill",
+    "page": 119
+  },
+  {
+    "it": "il colore",
+    "en": "color",
+    "page": 120
+  },
+  {
+    "it": "il disOrdine",
+    "en": "mess",
+    "page": 120
+  },
+  {
+    "it": "l’edificio",
+    "en": "building",
+    "page": 120
+  },
+  {
+    "it": "il fiore",
+    "en": "flower",
+    "page": 120
+  },
+  {
+    "it": "il futuro",
+    "en": "future",
+    "page": 120
+  },
+  {
+    "it": "il giardino",
+    "en": "garden",
+    "page": 120
+  },
+  {
+    "it": "il giornale",
+    "en": "newspaper",
+    "page": 120
+  },
+  {
+    "it": "il grattacielo",
+    "en": "skyscraper",
+    "page": 120
+  },
+  {
+    "it": "l’idea",
+    "en": "idea",
+    "page": 120
+  },
+  {
+    "it": "la lEttera",
+    "en": "letter",
+    "page": 120
+  },
+  {
+    "it": "la luna",
+    "en": "moon",
+    "page": 120
+  },
+  {
+    "it": "il mondo",
+    "en": "world",
+    "page": 120
+  },
+  {
+    "it": "il piano",
+    "en": "floor",
+    "page": 120
+  },
+  {
+    "it": "il poeta",
+    "en": "poet",
+    "page": 120
+  },
+  {
+    "it": "il sogno",
+    "en": "dream",
+    "page": 120
+  },
+  {
+    "it": "lo stadio",
+    "en": "stadium",
+    "page": 120
+  },
+  {
+    "it": "la stampante",
+    "en": "printer",
+    "page": 120
+  },
+  {
+    "it": "la stazione",
+    "en": "station",
+    "page": 120
+  },
+  {
+    "it": "il supermercato",
+    "en": "supermarket",
+    "page": 120
+  },
+  {
+    "it": "il teatro",
+    "en": "theater",
+    "page": 120
+  },
+  {
+    "it": "il tetto",
+    "en": "roof",
+    "page": 120
+  },
+  {
+    "it": "la via",
+    "en": "street",
+    "page": 120
+  },
+  {
+    "it": "la volta",
+    "en": "time",
+    "page": 120
+  },
+  {
+    "it": "azzurro / azzurra",
+    "en": "blue",
+    "page": 120
+  },
+  {
+    "it": "bianco / bianca",
+    "en": "white",
+    "page": 120
+  },
+  {
+    "it": "cOmodo / cOmoda",
+    "en": "comfortable",
+    "page": 120
+  },
+  {
+    "it": "giallo / gialla",
+    "en": "yellow",
+    "page": 120
+  },
+  {
+    "it": "grigio / grigia",
+    "en": "gray",
+    "page": 120
+  },
+  {
+    "it": "immenso / immensa",
+    "en": "immense",
+    "page": 120
+  },
+  {
+    "it": "lungo / lunga",
+    "en": "long",
+    "page": 120
+  },
+  {
+    "it": "marrone",
+    "en": "brown",
+    "page": 120
+  },
+  {
+    "it": "pieno / piena",
+    "en": "full",
+    "page": 120
+  },
+  {
+    "it": "rosa",
+    "en": "pink",
+    "page": 120
+  },
+  {
+    "it": "rosso / rossa",
+    "en": "red",
+    "page": 120
+  },
+  {
+    "it": "verde",
+    "en": "green",
+    "page": 121
+  },
+  {
+    "it": "viola",
+    "en": "purple",
+    "page": 121
+  },
+  {
+    "it": "male",
+    "en": "badly",
+    "page": 121
+  },
+  {
+    "it": "specialmente",
+    "en": "especially",
+    "page": 121
+  },
+  {
+    "it": "plural",
+    "en": "il",
+    "page": 126
+  },
+  {
+    "it": "vostra madre",
+    "en": "your",
+    "page": 127
+  },
+  {
+    "it": "l’amico",
+    "en": "friend",
+    "page": 133
+  },
+  {
+    "it": "l’Acqua",
+    "en": "water",
+    "page": 133
+  },
+  {
+    "it": "il banco",
+    "en": "bar",
+    "page": 133
+  },
+  {
+    "it": "il bene",
+    "en": "good",
+    "page": 133
+  },
+  {
+    "it": "la bevanda",
+    "en": "drink",
+    "page": 133
+  },
+  {
+    "it": "il bicchiere",
+    "en": "glass",
+    "page": 133
+  },
+  {
+    "it": "la birra",
+    "en": "beer",
+    "page": 134
+  },
+  {
+    "it": "la bottiglia",
+    "en": "bottle",
+    "page": 134
+  },
+  {
+    "it": "il caffè",
+    "en": "coffee",
+    "page": 134
+  },
+  {
+    "it": "il cioccolato / la cioccolata",
+    "en": "chocolate",
+    "page": 134
+  },
+  {
+    "it": "il complimento",
+    "en": "compliment",
+    "page": 134
+  },
+  {
+    "it": "la conversazione",
+    "en": "conversation",
+    "page": 134
+  },
+  {
+    "it": "il cornetto",
+    "en": "croissant",
+    "page": 134
+  },
+  {
+    "it": "il corso",
+    "en": "course",
+    "page": 134
+  },
+  {
+    "it": "il latte",
+    "en": "milk",
+    "page": 134
+  },
+  {
+    "it": "la lattina",
+    "en": "can",
+    "page": 134
+  },
+  {
+    "it": "il lavoro",
+    "en": "work",
+    "page": 134
+  },
+  {
+    "it": "la mancia",
+    "en": "tip",
+    "page": 134
+  },
+  {
+    "it": "la notizia",
+    "en": "news",
+    "page": 134
+  },
+  {
+    "it": "lo scApolo",
+    "en": "bachelor",
+    "page": 134
+  },
+  {
+    "it": "la sorpresa",
+    "en": "surprise",
+    "page": 134
+  },
+  {
+    "it": "l’università",
+    "en": "university",
+    "page": 134
+  },
+  {
+    "it": "la vacanza",
+    "en": "vacation",
+    "page": 134
+  },
+  {
+    "it": "lo yogurt",
+    "en": "yogurt",
+    "page": 134
+  },
+  {
+    "it": "contento / contenta",
+    "en": "glad",
+    "page": 134
+  },
+  {
+    "it": "decaffeinato / decaffeinata",
+    "en": "decaffeinated",
+    "page": 134
+  },
+  {
+    "it": "differente",
+    "en": "different",
+    "page": 134
+  },
+  {
+    "it": "diffIcile",
+    "en": "difficult",
+    "page": 134
+  },
+  {
+    "it": "diverso / diversa",
+    "en": "different",
+    "page": 134
+  },
+  {
+    "it": "freddo / fredda",
+    "en": "cold",
+    "page": 134
+  },
+  {
+    "it": "indiscreto / indiscreta",
+    "en": "indiscreet",
+    "page": 135
+  },
+  {
+    "it": "macchiato / macchiata",
+    "en": "stained",
+    "page": 135
+  },
+  {
+    "it": "privato / privata",
+    "en": "private",
+    "page": 135
+  },
+  {
+    "it": "tutti / tutte",
+    "en": "all",
+    "page": 135
+  },
+  {
+    "it": "tutti e due / tutte e due",
+    "en": "both",
+    "page": 135
+  },
+  {
+    "it": "to happen",
+    "en": "trovare",
+    "page": 135
+  },
+  {
+    "it": "a meraviglia",
+    "en": "wonderfully",
+    "page": 135
+  },
+  {
+    "it": "assiduamente",
+    "en": "assiduously",
+    "page": 135
+  },
+  {
+    "it": "di sOlito",
+    "en": "usually",
+    "page": 135
+  },
+  {
+    "it": "d’oro",
+    "en": "golden",
+    "page": 135
+  },
+  {
+    "it": "meglio",
+    "en": "better",
+    "page": 135
+  },
+  {
+    "it": "perciò",
+    "en": "therefore",
+    "page": 135
+  },
+  {
+    "it": "qualcosa",
+    "en": "something",
+    "page": 135
+  },
+  {
+    "it": "spesso",
+    "en": "often",
+    "page": 135
+  },
+  {
+    "it": "breve",
+    "en": "short",
+    "page": 140
+  },
+  {
+    "it": "brutto / brutta",
+    "en": "ugly",
+    "page": 140
+  },
+  {
+    "it": "buono / buona",
+    "en": "good",
+    "page": 140
+  },
+  {
+    "it": "cattivo / cattiva",
+    "en": "bad",
+    "page": 140
+  },
+  {
+    "it": "nuovo / nuova",
+    "en": "new",
+    "page": 140
+  },
+  {
+    "it": "vecchio / vecchia",
+    "en": "old",
+    "page": 140
+  },
+  {
+    "it": "glass of mineral",
+    "en": "water",
+    "page": 143
+  },
+  {
+    "it": "gassata",
+    "en": "bubbly",
+    "page": 143
+  },
+  {
+    "it": "per favore / per piacere / prego",
+    "en": "please",
+    "page": 144
+  },
+  {
+    "it": "il bricco",
+    "en": "pitcher",
+    "page": 147
+  },
+  {
+    "it": "la canzone",
+    "en": "song",
+    "page": 147
+  },
+  {
+    "it": "la cerAmica",
+    "en": "ceramic",
+    "page": 147
+  },
+  {
+    "it": "il coltello",
+    "en": "knife",
+    "page": 147
+  },
+  {
+    "it": "la crostata",
+    "en": "pie",
+    "page": 147
+  },
+  {
+    "it": "il cucchiaino",
+    "en": "teaspoon",
+    "page": 147
+  },
+  {
+    "it": "il cucchiaio",
+    "en": "spoon",
+    "page": 147
+  },
+  {
+    "it": "il cuore",
+    "en": "heart",
+    "page": 147
+  },
+  {
+    "it": "il distributore",
+    "en": "distributor",
+    "page": 147
+  },
+  {
+    "it": "la forchetta",
+    "en": "fork",
+    "page": 148
+  },
+  {
+    "it": "la frutta",
+    "en": "fruit",
+    "page": 148
+  },
+  {
+    "it": "il mese",
+    "en": "month",
+    "page": 148
+  },
+  {
+    "it": "il piattino",
+    "en": "saucer",
+    "page": 148
+  },
+  {
+    "it": "il piatto",
+    "en": "plate",
+    "page": 148
+  },
+  {
+    "it": "il prodotto",
+    "en": "product",
+    "page": 148
+  },
+  {
+    "it": "la regione",
+    "en": "region",
+    "page": 148
+  },
+  {
+    "it": "il salatino",
+    "en": "cracker",
+    "page": 148
+  },
+  {
+    "it": "il sottofondo",
+    "en": "background",
+    "page": 148
+  },
+  {
+    "it": "lo stEreo",
+    "en": "stereo",
+    "page": 148
+  },
+  {
+    "it": "lo stile",
+    "en": "style",
+    "page": 148
+  },
+  {
+    "it": "la teiera",
+    "en": "teapot",
+    "page": 148
+  },
+  {
+    "it": "il torrone",
+    "en": "nougat",
+    "page": 148
+  },
+  {
+    "it": "la vita",
+    "en": "life",
+    "page": 148
+  },
+  {
+    "it": "lo zucchero",
+    "en": "sugar",
+    "page": 148
+  },
+  {
+    "it": "attraente",
+    "en": "attractive",
+    "page": 148
+  },
+  {
+    "it": "celebre",
+    "en": "famous",
+    "page": 148
+  },
+  {
+    "it": "certo / certa",
+    "en": "certain",
+    "page": 148
+  },
+  {
+    "it": "legato / legata",
+    "en": "tied",
+    "page": 148
+  },
+  {
+    "it": "ornato / ornata",
+    "en": "decorated",
+    "page": 148
+  },
+  {
+    "it": "necessario / necessaria",
+    "en": "necessary",
+    "page": 148
+  },
+  {
+    "it": "perfetto / perfetta",
+    "en": "perfect",
+    "page": 148
+  },
+  {
+    "it": "personale",
+    "en": "personal",
+    "page": 148
+  },
+  {
+    "it": "qualche",
+    "en": "some",
+    "page": 148
+  },
+  {
+    "it": "vero / vera",
+    "en": "true",
+    "page": 148
+  },
+  {
+    "it": "adesso",
+    "en": "now",
+    "page": 149
+  },
+  {
+    "it": "certamente",
+    "en": "certainly",
+    "page": 149
+  },
+  {
+    "it": "perfettamente",
+    "en": "perfectly",
+    "page": 149
+  },
+  {
+    "it": "demonstrative adjective",
+    "en": "quello",
+    "page": 154
+  },
+  {
+    "it": "l’affare",
+    "en": "business",
+    "page": 159
+  },
+  {
+    "it": "la categoria",
+    "en": "category",
+    "page": 159
+  },
+  {
+    "it": "la civiltà",
+    "en": "civilization",
+    "page": 159
+  },
+  {
+    "it": "la data",
+    "en": "date",
+    "page": 159
+  },
+  {
+    "it": "il denaro",
+    "en": "money",
+    "page": 159
+  },
+  {
+    "it": "l’ora",
+    "en": "hour",
+    "page": 159
+  },
+  {
+    "it": "il progresso",
+    "en": "progress",
+    "page": 159
+  },
+  {
+    "it": "la quantità",
+    "en": "quantity",
+    "page": 159
+  },
+  {
+    "it": "la radio",
+    "en": "radio",
+    "page": 159
+  },
+  {
+    "it": "la scienza",
+    "en": "science",
+    "page": 159
+  },
+  {
+    "it": "i soldi",
+    "en": "money",
+    "page": 159
+  },
+  {
+    "it": "lo studio",
+    "en": "study",
+    "page": 160
+  },
+  {
+    "it": "il telEfono",
+    "en": "telephone",
+    "page": 160
+  },
+  {
+    "it": "la televisione",
+    "en": "television",
+    "page": 160
+  },
+  {
+    "it": "la temperatura",
+    "en": "temperature",
+    "page": 160
+  },
+  {
+    "it": "essenziale",
+    "en": "essential",
+    "page": 160
+  },
+  {
+    "it": "facile",
+    "en": "easy",
+    "page": 160
+  },
+  {
+    "it": "indispensAbile",
+    "en": "indispensable",
+    "page": 160
+  },
+  {
+    "it": "moderno / moderna",
+    "en": "modern",
+    "page": 160
+  },
+  {
+    "it": "prOssimo / prOssima",
+    "en": "next",
+    "page": 160
+  },
+  {
+    "it": "quotidiano / quotidiana",
+    "en": "daily",
+    "page": 160
+  },
+  {
+    "it": "correttamente",
+    "en": "correctly",
+    "page": 160
+  },
+  {
+    "it": "davvero",
+    "en": "really",
+    "page": 160
+  },
+  {
+    "it": "a quattr’occhi",
+    "en": "privately",
+    "page": 166
+  },
+  {
+    "it": "il biglietto",
+    "en": "ticket",
+    "page": 179
+  },
+  {
+    "it": "il centEsimo",
+    "en": "cent",
+    "page": 179
+  },
+  {
+    "it": "il collega",
+    "en": "colleague",
+    "page": 179
+  },
+  {
+    "it": "la distanza",
+    "en": "distance",
+    "page": 179
+  },
+  {
+    "it": "il dOllaro",
+    "en": "dollar",
+    "page": 179
+  },
+  {
+    "it": "l’Euro",
+    "en": "euro",
+    "page": 179
+  },
+  {
+    "it": "la matemAtica",
+    "en": "mathematics",
+    "page": 180
+  },
+  {
+    "it": "il mercato",
+    "en": "market",
+    "page": 180
+  },
+  {
+    "it": "il pasto",
+    "en": "meal",
+    "page": 180
+  },
+  {
+    "it": "la prAtica",
+    "en": "practice",
+    "page": 180
+  },
+  {
+    "it": "il problema",
+    "en": "problem",
+    "page": 180
+  },
+  {
+    "it": "il programma",
+    "en": "program",
+    "page": 180
+  },
+  {
+    "it": "il resto",
+    "en": "change",
+    "page": 180
+  },
+  {
+    "it": "il sistema",
+    "en": "system",
+    "page": 180
+  },
+  {
+    "it": "l’unità",
+    "en": "unit",
+    "page": 180
+  },
+  {
+    "it": "migliore",
+    "en": "better",
+    "page": 180
+  },
+  {
+    "it": "monetario / monetaria",
+    "en": "monetary",
+    "page": 180
+  },
+  {
+    "it": "sEmplice",
+    "en": "simple",
+    "page": 180
+  },
+  {
+    "it": "last",
+    "en": "verbi",
+    "page": 180
+  },
+  {
+    "it": "circa",
+    "en": "about",
+    "page": 180
+  },
+  {
+    "it": "proprio",
+    "en": "really",
+    "page": 180
+  },
+  {
+    "it": "l’amica",
+    "en": "friend",
+    "page": 184
+  },
+  {
+    "it": "le amiche",
+    "en": "friends",
+    "page": 184
+  },
+  {
+    "it": "lunga",
+    "en": "long",
+    "page": 184
+  },
+  {
+    "it": "lunghe",
+    "en": "long",
+    "page": 184
+  },
+  {
+    "it": "il lago",
+    "en": "lake",
+    "page": 184
+  },
+  {
+    "it": "i laghi",
+    "en": "lakes",
+    "page": 184
+  },
+  {
+    "it": "lungo",
+    "en": "long",
+    "page": 184
+  },
+  {
+    "it": "lunghi",
+    "en": "long",
+    "page": 184
+  },
+  {
+    "it": "il pacco",
+    "en": "package",
+    "page": 185
+  },
+  {
+    "it": "i pacchi",
+    "en": "packages",
+    "page": 185
+  },
+  {
+    "it": "ricco",
+    "en": "rich",
+    "page": 185
+  },
+  {
+    "it": "ricchi",
+    "en": "rich",
+    "page": 185
+  },
+  {
+    "it": "il medico",
+    "en": "doctor",
+    "page": 185
+  },
+  {
+    "it": "i medici",
+    "en": "doctors",
+    "page": 185
+  },
+  {
+    "it": "simpatico",
+    "en": "nice",
+    "page": 185
+  },
+  {
+    "it": "simpatici",
+    "en": "nice",
+    "page": 185
+  },
+  {
+    "it": "amico",
+    "en": "friend",
+    "page": 185
+  },
+  {
+    "it": "amici",
+    "en": "friends",
+    "page": 185
+  },
+  {
+    "it": "nemico",
+    "en": "enemy",
+    "page": 185
+  },
+  {
+    "it": "nemici",
+    "en": "enemies",
+    "page": 185
+  },
+  {
+    "it": "il clima",
+    "en": "climate",
+    "page": 185
+  },
+  {
+    "it": "i climi",
+    "en": "climates",
+    "page": 185
+  },
+  {
+    "it": "i colleghi",
+    "en": "colleagues",
+    "page": 185
+  },
+  {
+    "it": "il dilemma",
+    "en": "dilemma",
+    "page": 185
+  },
+  {
+    "it": "i dilemmi",
+    "en": "dilemmas",
+    "page": 185
+  },
+  {
+    "it": "il giornalista",
+    "en": "journalist",
+    "page": 185
+  },
+  {
+    "it": "i giornalisti",
+    "en": "journalists",
+    "page": 185
+  },
+  {
+    "it": "i poeti",
+    "en": "poets",
+    "page": 185
+  },
+  {
+    "it": "i problemi",
+    "en": "problems",
+    "page": 185
+  },
+  {
+    "it": "i programmi",
+    "en": "programs",
+    "page": 185
+  },
+  {
+    "it": "i sistemi",
+    "en": "systems",
+    "page": 185
+  },
+  {
+    "it": "l’aeroporto",
+    "en": "airport",
+    "page": 191
+  },
+  {
+    "it": "l’argomento",
+    "en": "topic",
+    "page": 191
+  },
+  {
+    "it": "il calcolo",
+    "en": "calculation",
+    "page": 191
+  },
+  {
+    "it": "il chilometro",
+    "en": "kilometer",
+    "page": 191
+  },
+  {
+    "it": "la cintura",
+    "en": "belt",
+    "page": 191
+  },
+  {
+    "it": "la colazione",
+    "en": "breakfast",
+    "page": 191
+  },
+  {
+    "it": "il commesso / la commessa",
+    "en": "salesperson",
+    "page": 191
+  },
+  {
+    "it": "il giorno",
+    "en": "day",
+    "page": 191
+  },
+  {
+    "it": "il guanto",
+    "en": "glove",
+    "page": 191
+  },
+  {
+    "it": "la libbra",
+    "en": "pound",
+    "page": 192
+  },
+  {
+    "it": "il negozio",
+    "en": "shop",
+    "page": 192
+  },
+  {
+    "it": "il paio",
+    "en": "pair",
+    "page": 192
+  },
+  {
+    "it": "il peso",
+    "en": "weight",
+    "page": 192
+  },
+  {
+    "it": "il prezzo",
+    "en": "price",
+    "page": 192
+  },
+  {
+    "it": "il regalo",
+    "en": "gift",
+    "page": 192
+  },
+  {
+    "it": "il secolo",
+    "en": "century",
+    "page": 192
+  },
+  {
+    "it": "la somma",
+    "en": "sum",
+    "page": 192
+  },
+  {
+    "it": "il totale",
+    "en": "total",
+    "page": 192
+  },
+  {
+    "it": "l’uso",
+    "en": "use",
+    "page": 192
+  },
+  {
+    "it": "la valigia",
+    "en": "suitcase",
+    "page": 192
+  },
+  {
+    "it": "la virgola",
+    "en": "comma",
+    "page": 192
+  },
+  {
+    "it": "continentale",
+    "en": "continental",
+    "page": 192
+  },
+  {
+    "it": "corretto / corretta",
+    "en": "correct",
+    "page": 192
+  },
+  {
+    "it": "pesante",
+    "en": "heavy",
+    "page": 192
+  },
+  {
+    "it": "in ritardo",
+    "en": "late",
+    "page": 192
+  },
+  {
+    "it": "tardi",
+    "en": "late",
+    "page": 192
+  },
+  {
+    "it": "la mortadella",
+    "en": "mortadella",
+    "page": 203
+  },
+  {
+    "it": "il salame",
+    "en": "salami",
+    "page": 203
+  },
+  {
+    "it": "i formaggi",
+    "en": "cheeses",
+    "page": 203
+  },
+  {
+    "it": "il provolone",
+    "en": "provolone",
+    "page": 203
+  },
+  {
+    "it": "i capperi",
+    "en": "capers",
+    "page": 203
+  },
+  {
+    "it": "l’andata",
+    "en": "one-way",
+    "page": 205
+  },
+  {
+    "it": "la cena",
+    "en": "dinner",
+    "page": 205
+  },
+  {
+    "it": "la classe",
+    "en": "class",
+    "page": 205
+  },
+  {
+    "it": "la notte",
+    "en": "night",
+    "page": 205
+  },
+  {
+    "it": "l’ora di cena",
+    "en": "dinnertime",
+    "page": 205
+  },
+  {
+    "it": "l’ora di pranzo",
+    "en": "lunchtime",
+    "page": 205
+  },
+  {
+    "it": "l’ossessione",
+    "en": "obsession",
+    "page": 205
+  },
+  {
+    "it": "il pranzo",
+    "en": "lunch",
+    "page": 206
+  },
+  {
+    "it": "il ritorno",
+    "en": "return",
+    "page": 206
+  },
+  {
+    "it": "la sera",
+    "en": "evening",
+    "page": 206
+  },
+  {
+    "it": "la società",
+    "en": "society",
+    "page": 206
+  },
+  {
+    "it": "lo spettacolo",
+    "en": "show",
+    "page": 206
+  },
+  {
+    "it": "il viaggiatore",
+    "en": "traveler",
+    "page": 206
+  },
+  {
+    "it": "romAntico / romAntica",
+    "en": "romantic",
+    "page": 206
+  },
+  {
+    "it": "tanto / tanta",
+    "en": "much",
+    "page": 206
+  },
+  {
+    "it": "insieme",
+    "en": "together",
+    "page": 206
+  },
+  {
+    "it": "purtroppo",
+    "en": "unfortunately",
+    "page": 206
+  },
+  {
+    "it": "il buio",
+    "en": "darknes",
+    "page": 215
+  },
+  {
+    "it": "la commedia",
+    "en": "comedy",
+    "page": 215
+  },
+  {
+    "it": "i cartoni animati",
+    "en": "cartoons",
+    "page": 215
+  },
+  {
+    "it": "le commedie",
+    "en": "comedies",
+    "page": 216
+  },
+  {
+    "it": "i film drammAtici",
+    "en": "dramas",
+    "page": 216
+  },
+  {
+    "it": "la gente",
+    "en": "people",
+    "page": 216
+  },
+  {
+    "it": "il gusto",
+    "en": "taste",
+    "page": 216
+  },
+  {
+    "it": "i popcorn",
+    "en": "popcorn",
+    "page": 216
+  },
+  {
+    "it": "lo schermo",
+    "en": "screen",
+    "page": 216
+  },
+  {
+    "it": "la videocassetta",
+    "en": "videotape",
+    "page": 216
+  },
+  {
+    "it": "buffo / buffa",
+    "en": "funny",
+    "page": 216
+  },
+  {
+    "it": "divertente",
+    "en": "amusing",
+    "page": 216
+  },
+  {
+    "it": "irresistIbile",
+    "en": "irrestistible",
+    "page": 216
+  },
+  {
+    "it": "lento / lenta",
+    "en": "slow",
+    "page": 216
+  },
+  {
+    "it": "noioso / noiosa",
+    "en": "boring",
+    "page": 216
+  },
+  {
+    "it": "Ottimo / Ottima",
+    "en": "excellent",
+    "page": 216
+  },
+  {
+    "it": "poco / poca",
+    "en": "little",
+    "page": 216
+  },
+  {
+    "it": "tIpico / tIpica",
+    "en": "typical",
+    "page": 216
+  },
+  {
+    "it": "qualche volta",
+    "en": "sometimes",
+    "page": 216
+  },
+  {
+    "it": "him / it",
+    "en": "la",
+    "page": 221
+  },
+  {
+    "it": "il canale",
+    "en": "channel",
+    "page": 224
+  },
+  {
+    "it": "il telegiornale",
+    "en": "news",
+    "page": 224
+  },
+  {
+    "it": "l’alleato",
+    "en": "ally",
+    "page": 226
+  },
+  {
+    "it": "la caduta",
+    "en": "fall",
+    "page": 226
+  },
+  {
+    "it": "la camicia",
+    "en": "shirt",
+    "page": 226
+  },
+  {
+    "it": "la caramella",
+    "en": "candy",
+    "page": 226
+  },
+  {
+    "it": "il comandante",
+    "en": "commander",
+    "page": 226
+  },
+  {
+    "it": "il compleanno",
+    "en": "birthday",
+    "page": 226
+  },
+  {
+    "it": "la dittatura",
+    "en": "dictatorship",
+    "page": 226
+  },
+  {
+    "it": "l’enciclopedIa",
+    "en": "encyclopedia",
+    "page": 226
+  },
+  {
+    "it": "l’evento",
+    "en": "event",
+    "page": 226
+  },
+  {
+    "it": "la fine",
+    "en": "end",
+    "page": 227
+  },
+  {
+    "it": "la fondazione",
+    "en": "foundation",
+    "page": 227
+  },
+  {
+    "it": "la guerra",
+    "en": "war",
+    "page": 227
+  },
+  {
+    "it": "l’impressione",
+    "en": "impression",
+    "page": 227
+  },
+  {
+    "it": "l’inizio",
+    "en": "beginning",
+    "page": 227
+  },
+  {
+    "it": "l’Internet",
+    "en": "internet",
+    "page": 227
+  },
+  {
+    "it": "la leggenda",
+    "en": "legend",
+    "page": 227
+  },
+  {
+    "it": "la morte",
+    "en": "death",
+    "page": 227
+  },
+  {
+    "it": "il perIodo",
+    "en": "period",
+    "page": 227
+  },
+  {
+    "it": "il sito",
+    "en": "site",
+    "page": 227
+  },
+  {
+    "it": "la vittoria",
+    "en": "victory",
+    "page": 227
+  },
+  {
+    "it": "antico / antica",
+    "en": "ancient",
+    "page": 227
+  },
+  {
+    "it": "corrispondente",
+    "en": "corresponding",
+    "page": 227
+  },
+  {
+    "it": "incluso / inclusa",
+    "en": "included",
+    "page": 227
+  },
+  {
+    "it": "militare",
+    "en": "military",
+    "page": 227
+  },
+  {
+    "it": "ogni",
+    "en": "each",
+    "page": 227
+  },
+  {
+    "it": "recente",
+    "en": "recent",
+    "page": 227
+  },
+  {
+    "it": "triste",
+    "en": "sad",
+    "page": 227
+  },
+  {
+    "it": "ora",
+    "en": "now",
+    "page": 227
+  },
+  {
+    "it": "presto",
+    "en": "soon",
+    "page": 227
+  },
+  {
+    "it": "l’abitante",
+    "en": "inhabitant",
+    "page": 245
+  },
+  {
+    "it": "l’altezza",
+    "en": "height",
+    "page": 245
+  },
+  {
+    "it": "la bugIa",
+    "en": "lie",
+    "page": 245
+  },
+  {
+    "it": "la cima",
+    "en": "top",
+    "page": 245
+  },
+  {
+    "it": "le congratulazioni",
+    "en": "congratulations",
+    "page": 245
+  },
+  {
+    "it": "il dubbio",
+    "en": "doubt",
+    "page": 245
+  },
+  {
+    "it": "il fiume",
+    "en": "river",
+    "page": 245
+  },
+  {
+    "it": "la geografIa",
+    "en": "geography",
+    "page": 245
+  },
+  {
+    "it": "il mare",
+    "en": "sea",
+    "page": 246
+  },
+  {
+    "it": "il modo",
+    "en": "way",
+    "page": 246
+  },
+  {
+    "it": "la montagna",
+    "en": "mountain",
+    "page": 246
+  },
+  {
+    "it": "la penIsola",
+    "en": "peninsula",
+    "page": 246
+  },
+  {
+    "it": "il porto",
+    "en": "harbor",
+    "page": 246
+  },
+  {
+    "it": "il premio",
+    "en": "prize",
+    "page": 246
+  },
+  {
+    "it": "lo stivale",
+    "en": "boot",
+    "page": 246
+  },
+  {
+    "it": "South",
+    "en": "aggettivi",
+    "page": 246
+  },
+  {
+    "it": "alto / alta",
+    "en": "tall",
+    "page": 246
+  },
+  {
+    "it": "basso / bassa",
+    "en": "short",
+    "page": 246
+  },
+  {
+    "it": "comprensivo / comprensiva",
+    "en": "understanding",
+    "page": 246
+  },
+  {
+    "it": "impaziente",
+    "en": "impatient",
+    "page": 246
+  },
+  {
+    "it": "incantEvole",
+    "en": "enchanting",
+    "page": 246
+  },
+  {
+    "it": "infinito / infinita",
+    "en": "infinite",
+    "page": 246
+  },
+  {
+    "it": "largo / larga",
+    "en": "wide",
+    "page": 246
+  },
+  {
+    "it": "paziente",
+    "en": "patient",
+    "page": 246
+  },
+  {
+    "it": "situato / situata",
+    "en": "situated",
+    "page": 246
+  },
+  {
+    "it": "stretto / stretta",
+    "en": "narrow",
+    "page": 246
+  },
+  {
+    "it": "relating to television",
+    "en": "verbi",
+    "page": 246
+  },
+  {
+    "it": "be’",
+    "en": "well",
+    "page": 246
+  },
+  {
+    "it": "comunque",
+    "en": "anyway",
+    "page": 247
+  },
+  {
+    "it": "onestamente",
+    "en": "honestly",
+    "page": 247
+  },
+  {
+    "it": "veramente",
+    "en": "truly",
+    "page": 247
+  },
+  {
+    "it": "buono",
+    "en": "good",
+    "page": 252
+  },
+  {
+    "it": "cattivo",
+    "en": "bad",
+    "page": 252
+  },
+  {
+    "it": "grande",
+    "en": "large",
+    "page": 252
+  },
+  {
+    "it": "piccolo",
+    "en": "small",
+    "page": 252
+  },
+  {
+    "it": "peggio",
+    "en": "worse",
+    "page": 252
+  },
+  {
+    "it": "lungo/lunga",
+    "en": "long",
+    "page": 253
+  },
+  {
+    "it": "povero/povera",
+    "en": "poor",
+    "page": 253
+  },
+  {
+    "it": "più/meno di",
+    "en": "or",
+    "page": 254
+  },
+  {
+    "it": "i cereali",
+    "en": "cereal",
+    "page": 257
+  },
+  {
+    "it": "il colesterolo",
+    "en": "cholesterol",
+    "page": 257
+  },
+  {
+    "it": "la contraddizione",
+    "en": "contradiction",
+    "page": 257
+  },
+  {
+    "it": "la doccia",
+    "en": "shower",
+    "page": 257
+  },
+  {
+    "it": "la natura",
+    "en": "nature",
+    "page": 258
+  },
+  {
+    "it": "la pancetta",
+    "en": "bacon",
+    "page": 258
+  },
+  {
+    "it": "il pane",
+    "en": "bread",
+    "page": 258
+  },
+  {
+    "it": "la posta",
+    "en": "mail",
+    "page": 258
+  },
+  {
+    "it": "la terrazza",
+    "en": "balcony",
+    "page": 258
+  },
+  {
+    "it": "le uova",
+    "en": "egg",
+    "page": 258
+  },
+  {
+    "it": "la vIsita",
+    "en": "visit",
+    "page": 258
+  },
+  {
+    "it": "elettrOnico / elettrOnica",
+    "en": "electronic",
+    "page": 258
+  },
+  {
+    "it": "normale",
+    "en": "normal",
+    "page": 258
+  },
+  {
+    "it": "pronto / pronta",
+    "en": "ready",
+    "page": 258
+  },
+  {
+    "it": "stanco / stanca",
+    "en": "tired",
+    "page": 258
+  },
+  {
+    "it": "tostato / tostata",
+    "en": "toasted",
+    "page": 258
+  },
+  {
+    "it": "infine",
+    "en": "finally",
+    "page": 259
+  },
+  {
+    "it": "in gEnere",
+    "en": "generally",
+    "page": 259
+  },
+  {
+    "it": "poi",
+    "en": "then",
+    "page": 259
+  },
+  {
+    "it": "verso",
+    "en": "around",
+    "page": 259
+  },
+  {
+    "it": "la testa",
+    "en": "head",
+    "page": 266
+  },
+  {
+    "it": "i capelli",
+    "en": "hair",
+    "page": 266
+  },
+  {
+    "it": "l’occhio",
+    "en": "eye",
+    "page": 266
+  },
+  {
+    "it": "la fronte",
+    "en": "forehead",
+    "page": 266
+  },
+  {
+    "it": "il naso",
+    "en": "nose",
+    "page": 266
+  },
+  {
+    "it": "la bocca",
+    "en": "mouth",
+    "page": 266
+  },
+  {
+    "it": "il dente",
+    "en": "tooth",
+    "page": 266
+  },
+  {
+    "it": "il mento",
+    "en": "chin",
+    "page": 267
+  },
+  {
+    "it": "l’orecchio",
+    "en": "ear",
+    "page": 267
+  },
+  {
+    "it": "il collo",
+    "en": "neck",
+    "page": 267
+  },
+  {
+    "it": "la spalla",
+    "en": "shoulder",
+    "page": 267
+  },
+  {
+    "it": "la schiena",
+    "en": "back",
+    "page": 267
+  },
+  {
+    "it": "il petto",
+    "en": "chest",
+    "page": 267
+  },
+  {
+    "it": "il seno",
+    "en": "breast",
+    "page": 267
+  },
+  {
+    "it": "il braccio",
+    "en": "arm",
+    "page": 267
+  },
+  {
+    "it": "il polso",
+    "en": "wrist",
+    "page": 267
+  },
+  {
+    "it": "la mano",
+    "en": "hand",
+    "page": 267
+  },
+  {
+    "it": "il dito",
+    "en": "finger",
+    "page": 267
+  },
+  {
+    "it": "il gomito",
+    "en": "elbow",
+    "page": 267
+  },
+  {
+    "it": "la pancia",
+    "en": "belly",
+    "page": 267
+  },
+  {
+    "it": "il sesso",
+    "en": "sex",
+    "page": 267
+  },
+  {
+    "it": "i genitali",
+    "en": "genitals",
+    "page": 267
+  },
+  {
+    "it": "la gamba",
+    "en": "leg",
+    "page": 267
+  },
+  {
+    "it": "la coscia",
+    "en": "thigh",
+    "page": 267
+  },
+  {
+    "it": "il ginocchio",
+    "en": "knee",
+    "page": 267
+  },
+  {
+    "it": "la caviglia",
+    "en": "ankle",
+    "page": 267
+  },
+  {
+    "it": "to get",
+    "en": "undressed",
+    "page": 267
+  },
+  {
+    "it": "il burro",
+    "en": "butter",
+    "page": 269
+  },
+  {
+    "it": "la carne",
+    "en": "meat",
+    "page": 269
+  },
+  {
+    "it": "la distrazione",
+    "en": "distraction",
+    "page": 269
+  },
+  {
+    "it": "il formaggio",
+    "en": "cheese",
+    "page": 269
+  },
+  {
+    "it": "il nido",
+    "en": "nest",
+    "page": 270
+  },
+  {
+    "it": "i pantaloni",
+    "en": "pants",
+    "page": 270
+  },
+  {
+    "it": "la pEntola",
+    "en": "pot",
+    "page": 270
+  },
+  {
+    "it": "il pesce",
+    "en": "fish",
+    "page": 270
+  },
+  {
+    "it": "il quartiere",
+    "en": "neighborhood",
+    "page": 270
+  },
+  {
+    "it": "l’uccello",
+    "en": "bird",
+    "page": 270
+  },
+  {
+    "it": "il vicino di casa / la vicina di casa",
+    "en": "neighbor",
+    "page": 270
+  },
+  {
+    "it": "curioso / curiosa",
+    "en": "curious",
+    "page": 270
+  },
+  {
+    "it": "fornito / fornita",
+    "en": "stocked",
+    "page": 270
+  },
+  {
+    "it": "fortunato / fortunata",
+    "en": "lucky",
+    "page": 270
+  },
+  {
+    "it": "comodamente",
+    "en": "comfortably",
+    "page": 270
+  },
+  {
+    "it": "piuttosto",
+    "en": "rather",
+    "page": 270
+  },
+  {
+    "it": "temporaneamente",
+    "en": "temporarily",
+    "page": 270
+  },
+  {
+    "it": "l’entusiasmo",
+    "en": "enthusiasm",
+    "page": 279
+  },
+  {
+    "it": "l’impermeAbile",
+    "en": "raincoat",
+    "page": 279
+  },
+  {
+    "it": "l’ombrello",
+    "en": "umbrella",
+    "page": 279
+  },
+  {
+    "it": "la poltrona",
+    "en": "armchair",
+    "page": 279
+  },
+  {
+    "it": "la segretaria",
+    "en": "secretary",
+    "page": 279
+  },
+  {
+    "it": "il sorriso",
+    "en": "smile",
+    "page": 279
+  },
+  {
+    "it": "il tipo",
+    "en": "type",
+    "page": 279
+  },
+  {
+    "it": "il vassoio",
+    "en": "tray",
+    "page": 279
+  },
+  {
+    "it": "la voce",
+    "en": "voice",
+    "page": 279
+  },
+  {
+    "it": "adatto / adatta",
+    "en": "appropriate",
+    "page": 280
+  },
+  {
+    "it": "animato / animata",
+    "en": "animated",
+    "page": 280
+  },
+  {
+    "it": "bagnato / bagnata",
+    "en": "wet",
+    "page": 280
+  },
+  {
+    "it": "bollente",
+    "en": "boiling",
+    "page": 280
+  },
+  {
+    "it": "caffeinato / caffeinata",
+    "en": "caffeinated",
+    "page": 280
+  },
+  {
+    "it": "caldo / calda",
+    "en": "hot",
+    "page": 280
+  },
+  {
+    "it": "dedicato / dedicata",
+    "en": "dedicated",
+    "page": 280
+  },
+  {
+    "it": "orrIbile",
+    "en": "horrible",
+    "page": 280
+  },
+  {
+    "it": "terribile",
+    "en": "terrible",
+    "page": 280
+  },
+  {
+    "it": "until",
+    "en": "mentre",
+    "page": 280
+  },
+  {
+    "it": "pure",
+    "en": "also",
+    "page": 280
+  },
+  {
+    "it": "l’Albero",
+    "en": "tree",
+    "page": 290
+  },
+  {
+    "it": "l’aria",
+    "en": "air",
+    "page": 290
+  },
+  {
+    "it": "il cambiamento",
+    "en": "change",
+    "page": 290
+  },
+  {
+    "it": "la differenza",
+    "en": "difference",
+    "page": 290
+  },
+  {
+    "it": "l’influenza",
+    "en": "influence",
+    "page": 290
+  },
+  {
+    "it": "l’Isola",
+    "en": "island",
+    "page": 290
+  },
+  {
+    "it": "la nebbia",
+    "en": "fog",
+    "page": 290
+  },
+  {
+    "it": "la nUvola",
+    "en": "cloud",
+    "page": 290
+  },
+  {
+    "it": "la presenza",
+    "en": "presence",
+    "page": 290
+  },
+  {
+    "it": "il resto",
+    "en": "rest",
+    "page": 290
+  },
+  {
+    "it": "fresco / fresca",
+    "en": "fresh",
+    "page": 291
+  },
+  {
+    "it": "esagerato / esagerata",
+    "en": "exaggerated",
+    "page": 291
+  },
+  {
+    "it": "eterno / eterna",
+    "en": "eternal",
+    "page": 291
+  },
+  {
+    "it": "intero / intera",
+    "en": "entire",
+    "page": 291
+  },
+  {
+    "it": "luminoso / luminosa",
+    "en": "light",
+    "page": 291
+  },
+  {
+    "it": "mite",
+    "en": "mild",
+    "page": 291
+  },
+  {
+    "it": "moderato / moderata",
+    "en": "moderate",
+    "page": 291
+  },
+  {
+    "it": "neutrale",
+    "en": "neutral",
+    "page": 291
+  },
+  {
+    "it": "nuvoloso",
+    "en": "cloudy",
+    "page": 291
+  },
+  {
+    "it": "piacEvole",
+    "en": "pleasant",
+    "page": 291
+  },
+  {
+    "it": "rifiutato / rifiutata",
+    "en": "rejected",
+    "page": 291
+  },
+  {
+    "it": "sereno",
+    "en": "clear",
+    "page": 291
+  },
+  {
+    "it": "variAbile",
+    "en": "variable",
+    "page": 291
+  },
+  {
+    "it": "altrove",
+    "en": "elsewhere",
+    "page": 291
+  },
+  {
+    "it": "fuori",
+    "en": "outside",
+    "page": 291
+  },
+  {
+    "it": "inoltre",
+    "en": "furthermore",
+    "page": 291
+  },
+  {
+    "it": "qui / qua",
+    "en": "here",
+    "page": 291
+  },
+  {
+    "it": "tutto d’un tratto",
+    "en": "suddenly",
+    "page": 291
+  },
+  {
+    "it": "Ne conosco",
+    "en": "quattro",
+    "page": 308
+  },
+  {
+    "it": "Ne conosco",
+    "en": "alcune",
+    "page": 308
+  },
+  {
+    "it": "Non ne conosco",
+    "en": "nessuna",
+    "page": 308
+  },
+  {
+    "it": "il consiglio",
+    "en": "advice",
+    "page": 313
+  },
+  {
+    "it": "l’esame",
+    "en": "exam",
+    "page": 313
+  },
+  {
+    "it": "la foglia",
+    "en": "leaf",
+    "page": 313
+  },
+  {
+    "it": "la frontiera",
+    "en": "border",
+    "page": 313
+  },
+  {
+    "it": "il luogo",
+    "en": "place",
+    "page": 313
+  },
+  {
+    "it": "il prato",
+    "en": "lawn",
+    "page": 313
+  },
+  {
+    "it": "lo smog",
+    "en": "smog",
+    "page": 313
+  },
+  {
+    "it": "la spiaggia",
+    "en": "beach",
+    "page": 314
+  },
+  {
+    "it": "il venticello",
+    "en": "breeze",
+    "page": 314
+  },
+  {
+    "it": "la vista",
+    "en": "view",
+    "page": 314
+  },
+  {
+    "it": "abbondante",
+    "en": "abundant",
+    "page": 314
+  },
+  {
+    "it": "asciutto / asciutta",
+    "en": "dry",
+    "page": 314
+  },
+  {
+    "it": "coperto / coperta",
+    "en": "covered",
+    "page": 314
+  },
+  {
+    "it": "delizioso / deliziosa",
+    "en": "delightful",
+    "page": 314
+  },
+  {
+    "it": "denso / densa",
+    "en": "dense",
+    "page": 314
+  },
+  {
+    "it": "dolce",
+    "en": "sweet",
+    "page": 314
+  },
+  {
+    "it": "entusiasta",
+    "en": "enthusiastic",
+    "page": 314
+  },
+  {
+    "it": "meraviglioso / meravigliosa",
+    "en": "marvelous",
+    "page": 314
+  },
+  {
+    "it": "nativo / nativa",
+    "en": "native",
+    "page": 314
+  },
+  {
+    "it": "vicino / vicina",
+    "en": "close",
+    "page": 314
+  },
+  {
+    "it": "visIbile",
+    "en": "visible",
+    "page": 314
+  },
+  {
+    "it": "qualsIasi",
+    "en": "any",
+    "page": 314
+  },
+  {
+    "it": "qualunque",
+    "en": "any",
+    "page": 314
+  },
+  {
+    "it": "quindi",
+    "en": "therefore",
+    "page": 314
+  },
+  {
+    "it": "l’abitUdine",
+    "en": "habit",
+    "page": 323
+  },
+  {
+    "it": "l’arte",
+    "en": "art",
+    "page": 323
+  },
+  {
+    "it": "il basIlico",
+    "en": "basil",
+    "page": 323
+  },
+  {
+    "it": "il cibo",
+    "en": "food",
+    "page": 323
+  },
+  {
+    "it": "l’insalata",
+    "en": "salad",
+    "page": 323
+  },
+  {
+    "it": "la lista",
+    "en": "list",
+    "page": 324
+  },
+  {
+    "it": "la partenza",
+    "en": "departure",
+    "page": 324
+  },
+  {
+    "it": "la passione",
+    "en": "passion",
+    "page": 324
+  },
+  {
+    "it": "la pastasciutta",
+    "en": "pasta",
+    "page": 324
+  },
+  {
+    "it": "il piacere",
+    "en": "pleasure",
+    "page": 324
+  },
+  {
+    "it": "il pollo",
+    "en": "chicken",
+    "page": 324
+  },
+  {
+    "it": "la qualità",
+    "en": "quality",
+    "page": 324
+  },
+  {
+    "it": "il sapore",
+    "en": "flavor",
+    "page": 324
+  },
+  {
+    "it": "il segreto",
+    "en": "secret",
+    "page": 324
+  },
+  {
+    "it": "la specialità",
+    "en": "specialty",
+    "page": 324
+  },
+  {
+    "it": "il sugo",
+    "en": "sauce",
+    "page": 324
+  },
+  {
+    "it": "il turista",
+    "en": "tourist",
+    "page": 324
+  },
+  {
+    "it": "la varietà",
+    "en": "variety",
+    "page": 324
+  },
+  {
+    "it": "il vino",
+    "en": "wine",
+    "page": 324
+  },
+  {
+    "it": "lo zafferano",
+    "en": "saffron",
+    "page": 324
+  },
+  {
+    "it": "maturo / matura",
+    "en": "ripe",
+    "page": 324
+  },
+  {
+    "it": "misto / mista",
+    "en": "mixed",
+    "page": 324
+  },
+  {
+    "it": "monOtono / monOtona",
+    "en": "monotonous",
+    "page": 324
+  },
+  {
+    "it": "naturale",
+    "en": "natural",
+    "page": 324
+  },
+  {
+    "it": "facilmente",
+    "en": "easily",
+    "page": 325
+  },
+  {
+    "it": "cotto / cotta",
+    "en": "cooked",
+    "page": 332
+  },
+  {
+    "it": "crudo / cruda",
+    "en": "raw",
+    "page": 332
+  },
+  {
+    "it": "il fornello",
+    "en": "burner",
+    "page": 332
+  },
+  {
+    "it": "il forno",
+    "en": "oven",
+    "page": 332
+  },
+  {
+    "it": "il pezzo",
+    "en": "piece",
+    "page": 332
+  },
+  {
+    "it": "il prosciutto",
+    "en": "ham",
+    "page": 332
+  },
+  {
+    "it": "l’artista",
+    "en": "artist",
+    "page": 336
+  },
+  {
+    "it": "l’attrazione",
+    "en": "attraction",
+    "page": 336
+  },
+  {
+    "it": "la bellezza",
+    "en": "beauty",
+    "page": 336
+  },
+  {
+    "it": "la carezza",
+    "en": "caress",
+    "page": 336
+  },
+  {
+    "it": "il fAscino",
+    "en": "charm",
+    "page": 336
+  },
+  {
+    "it": "la guida",
+    "en": "guide",
+    "page": 336
+  },
+  {
+    "it": "la letteratura",
+    "en": "literature",
+    "page": 336
+  },
+  {
+    "it": "il monumento",
+    "en": "monument",
+    "page": 336
+  },
+  {
+    "it": "la mUsica",
+    "en": "music",
+    "page": 337
+  },
+  {
+    "it": "la pittura",
+    "en": "painting",
+    "page": 337
+  },
+  {
+    "it": "il poeta / la poetessa",
+    "en": "poet",
+    "page": 337
+  },
+  {
+    "it": "lo scrittore / la scrittrice",
+    "en": "writer",
+    "page": 337
+  },
+  {
+    "it": "la scultura",
+    "en": "sculpture",
+    "page": 337
+  },
+  {
+    "it": "la sede",
+    "en": "location",
+    "page": 337
+  },
+  {
+    "it": "il tema",
+    "en": "theme",
+    "page": 337
+  },
+  {
+    "it": "il tesoro",
+    "en": "treasure",
+    "page": 337
+  },
+  {
+    "it": "il vulcano",
+    "en": "volcano",
+    "page": 337
+  },
+  {
+    "it": "attivo / attiva",
+    "en": "active",
+    "page": 337
+  },
+  {
+    "it": "eccezionale",
+    "en": "exceptional",
+    "page": 337
+  },
+  {
+    "it": "insOlito / insOlita",
+    "en": "unusual",
+    "page": 337
+  },
+  {
+    "it": "preparato / preparata",
+    "en": "prepared",
+    "page": 337
+  },
+  {
+    "it": "turIstico / turIstica",
+    "en": "touristic",
+    "page": 337
+  },
+  {
+    "it": "dappertutto",
+    "en": "everywhere",
+    "page": 337
+  },
+  {
+    "it": "lo sport",
+    "en": "sport",
+    "page": 345
+  },
+  {
+    "it": "il cinema",
+    "en": "cinema",
+    "page": 345
+  },
+  {
+    "it": "il ballo",
+    "en": "dance",
+    "page": 346
+  },
+  {
+    "it": "la fotografia",
+    "en": "photography",
+    "page": 346
+  },
+  {
+    "it": "l’ambiente",
+    "en": "environment",
+    "page": 349
+  },
+  {
+    "it": "l’amore",
+    "en": "love",
+    "page": 349
+  },
+  {
+    "it": "la caratterIstica",
+    "en": "characteristic",
+    "page": 349
+  },
+  {
+    "it": "il dolore",
+    "en": "pain",
+    "page": 349
+  },
+  {
+    "it": "l’eccezione",
+    "en": "exception",
+    "page": 349
+  },
+  {
+    "it": "l’effetto",
+    "en": "effect",
+    "page": 349
+  },
+  {
+    "it": "l’emozione",
+    "en": "emotion",
+    "page": 349
+  },
+  {
+    "it": "la fAbbrica",
+    "en": "factory",
+    "page": 349
+  },
+  {
+    "it": "il fIsico",
+    "en": "physique",
+    "page": 349
+  },
+  {
+    "it": "la gioia",
+    "en": "joy",
+    "page": 349
+  },
+  {
+    "it": "l’industria",
+    "en": "industry",
+    "page": 350
+  },
+  {
+    "it": "l’odio",
+    "en": "hatred",
+    "page": 350
+  },
+  {
+    "it": "la permanenza",
+    "en": "permanence",
+    "page": 350
+  },
+  {
+    "it": "il pOpolo",
+    "en": "people",
+    "page": 350
+  },
+  {
+    "it": "la questione",
+    "en": "issue",
+    "page": 350
+  },
+  {
+    "it": "la restrizione",
+    "en": "restriction",
+    "page": 350
+  },
+  {
+    "it": "lo stereOtipo",
+    "en": "stereotype",
+    "page": 350
+  },
+  {
+    "it": "il temperamento",
+    "en": "temperament",
+    "page": 350
+  },
+  {
+    "it": "il vigore",
+    "en": "vigor",
+    "page": 350
+  },
+  {
+    "it": "biondo / bionda",
+    "en": "blond-haired",
+    "page": 350
+  },
+  {
+    "it": "breve",
+    "en": "brief",
+    "page": 350
+  },
+  {
+    "it": "considerEvole",
+    "en": "considerable",
+    "page": 350
+  },
+  {
+    "it": "disponIbile",
+    "en": "available",
+    "page": 350
+  },
+  {
+    "it": "moro / mora",
+    "en": "dark-haired",
+    "page": 350
+  },
+  {
+    "it": "passionale",
+    "en": "passionate",
+    "page": 350
+  },
+  {
+    "it": "polItico / polItica",
+    "en": "political",
+    "page": 350
+  },
+  {
+    "it": "rilassante",
+    "en": "relaxing",
+    "page": 350
+  },
+  {
+    "it": "rilassato / rilassata",
+    "en": "relaxed",
+    "page": 350
+  },
+  {
+    "it": "teso / tesa",
+    "en": "tense",
+    "page": 350
+  },
+  {
+    "it": "durante",
+    "en": "during",
+    "page": 351
+  },
+  {
+    "it": "finalmente",
+    "en": "finally",
+    "page": 351
+  },
+  {
+    "it": "in pieno",
+    "en": "fully",
+    "page": 351
+  },
+  {
+    "it": "malgrado",
+    "en": "despite",
+    "page": 351
+  },
+  {
+    "it": "prevalentemente",
+    "en": "mostly",
+    "page": 351
+  },
+  {
+    "it": "più tardi",
+    "en": "later",
+    "page": 356
+  },
+  {
+    "it": "il / la cantante",
+    "en": "singer",
+    "page": 359
+  },
+  {
+    "it": "la cassetta",
+    "en": "tape",
+    "page": 359
+  },
+  {
+    "it": "il compositore",
+    "en": "composer",
+    "page": 359
+  },
+  {
+    "it": "il concerto",
+    "en": "concert",
+    "page": 359
+  },
+  {
+    "it": "il conservatorio",
+    "en": "conservatory",
+    "page": 359
+  },
+  {
+    "it": "la discoteca",
+    "en": "club",
+    "page": 359
+  },
+  {
+    "it": "classica",
+    "en": "classical",
+    "page": 359
+  },
+  {
+    "it": "leggera",
+    "en": "pop",
+    "page": 359
+  },
+  {
+    "it": "rock",
+    "en": "rock",
+    "page": 359
+  },
+  {
+    "it": "il/la musicista",
+    "en": "musician",
+    "page": 359
+  },
+  {
+    "it": "la batteria",
+    "en": "drums",
+    "page": 359
+  },
+  {
+    "it": "il clarinetto",
+    "en": "clarinet",
+    "page": 359
+  },
+  {
+    "it": "il flauto",
+    "en": "flute",
+    "page": 359
+  },
+  {
+    "it": "il pianoforte",
+    "en": "piano",
+    "page": 359
+  },
+  {
+    "it": "la tromba",
+    "en": "trumpet",
+    "page": 359
+  },
+  {
+    "it": "il violino",
+    "en": "violin",
+    "page": 359
+  },
+  {
+    "it": "l’artigiano",
+    "en": "craftsman",
+    "page": 362
+  },
+  {
+    "it": "il bagaglio / i bagagli",
+    "en": "baggage",
+    "page": 362
+  },
+  {
+    "it": "la basIlica",
+    "en": "basilica",
+    "page": 362
+  },
+  {
+    "it": "la collezione",
+    "en": "collection",
+    "page": 362
+  },
+  {
+    "it": "i dintorni",
+    "en": "surroundings",
+    "page": 362
+  },
+  {
+    "it": "il giro",
+    "en": "trip",
+    "page": 362
+  },
+  {
+    "it": "il musEo",
+    "en": "museum",
+    "page": 363
+  },
+  {
+    "it": "l’oggetto",
+    "en": "object",
+    "page": 363
+  },
+  {
+    "it": "il papa",
+    "en": "pope",
+    "page": 363
+  },
+  {
+    "it": "il progetto",
+    "en": "project",
+    "page": 363
+  },
+  {
+    "it": "lo scavo",
+    "en": "excavation",
+    "page": 363
+  },
+  {
+    "it": "il soggiorno",
+    "en": "stay",
+    "page": 363
+  },
+  {
+    "it": "il vetro",
+    "en": "glass",
+    "page": 363
+  },
+  {
+    "it": "immaginario / immaginaria",
+    "en": "imaginary",
+    "page": 363
+  },
+  {
+    "it": "impossIbile",
+    "en": "impossible",
+    "page": 363
+  },
+  {
+    "it": "possIbile",
+    "en": "posisble",
+    "page": 363
+  },
+  {
+    "it": "straordinario / straordinaria",
+    "en": "extraordinary",
+    "page": 363
+  },
+  {
+    "it": "a disposizione",
+    "en": "available",
+    "page": 363
+  },
+  {
+    "it": "lì / là",
+    "en": "there",
+    "page": 363
+  },
+  {
+    "it": "to mail",
+    "en": "mancare",
+    "page": 368
+  },
+  {
+    "it": "i fuochi d’artificio",
+    "en": "fireworks",
+    "page": 370
+  },
+  {
+    "it": "l’aiuto",
+    "en": "help",
+    "page": 381
+  },
+  {
+    "it": "l’attesa",
+    "en": "wait",
+    "page": 381
+  },
+  {
+    "it": "la busta",
+    "en": "envelope",
+    "page": 381
+  },
+  {
+    "it": "la cassetta postale",
+    "en": "mailbox",
+    "page": 381
+  },
+  {
+    "it": "la conclusione",
+    "en": "conclusion",
+    "page": 381
+  },
+  {
+    "it": "la copia",
+    "en": "copy",
+    "page": 381
+  },
+  {
+    "it": "la corrispondenza",
+    "en": "correspondence",
+    "page": 382
+  },
+  {
+    "it": "il destinatario",
+    "en": "addressee",
+    "page": 382
+  },
+  {
+    "it": "l’errore",
+    "en": "mistake",
+    "page": 382
+  },
+  {
+    "it": "l’espressione",
+    "en": "expression",
+    "page": 382
+  },
+  {
+    "it": "il francobollo",
+    "en": "stamp",
+    "page": 382
+  },
+  {
+    "it": "l’indirizzo",
+    "en": "address",
+    "page": 382
+  },
+  {
+    "it": "la gentilezza",
+    "en": "kindness",
+    "page": 382
+  },
+  {
+    "it": "il mittente",
+    "en": "sender",
+    "page": 382
+  },
+  {
+    "it": "la ragione",
+    "en": "reason",
+    "page": 382
+  },
+  {
+    "it": "il servizio",
+    "en": "service",
+    "page": 382
+  },
+  {
+    "it": "la speranza",
+    "en": "hope",
+    "page": 382
+  },
+  {
+    "it": "il successo",
+    "en": "success",
+    "page": 382
+  },
+  {
+    "it": "il tItolo",
+    "en": "title",
+    "page": 382
+  },
+  {
+    "it": "commerciale",
+    "en": "commerical",
+    "page": 382
+  },
+  {
+    "it": "cordiale",
+    "en": "cordial",
+    "page": 382
+  },
+  {
+    "it": "intitolato / intitolata",
+    "en": "titled",
+    "page": 382
+  },
+  {
+    "it": "sincero / sincera",
+    "en": "sincere",
+    "page": 382
+  },
+  {
+    "it": "già",
+    "en": "already",
+    "page": 382
+  },
+  {
+    "it": "to buy",
+    "en": "comprato",
+    "page": 387
+  },
+  {
+    "it": "to speak",
+    "en": "parlato",
+    "page": 387
+  },
+  {
+    "it": "to study",
+    "en": "studiato",
+    "page": 387
+  },
+  {
+    "it": "to bring",
+    "en": "portato",
+    "page": 387
+  },
+  {
+    "it": "trovato",
+    "en": "found",
+    "page": 387
+  },
+  {
+    "it": "to help",
+    "en": "aiutato",
+    "page": 387
+  },
+  {
+    "it": "apprezzato",
+    "en": "appreciated",
+    "page": 387
+  },
+  {
+    "it": "to give",
+    "en": "dato",
+    "page": 387
+  },
+  {
+    "it": "to sell",
+    "en": "venduto",
+    "page": 388
+  },
+  {
+    "it": "to receive",
+    "en": "ricevuto",
+    "page": 388
+  },
+  {
+    "it": "have",
+    "en": "avuto",
+    "page": 388
+  },
+  {
+    "it": "to obtain",
+    "en": "ottenuto",
+    "page": 388
+  },
+  {
+    "it": "to know",
+    "en": "saputo",
+    "page": 388
+  },
+  {
+    "it": "to know",
+    "en": "conosciuto",
+    "page": 388
+  },
+  {
+    "it": "to understand",
+    "en": "capito",
+    "page": 388
+  },
+  {
+    "it": "to finish",
+    "en": "finito",
+    "page": 388
+  },
+  {
+    "it": "to serve",
+    "en": "servito",
+    "page": 388
+  },
+  {
+    "it": "to prefer",
+    "en": "preferito",
+    "page": 388
+  },
+  {
+    "it": "contribute",
+    "en": "contribuito",
+    "page": 388
+  },
+  {
+    "it": "aperto",
+    "en": "opened",
+    "page": 388
+  },
+  {
+    "it": "chiuso",
+    "en": "closed",
+    "page": 388
+  },
+  {
+    "it": "deciso",
+    "en": "decided",
+    "page": 388
+  },
+  {
+    "it": "detto",
+    "en": "said",
+    "page": 388
+  },
+  {
+    "it": "letto",
+    "en": "read",
+    "page": 388
+  },
+  {
+    "it": "preso",
+    "en": "taken",
+    "page": 388
+  },
+  {
+    "it": "risposto",
+    "en": "answered",
+    "page": 388
+  },
+  {
+    "it": "scritto",
+    "en": "written",
+    "page": 388
+  },
+  {
+    "it": "la familiarità",
+    "en": "familiarity",
+    "page": 394
+  },
+  {
+    "it": "lo sbaglio",
+    "en": "mistake",
+    "page": 394
+  },
+  {
+    "it": "Abile",
+    "en": "able",
+    "page": 394
+  },
+  {
+    "it": "dannoso / dannosa",
+    "en": "harmful",
+    "page": 395
+  },
+  {
+    "it": "entrambi / entrambe",
+    "en": "both",
+    "page": 395
+  },
+  {
+    "it": "magro / magra",
+    "en": "thin",
+    "page": 395
+  },
+  {
+    "it": "profittEvole",
+    "en": "profitable",
+    "page": 395
+  },
+  {
+    "it": "riccio / riccia",
+    "en": "curly",
+    "page": 395
+  },
+  {
+    "it": "rispettoso / rispettosa",
+    "en": "respectful",
+    "page": 395
+  },
+  {
+    "it": "serio / seria",
+    "en": "serious",
+    "page": 395
+  },
+  {
+    "it": "sportivo / sportiva",
+    "en": "sporty",
+    "page": 395
+  },
+  {
+    "it": "fortunatamente",
+    "en": "fortunately",
+    "page": 395
+  },
+  {
+    "it": "interamente",
+    "en": "entirely",
+    "page": 395
+  },
+  {
+    "it": "poiché",
+    "en": "since",
+    "page": 395
+  },
+  {
+    "it": "l’autore / l’autrice",
+    "en": "author",
+    "page": 403
+  },
+  {
+    "it": "la biblioteca",
+    "en": "library",
+    "page": 403
+  },
+  {
+    "it": "il capolavoro",
+    "en": "masterpiece",
+    "page": 403
+  },
+  {
+    "it": "la librerIa",
+    "en": "bookshop",
+    "page": 403
+  },
+  {
+    "it": "la narrativa",
+    "en": "fiction",
+    "page": 403
+  },
+  {
+    "it": "la prosa",
+    "en": "prose",
+    "page": 403
+  },
+  {
+    "it": "la recensione",
+    "en": "review",
+    "page": 403
+  },
+  {
+    "it": "la rivista",
+    "en": "magazine",
+    "page": 403
+  },
+  {
+    "it": "il romanzo",
+    "en": "novel",
+    "page": 403
+  },
+  {
+    "it": "stOrico",
+    "en": "historical",
+    "page": 403
+  },
+  {
+    "it": "il saggio",
+    "en": "essay",
+    "page": 403
+  },
+  {
+    "it": "la storia",
+    "en": "story",
+    "page": 403
+  },
+  {
+    "it": "la trama",
+    "en": "plot",
+    "page": 403
+  },
+  {
+    "it": "il volume",
+    "en": "volume",
+    "page": 404
+  },
+  {
+    "it": "la cortesIa",
+    "en": "courtesy",
+    "page": 407
+  },
+  {
+    "it": "l’esperienza",
+    "en": "experience",
+    "page": 407
+  },
+  {
+    "it": "la formalità",
+    "en": "formality",
+    "page": 407
+  },
+  {
+    "it": "l’interesse",
+    "en": "interest",
+    "page": 407
+  },
+  {
+    "it": "il mal di testa",
+    "en": "headache",
+    "page": 407
+  },
+  {
+    "it": "l’ospitalità",
+    "en": "hospitality",
+    "page": 407
+  },
+  {
+    "it": "il rispetto",
+    "en": "respect",
+    "page": 407
+  },
+  {
+    "it": "il rumore",
+    "en": "noise",
+    "page": 408
+  },
+  {
+    "it": "il soffio",
+    "en": "breath",
+    "page": 408
+  },
+  {
+    "it": "il tentativo",
+    "en": "attempt",
+    "page": 408
+  },
+  {
+    "it": "il valore",
+    "en": "value",
+    "page": 408
+  },
+  {
+    "it": "agitato / agitata",
+    "en": "agitated",
+    "page": 408
+  },
+  {
+    "it": "degno / degna",
+    "en": "worthy",
+    "page": 408
+  },
+  {
+    "it": "desiderAbile",
+    "en": "desirable",
+    "page": 408
+  },
+  {
+    "it": "irritAbile",
+    "en": "irritable",
+    "page": 408
+  },
+  {
+    "it": "ospitale",
+    "en": "hospitable",
+    "page": 408
+  },
+  {
+    "it": "rotto / rotta",
+    "en": "broken",
+    "page": 408
+  },
+  {
+    "it": "noi",
+    "en": "us",
+    "page": 412
+  },
+  {
+    "it": "loro",
+    "en": "them",
+    "page": 412
+  },
+  {
+    "it": "colto / colta",
+    "en": "cultured",
+    "page": 415
+  },
+  {
+    "it": "comico / comica",
+    "en": "comical",
+    "page": 415
+  },
+  {
+    "it": "debole",
+    "en": "weak",
+    "page": 415
+  },
+  {
+    "it": "fedele",
+    "en": "faithful",
+    "page": 415
+  },
+  {
+    "it": "forte",
+    "en": "strong",
+    "page": 415
+  },
+  {
+    "it": "ironico / ironica",
+    "en": "ironic",
+    "page": 416
+  },
+  {
+    "it": "sensibile",
+    "en": "sensitive",
+    "page": 416
+  },
+  {
+    "it": "socievole",
+    "en": "sociable",
+    "page": 416
+  },
+  {
+    "it": "l’amicizia",
+    "en": "friendship",
+    "page": 418
+  },
+  {
+    "it": "l’assistente",
+    "en": "assistant",
+    "page": 418
+  },
+  {
+    "it": "la cintura di sicurezza",
+    "en": "seatbelt",
+    "page": 419
+  },
+  {
+    "it": "il controllo",
+    "en": "check",
+    "page": 419
+  },
+  {
+    "it": "il gioco",
+    "en": "game",
+    "page": 419
+  },
+  {
+    "it": "la fila",
+    "en": "line",
+    "page": 419
+  },
+  {
+    "it": "il lusso",
+    "en": "luxury",
+    "page": 419
+  },
+  {
+    "it": "il messaggio",
+    "en": "message",
+    "page": 419
+  },
+  {
+    "it": "la misura",
+    "en": "measure",
+    "page": 419
+  },
+  {
+    "it": "il passaporto",
+    "en": "passport",
+    "page": 419
+  },
+  {
+    "it": "il pensiero",
+    "en": "thought",
+    "page": 419
+  },
+  {
+    "it": "la posta elettrOnica",
+    "en": "email",
+    "page": 419
+  },
+  {
+    "it": "il sedile",
+    "en": "seat",
+    "page": 419
+  },
+  {
+    "it": "il senso",
+    "en": "sense",
+    "page": 419
+  },
+  {
+    "it": "il vuoto",
+    "en": "emptiness",
+    "page": 419
+  },
+  {
+    "it": "assorto / assorta",
+    "en": "absorbed",
+    "page": 419
+  },
+  {
+    "it": "interessato / interessata",
+    "en": "interested",
+    "page": 419
+  },
+  {
+    "it": "preciso / precisa",
+    "en": "precise",
+    "page": 419
+  },
+  {
+    "it": "trAgico / trAgica",
+    "en": "tragic",
+    "page": 419
+  },
+  {
+    "it": "calorosamente",
+    "en": "warmly",
+    "page": 420
+  },
+  {
+    "it": "particolarmente",
+    "en": "particularly",
+    "page": 420
+  },
+  {
+    "it": "seriamente",
+    "en": "seriously",
+    "page": 420
+  },
+  {
+    "it": "l’Angolo",
+    "en": "corner",
+    "page": 429
+  },
+  {
+    "it": "l’ascensore",
+    "en": "elevator",
+    "page": 429
+  },
+  {
+    "it": "la dogana",
+    "en": "customs",
+    "page": 429
+  },
+  {
+    "it": "la velocità",
+    "en": "speed",
+    "page": 429
+  },
+  {
+    "it": "compreso / compresa",
+    "en": "included",
+    "page": 429
+  },
+  {
+    "it": "orgoglioso / orgogliosa",
+    "en": "proud",
+    "page": 429
+  },
+  {
+    "it": "prenotato / prenotata",
+    "en": "reserved",
+    "page": 430
+  },
+  {
+    "it": "salvo / salva",
+    "en": "safe",
+    "page": 430
+  },
+  {
+    "it": "sano / sana",
+    "en": "healthy",
+    "page": 430
+  },
+  {
+    "it": "tranquillo / tranquilla",
+    "en": "calm",
+    "page": 430
+  },
+  {
+    "it": "extremely high",
+    "en": "verbi",
+    "page": 430
+  },
+  {
+    "it": "to look around",
+    "en": "ritirare",
+    "page": 430
+  },
+  {
+    "it": "to claim",
+    "en": "sbagliarsi",
+    "page": 430
+  },
+  {
+    "it": "appena",
+    "en": "barely",
+    "page": 430
+  },
+  {
+    "it": "l’antipasto",
+    "en": "appetizer",
+    "page": 448
+  },
+  {
+    "it": "l’avvocato",
+    "en": "lawyer",
+    "page": 448
+  },
+  {
+    "it": "il brodo",
+    "en": "broth",
+    "page": 448
+  },
+  {
+    "it": "la cerimonia",
+    "en": "ceremony",
+    "page": 448
+  },
+  {
+    "it": "la chitarra",
+    "en": "guitar",
+    "page": 448
+  },
+  {
+    "it": "la coppia",
+    "en": "couple",
+    "page": 448
+  },
+  {
+    "it": "il desiderio",
+    "en": "desire",
+    "page": 448
+  },
+  {
+    "it": "il giovanotto",
+    "en": "youth",
+    "page": 449
+  },
+  {
+    "it": "la minestra",
+    "en": "soup",
+    "page": 449
+  },
+  {
+    "it": "il palazzo",
+    "en": "building",
+    "page": 449
+  },
+  {
+    "it": "il parente",
+    "en": "relative",
+    "page": 449
+  },
+  {
+    "it": "il passo",
+    "en": "step",
+    "page": 449
+  },
+  {
+    "it": "il ricevimento",
+    "en": "reception",
+    "page": 449
+  },
+  {
+    "it": "il ricordo",
+    "en": "memory",
+    "page": 449
+  },
+  {
+    "it": "father-in-law / mother-in-law",
+    "en": "aggettivi",
+    "page": 449
+  },
+  {
+    "it": "affascinato / affascinata",
+    "en": "fascinated",
+    "page": 449
+  },
+  {
+    "it": "ammobiliato / ammobiliata",
+    "en": "furnished",
+    "page": 449
+  },
+  {
+    "it": "clAssico / clAssica",
+    "en": "classical",
+    "page": 449
+  },
+  {
+    "it": "indimenticAbile",
+    "en": "unforgettable",
+    "page": 449
+  },
+  {
+    "it": "scorso / scorsa",
+    "en": "last",
+    "page": 449
+  },
+  {
+    "it": "squisito / squisita",
+    "en": "delicious",
+    "page": 449
+  },
+  {
+    "it": "to get married",
+    "en": "suonare",
+    "page": 449
+  },
+  {
+    "it": "noi ragazze ci siamo accorte",
+    "en": "we",
+    "page": 454
+  },
+  {
+    "it": "il cricco",
+    "en": "jack",
+    "page": 461
+  },
+  {
+    "it": "il destino",
+    "en": "destiny",
+    "page": 461
+  },
+  {
+    "it": "la frenata",
+    "en": "brake",
+    "page": 461
+  },
+  {
+    "it": "la gomma",
+    "en": "tire",
+    "page": 461
+  },
+  {
+    "it": "l’email",
+    "en": "email",
+    "page": 461
+  },
+  {
+    "it": "lo zAino",
+    "en": "backpack",
+    "page": 461
+  },
+  {
+    "it": "disperato / disperata",
+    "en": "desperate",
+    "page": 461
+  },
+  {
+    "it": "grosso / grossa",
+    "en": "big",
+    "page": 461
+  },
+  {
+    "it": "rumoroso / rumorosa",
+    "en": "noisy",
+    "page": 462
+  },
+  {
+    "it": "to give a hand",
+    "en": "guidare",
+    "page": 462
+  },
+  {
+    "it": "sfortunatamente",
+    "en": "unfortunately",
+    "page": 462
+  },
+  {
+    "it": "spericolatamente",
+    "en": "dangerously",
+    "page": 462
+  },
+  {
+    "it": "fErmati",
+    "en": "stop",
+    "page": 470
+  },
+  {
+    "it": "la cartina",
+    "en": "map",
+    "page": 472
+  },
+  {
+    "it": "il club",
+    "en": "club",
+    "page": 472
+  },
+  {
+    "it": "l’elefante",
+    "en": "elephant",
+    "page": 472
+  },
+  {
+    "it": "la fontana",
+    "en": "fountain",
+    "page": 472
+  },
+  {
+    "it": "il giocAttolo",
+    "en": "toy",
+    "page": 472
+  },
+  {
+    "it": "il momento",
+    "en": "moment",
+    "page": 472
+  },
+  {
+    "it": "la moneta",
+    "en": "coin",
+    "page": 473
+  },
+  {
+    "it": "il / la passante",
+    "en": "passerby",
+    "page": 473
+  },
+  {
+    "it": "la passeggiata",
+    "en": "stroll",
+    "page": 473
+  },
+  {
+    "it": "il ponte",
+    "en": "bridge",
+    "page": 473
+  },
+  {
+    "it": "il portAtile",
+    "en": "laptop",
+    "page": 473
+  },
+  {
+    "it": "la scalinata",
+    "en": "staircase",
+    "page": 473
+  },
+  {
+    "it": "lo scalino",
+    "en": "stair",
+    "page": 473
+  },
+  {
+    "it": "la vetrina",
+    "en": "window",
+    "page": 473
+  },
+  {
+    "it": "street vendor",
+    "en": "aggettivi",
+    "page": 473
+  },
+  {
+    "it": "faticoso / faticosa",
+    "en": "tiring",
+    "page": 473
+  },
+  {
+    "it": "stancante",
+    "en": "tiring",
+    "page": 473
+  },
+  {
+    "it": "così",
+    "en": "so",
+    "page": 473
+  },
+  {
+    "it": "lo scuOlabus",
+    "en": "schoolbus",
+    "page": 482
+  },
+  {
+    "it": "il trAffico",
+    "en": "traffic",
+    "page": 482
+  },
+  {
+    "it": "il campo",
+    "en": "field",
+    "page": 484
+  },
+  {
+    "it": "la cartolina",
+    "en": "postcard",
+    "page": 484
+  },
+  {
+    "it": "il cipresso",
+    "en": "cypress",
+    "page": 484
+  },
+  {
+    "it": "il contadino / la contadina",
+    "en": "farmer",
+    "page": 484
+  },
+  {
+    "it": "il cuoco / la cuoca",
+    "en": "cook",
+    "page": 484
+  },
+  {
+    "it": "la fermata",
+    "en": "stop",
+    "page": 484
+  },
+  {
+    "it": "il grano",
+    "en": "wheat",
+    "page": 484
+  },
+  {
+    "it": "il gruppo",
+    "en": "group",
+    "page": 485
+  },
+  {
+    "it": "il lupo",
+    "en": "wolf",
+    "page": 485
+  },
+  {
+    "it": "la memoria",
+    "en": "memory",
+    "page": 485
+  },
+  {
+    "it": "l’oliva",
+    "en": "olive",
+    "page": 485
+  },
+  {
+    "it": "l’osservatorio",
+    "en": "observatory",
+    "page": 485
+  },
+  {
+    "it": "la pietra",
+    "en": "stone",
+    "page": 485
+  },
+  {
+    "it": "la residenza",
+    "en": "residence",
+    "page": 485
+  },
+  {
+    "it": "il ricordino",
+    "en": "memento",
+    "page": 485
+  },
+  {
+    "it": "il riposo",
+    "en": "rest",
+    "page": 485
+  },
+  {
+    "it": "la vigna",
+    "en": "vineyard",
+    "page": 485
+  },
+  {
+    "it": "la zona",
+    "en": "area",
+    "page": 485
+  },
+  {
+    "it": "astronOmico / astronOmica",
+    "en": "astronomical",
+    "page": 485
+  },
+  {
+    "it": "dorato / dorata",
+    "en": "golden",
+    "page": 485
+  },
+  {
+    "it": "estivo / estiva",
+    "en": "summer",
+    "page": 485
+  },
+  {
+    "it": "obbligato / obbligata",
+    "en": "obliged",
+    "page": 485
+  },
+  {
+    "it": "secco / secca",
+    "en": "dry",
+    "page": 485
+  },
+  {
+    "it": "alla griglia",
+    "en": "grilled",
+    "page": 486
+  },
+  {
+    "it": "allo spiedo",
+    "en": "spit-roasted",
+    "page": 486
+  },
+  {
+    "it": "negozio",
+    "en": "shop",
+    "page": 488
+  },
+  {
+    "it": "negozietto",
+    "en": "small",
+    "page": 488
+  },
+  {
+    "it": "ricordo",
+    "en": "memento",
+    "page": 488
+  },
+  {
+    "it": "libro",
+    "en": "book",
+    "page": 488
+  },
+  {
+    "it": "libretto",
+    "en": "small",
+    "page": 488
+  },
+  {
+    "it": "il menù",
+    "en": "menu",
+    "page": 493
+  },
+  {
+    "it": "il dolce",
+    "en": "dessert",
+    "page": 494
+  },
+  {
+    "it": "il conto",
+    "en": "check",
+    "page": 494
+  },
+  {
+    "it": "l’annuncio",
+    "en": "announcement",
+    "page": 497
+  },
+  {
+    "it": "il cartello",
+    "en": "sign",
+    "page": 497
+  },
+  {
+    "it": "il cavallo",
+    "en": "horse",
+    "page": 497
+  },
+  {
+    "it": "la contrada",
+    "en": "neighborhood",
+    "page": 497
+  },
+  {
+    "it": "il cortEo",
+    "en": "pageant",
+    "page": 497
+  },
+  {
+    "it": "il fantino",
+    "en": "jockey",
+    "page": 497
+  },
+  {
+    "it": "la festa",
+    "en": "party",
+    "page": 498
+  },
+  {
+    "it": "la pena",
+    "en": "punishment",
+    "page": 498
+  },
+  {
+    "it": "la sella",
+    "en": "saddle",
+    "page": 498
+  },
+  {
+    "it": "il veterinario / la veterinaria",
+    "en": "veterinarian",
+    "page": 498
+  },
+  {
+    "it": "affollato / affollata",
+    "en": "crowded",
+    "page": 498
+  },
+  {
+    "it": "eccitante",
+    "en": "exciting",
+    "page": 498
+  },
+  {
+    "it": "medievale",
+    "en": "medieval",
+    "page": 498
+  },
+  {
+    "it": "prezioso / preziosa",
+    "en": "precious",
+    "page": 498
+  },
+  {
+    "it": "puro / pura",
+    "en": "pure",
+    "page": 498
+  },
+  {
+    "it": "separato / separata",
+    "en": "separated",
+    "page": 498
+  },
+  {
+    "it": "dressed",
+    "en": "verbi",
+    "page": 498
+  },
+  {
+    "it": "saggiamente",
+    "en": "wisely",
+    "page": 498
+  },
+  {
+    "it": "siccome",
+    "en": "since",
+    "page": 498
+  },
+  {
+    "it": "mai",
+    "en": "never",
+    "page": 502
+  },
+  {
+    "it": "niente nulla",
+    "en": "nothing",
+    "page": 502
+  },
+  {
+    "it": "nemmeno / neppure / neanche",
+    "en": "not",
+    "page": 502
+  },
+  {
+    "it": "ancora",
+    "en": "still",
+    "page": 502
+  },
+  {
+    "it": "che",
+    "en": "only",
+    "page": 502
+  },
+  {
+    "it": "qualcuno",
+    "en": "someone",
+    "page": 503
+  },
+  {
+    "it": "il cane",
+    "en": "dog",
+    "page": 505
+  },
+  {
+    "it": "il criceto",
+    "en": "hamster",
+    "page": 505
+  },
+  {
+    "it": "il gatto",
+    "en": "cat",
+    "page": 505
+  },
+  {
+    "it": "la lucertola",
+    "en": "lizard",
+    "page": 505
+  },
+  {
+    "it": "il serpente",
+    "en": "snake",
+    "page": 505
+  },
+  {
+    "it": "il canarino",
+    "en": "canary",
+    "page": 505
+  },
+  {
+    "it": "la gazza",
+    "en": "magpie",
+    "page": 505
+  },
+  {
+    "it": "il pappagallo",
+    "en": "parrot",
+    "page": 505
+  },
+  {
+    "it": "la pEcora",
+    "en": "sheep",
+    "page": 505
+  },
+  {
+    "it": "l’affermazione",
+    "en": "statement",
+    "page": 517
+  },
+  {
+    "it": "l’anello",
+    "en": "ring",
+    "page": 517
+  },
+  {
+    "it": "l’arcata",
+    "en": "archway",
+    "page": 517
+  },
+  {
+    "it": "l’artigianato",
+    "en": "crafts",
+    "page": 517
+  },
+  {
+    "it": "la borsetta",
+    "en": "handbag",
+    "page": 517
+  },
+  {
+    "it": "il braccialetto",
+    "en": "bracelet",
+    "page": 517
+  },
+  {
+    "it": "la civilizzazione",
+    "en": "civilization",
+    "page": 517
+  },
+  {
+    "it": "la collana",
+    "en": "necklace",
+    "page": 518
+  },
+  {
+    "it": "il gioiello",
+    "en": "jewel",
+    "page": 518
+  },
+  {
+    "it": "l’orecchino",
+    "en": "earring",
+    "page": 518
+  },
+  {
+    "it": "l’oro",
+    "en": "gold",
+    "page": 518
+  },
+  {
+    "it": "la ricchezza",
+    "en": "richness",
+    "page": 518
+  },
+  {
+    "it": "l’universo",
+    "en": "universe",
+    "page": 518
+  },
+  {
+    "it": "elegante",
+    "en": "elegant",
+    "page": 518
+  },
+  {
+    "it": "nato / nata",
+    "en": "born",
+    "page": 518
+  },
+  {
+    "it": "pittoresco / pittoresca",
+    "en": "picturesque",
+    "page": 518
+  },
+  {
+    "it": "sconosciuto / sconosciuta",
+    "en": "unknown",
+    "page": 518
+  },
+  {
+    "it": "sufficiente",
+    "en": "sufficient",
+    "page": 518
+  },
+  {
+    "it": "affettuosamente",
+    "en": "affectionately",
+    "page": 518
+  },
+  {
+    "it": "d’eccezione",
+    "en": "exceptional",
+    "page": 518
+  },
+  {
+    "it": "di nuovo",
+    "en": "again",
+    "page": 518
+  },
+  {
+    "it": "di ritorno",
+    "en": "back",
+    "page": 518
+  },
+  {
+    "it": "direct",
+    "en": "mi",
+    "page": 523
+  },
+  {
+    "it": "li / le",
+    "en": "them",
+    "page": 523
+  },
+  {
+    "it": "indirect",
+    "en": "mi",
+    "page": 523
+  },
+  {
+    "it": "to me",
+    "en": "ci",
+    "page": 523
+  },
+  {
+    "it": "to us",
+    "en": "ti",
+    "page": 523
+  },
+  {
+    "it": "loro",
+    "en": "to",
+    "page": 523
+  },
+  {
+    "it": "reflexive",
+    "en": "mi",
+    "page": 523
+  },
+  {
+    "it": "l’architettura",
+    "en": "architecture",
+    "page": 528
+  },
+  {
+    "it": "il quadro",
+    "en": "picture",
+    "page": 528
+  },
+  {
+    "it": "architetto",
+    "en": "moderno",
+    "page": 528
+  },
+  {
+    "it": "t e",
+    "en": "you",
+    "page": 530
+  },
+  {
+    "it": "lui",
+    "en": "him,",
+    "page": 530
+  },
+  {
+    "it": "il compagno / la compagna",
+    "en": "mate",
+    "page": 531
+  },
+  {
+    "it": "il funerale",
+    "en": "funeral",
+    "page": 531
+  },
+  {
+    "it": "la gelosIa",
+    "en": "jealousy",
+    "page": 531
+  },
+  {
+    "it": "l’incontro",
+    "en": "encounter",
+    "page": 531
+  },
+  {
+    "it": "il proprietario / la proprietaria",
+    "en": "owner",
+    "page": 531
+  },
+  {
+    "it": "il sospetto",
+    "en": "suspicion",
+    "page": 531
+  },
+  {
+    "it": "ideale",
+    "en": "ideal",
+    "page": 532
+  },
+  {
+    "it": "da solo / da sola",
+    "en": "alone",
+    "page": 532
+  },
+  {
+    "it": "il pigiama",
+    "en": "pijamas",
+    "page": 540
+  },
+  {
+    "it": "la camicia da notte",
+    "en": "nightgown",
+    "page": 540
+  },
+  {
+    "it": "il cappello",
+    "en": "hat",
+    "page": 540
+  },
+  {
+    "it": "i guanti",
+    "en": "gloves",
+    "page": 540
+  },
+  {
+    "it": "il foulArd",
+    "en": "scarf",
+    "page": 540
+  },
+  {
+    "it": "le scarpe",
+    "en": "shoes",
+    "page": 540
+  },
+  {
+    "it": "la sciarpa",
+    "en": "scarf",
+    "page": 540
+  },
+  {
+    "it": "gli stivali",
+    "en": "boots",
+    "page": 540
+  },
+  {
+    "it": "a quadretti",
+    "en": "checkered",
+    "page": 540
+  },
+  {
+    "it": "a righe",
+    "en": "striped",
+    "page": 540
+  },
+  {
+    "it": "in tinta unita",
+    "en": "solid",
+    "page": 540
+  },
+  {
+    "it": "corto / corta",
+    "en": "short",
+    "page": 540
+  },
+  {
+    "it": "l’albicocca",
+    "en": "apricot",
+    "page": 543
+  },
+  {
+    "it": "la dignità",
+    "en": "dignity",
+    "page": 543
+  },
+  {
+    "it": "la facilità",
+    "en": "ease",
+    "page": 543
+  },
+  {
+    "it": "la frAgola",
+    "en": "strawberry",
+    "page": 543
+  },
+  {
+    "it": "il gianduia",
+    "en": "chocolate-hazelnut",
+    "page": 543
+  },
+  {
+    "it": "la mela",
+    "en": "apple",
+    "page": 543
+  },
+  {
+    "it": "la nocciola",
+    "en": "hazelnut",
+    "page": 543
+  },
+  {
+    "it": "la pera",
+    "en": "pear",
+    "page": 543
+  },
+  {
+    "it": "la pesca",
+    "en": "peach",
+    "page": 544
+  },
+  {
+    "it": "il remo",
+    "en": "oar",
+    "page": 544
+  },
+  {
+    "it": "la sabbia",
+    "en": "sand",
+    "page": 544
+  },
+  {
+    "it": "la susina",
+    "en": "plum",
+    "page": 544
+  },
+  {
+    "it": "il torroncino",
+    "en": "nougat",
+    "page": 544
+  },
+  {
+    "it": "calmo / calma",
+    "en": "calm",
+    "page": 544
+  },
+  {
+    "it": "geloso / gelosa",
+    "en": "jealous",
+    "page": 544
+  },
+  {
+    "it": "informato / informata",
+    "en": "informed",
+    "page": 544
+  },
+  {
+    "it": "decentemente",
+    "en": "decently",
+    "page": 544
+  },
+  {
+    "it": "perfino",
+    "en": "even",
+    "page": 544
+  },
+  {
+    "it": "la carriera",
+    "en": "career",
+    "page": 551
+  },
+  {
+    "it": "il mestiere",
+    "en": "job",
+    "page": 551
+  },
+  {
+    "it": "la professione",
+    "en": "profession",
+    "page": 551
+  },
+  {
+    "it": "l’occupazione",
+    "en": "occupation",
+    "page": 551
+  },
+  {
+    "it": "la fattorIa",
+    "en": "farm",
+    "page": 551
+  },
+  {
+    "it": "la ditta",
+    "en": "company",
+    "page": 551
+  },
+  {
+    "it": "l’azienda",
+    "en": "firm",
+    "page": 551
+  },
+  {
+    "it": "l’ingegnere",
+    "en": "engineer",
+    "page": 551
+  },
+  {
+    "it": "l’elettricista",
+    "en": "electrician",
+    "page": 551
+  },
+  {
+    "it": "il / la giornalista",
+    "en": "journalist",
+    "page": 551
+  },
+  {
+    "it": "il / la dentista",
+    "en": "dentist",
+    "page": 551
+  },
+  {
+    "it": "il / la musicista",
+    "en": "musician",
+    "page": 551
+  },
+  {
+    "it": "l’avvocato / l’avvocata",
+    "en": "lawyer",
+    "page": 551
+  },
+  {
+    "it": "l’architetto",
+    "en": "architect",
+    "page": 552
+  },
+  {
+    "it": "il cantante / la cantante",
+    "en": "singer",
+    "page": 552
+  },
+  {
+    "it": "il carabiniere",
+    "en": "policeman",
+    "page": 552
+  },
+  {
+    "it": "il falegname",
+    "en": "carpenter",
+    "page": 552
+  },
+  {
+    "it": "l’idraulico",
+    "en": "plumber",
+    "page": 552
+  },
+  {
+    "it": "il ragioniere / la ragioniera",
+    "en": "accountant",
+    "page": 552
+  },
+  {
+    "it": "il professore / la professoressa",
+    "en": "professor",
+    "page": 552
+  },
+  {
+    "it": "l’artigiano / l’artigiana",
+    "en": "craftsman",
+    "page": 552
+  },
+  {
+    "it": "la casalinga",
+    "en": "housewife",
+    "page": 552
+  },
+  {
+    "it": "il pensionato / la pensionata",
+    "en": "retiree",
+    "page": 552
+  },
+  {
+    "it": "Se mi fanno male i denti vado dal",
+    "en": "dentista.",
+    "page": 552
+  },
+  {
+    "it": "la suoneria",
+    "en": "ringer",
+    "page": 564
+  },
+  {
+    "it": "la ricArica",
+    "en": "recharge",
+    "page": 564
+  }
+];
+
+let currentIndex = 0;
+let flipped = false;
+
+function init() {
+  showCard();
+}
+
+function showCard() {
+  const statsEl = document.getElementById('stats');
+  const progressFill = document.getElementById('progressFill');
+  
+  if (CARDS.length === 0) {
+    statsEl.textContent = 'No cards found';
+    document.getElementById('frontText').textContent = 'No cards';
+    document.getElementById('backText').textContent = '';
+    progressFill.style.width = '0%';
+    return;
+  }
+  
+  const card = CARDS[currentIndex];
+  statsEl.textContent = `Card ${currentIndex + 1} of ${CARDS.length}`;
+  progressFill.style.width = `${((currentIndex + 1) / CARDS.length) * 100}%`;
+  
+  document.getElementById('frontText').textContent = card.it;
+  document.getElementById('backText').textContent = card.en;
+  
+  // Reset flip state
+  flipped = false;
+  document.getElementById('flashcard').classList.remove('flipped');
+}
+
+function flipCard() {
+  flipped = !flipped;
+  document.getElementById('flashcard').classList.toggle('flipped', flipped);
+}
+
+function nextCard() {
+  if (CARDS.length === 0) return;
+  currentIndex = (currentIndex + 1) % CARDS.length;
+  showCard();
+}
+
+function prevCard() {
+  if (CARDS.length === 0) return;
+  currentIndex = (currentIndex - 1 + CARDS.length) % CARDS.length;
+  showCard();
+}
+
+function shuffleCards() {
+  for (let i = CARDS.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [CARDS[i], CARDS[j]] = [CARDS[j], CARDS[i]];
+  }
+  currentIndex = 0;
+  showCard();
+}
+
+// Keyboard shortcuts
+document.addEventListener('keydown', function(e) {
+  if (e.code === 'Space' || e.code === 'Enter') {
+    e.preventDefault();
+    flipCard();
+  } else if (e.code === 'ArrowRight') {
+    nextCard();
+  } else if (e.code === 'ArrowLeft') {
+    prevCard();
+  }
+});
+
+init();
+</script>
+</body>
+</html>
